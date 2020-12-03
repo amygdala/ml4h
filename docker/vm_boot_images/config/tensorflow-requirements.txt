@@ -1,4 +1,4 @@
-h5py==2.10.0
+h5py
 pydot==1.2.4
 nibabel==2.5.0
 pydicom==1.2.2
@@ -9,11 +9,9 @@ scikit-survival
 biosppy
 vtk==8.1.2
 imageio==2.6.1
-apache-beam[gcp]==2.12.0
-google-cloud-storage==1.13.0
 ipywidgets==7.5.1
 bokeh
-Pillow==7.0.0
+Pillow==7.1.0
 notebook
 pytest
 tensorflow-addons[tensorflow]
