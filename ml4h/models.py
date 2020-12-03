@@ -761,7 +761,7 @@ class ConvEncoder:
     ):
         num_res = len(res_filters)
         res_x, res_y, res_z = conv_x[:num_res], conv_y[:num_res], conv_z[:num_res]
-        self.preprocess_block = PreprocessBlock(['rotate'], [0.3])
+        self.preprocess_block = PreprocessBlock(augmentations=['rotate'], factors=[0.3])
         self.res_block = ResidualBlock(
             dimension=dimension, filters_per_conv=res_filters, conv_layer_type=conv_layer_type, conv_x=res_x,
             conv_y=res_y, conv_z=res_z, activation=activation, normalization=normalization,
