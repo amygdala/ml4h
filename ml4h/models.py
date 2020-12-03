@@ -69,9 +69,9 @@ NORMALIZATION_CLASSES = {
     'poincare_norm': tfa.layers.PoincareNormalize,
 }
 PREPROCESS_CLASSES = {
-    'zoom': tf.keras.layers.experimental.preprocessing.RandomZoom,
-    'rotate': tf.keras.layers.experimental.preprocessing.RandomRotation,
-    'contrast': tf.keras.layers.experimental.preprocessing.RandomContrast,
+    'zoom': tensorflow.keras.layers.experimental.preprocessing.RandomZoom,
+    'rotate': tensorflow.keras.layers.experimental.preprocessing.RandomRotation,
+    'contrast': tensorflow.keras.layers.experimental.preprocessing.RandomContrast,
 }
 CONV_REGULARIZATION_CLASSES = {
     # class name -> (dimension -> class)
