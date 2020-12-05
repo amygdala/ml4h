@@ -2028,6 +2028,7 @@ def plot_saliency_maps(data: np.ndarray, gradients: np.ndarray, paths: List, pre
         mean_batch_saliency[..., 1] += mean_batch_slice
         mean_batch_saliency[..., 2] += mean_batch_slice
         axes.imshow(mean_batch_saliency)
+        axes.axis('off')
         plt.savefig(f'{prefix}_global_mean_saliency{IMAGE_EXT}')
     logging.info(f"Saved saliency maps at:{prefix}")
 
