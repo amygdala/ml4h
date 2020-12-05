@@ -1429,7 +1429,7 @@ def _slices_tensor_with_segmentation(tensor_key, segmentation_key, path_prefix='
                     found_key = tensor_key.replace('*', str(b + (j - tm.shape[-1] // 2) - l))
                 else:
                     found_key = tensor_key.replace('*', str(b + (j - tm.shape[-1] // 2) + l))
-                if l > 12:
+                if l > 13:
                     logging.warning(f'Could not get segmentation for {tm.name} segmentation key {segmentation_key} but {found_key} not present. l is {l}')
                     break
             if time_frames == 1:
