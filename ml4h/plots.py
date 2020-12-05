@@ -2080,6 +2080,12 @@ def _plot_3d_tensor_slices_as_rgb(tensor, figure_path, cols=3, rows=10):
     if not os.path.exists(os.path.dirname(figure_path)):
         os.makedirs(os.path.dirname(figure_path))
     plt.savefig(figure_path)
+
+    _, axes = plt.subplots(1, 1, figsize=(cols * 4, rows * 4))
+    mt = np.mean(tensor, axis=-2)
+    logging.info(f'Tensor mt shape : {mt.shape}, ')
+    axes[0].imshow(mt)
+    plt.savefig(figure_path.replace('mean', 'all_slice_mean'))
     plt.clf()
 
 
