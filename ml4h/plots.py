@@ -2021,6 +2021,10 @@ def plot_saliency_maps(data: np.ndarray, gradients: np.ndarray, paths: List, pre
 
     if len(data.shape) == 4:
         _plot_3d_tensor_slices_as_rgb(_scale_tensor_inplace(mean_saliency), f'{prefix}_batch_mean_saliency{IMAGE_EXT}', cols, rows)
+        _, axes = plt.subplots(1, 1, figsize=(cols * 4, rows * 4))
+        mean_slice = np.mean(mean_saliency, axis=-2)
+        axes.imshow(mean_slice)
+        plt.savefig(f'{prefix}_global_mean_saliency{IMAGE_EXT}')
     logging.info(f"Saved saliency maps at:{prefix}")
 
 
@@ -2080,12 +2084,6 @@ def _plot_3d_tensor_slices_as_rgb(tensor, figure_path, cols=3, rows=10):
     if not os.path.exists(os.path.dirname(figure_path)):
         os.makedirs(os.path.dirname(figure_path))
     plt.savefig(figure_path)
-
-    _, axes = plt.subplots(1, 1, figsize=(cols * 4, rows * 4))
-    mt = np.mean(tensor, axis=-2)
-    logging.info(f'Tensor mt shape : {mt.shape}, ')
-    axes.imshow(mt)
-    plt.savefig(figure_path.replace('mean', 'all_slice_mean'))
     plt.clf()
 
 
