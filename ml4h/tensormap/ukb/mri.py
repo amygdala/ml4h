@@ -1089,8 +1089,8 @@ cine_lax_3ch_192_16_3 = TensorMap(
     tensor_from_file=_slice_subset_tensor('cine_segmented_lax_3ch', 0, 48, 3, pad_shape=(192, 160, 48)),
     normalization=ZeroMeanStd1(),
 )
-cine_lax_4ch_192_16_3 = TensorMap(
-    'cine_lax_4ch_192_16_3', Interpretation.CONTINUOUS, shape=(192, 160, 16), path_prefix='ukb_cardiac_mri',
+cine_lax_4ch_224_16_3 = TensorMap(
+    'cine_lax_4ch_224_16_3', Interpretation.CONTINUOUS, shape=(160, 224, 16), path_prefix='ukb_cardiac_mri',
     tensor_from_file=_slice_subset_tensor('cine_segmented_lax_4ch', 0, 48, 3, pad_shape=(192, 160, 48)),
     normalization=ZeroMeanStd1(),
 )
@@ -1233,7 +1233,7 @@ liver_shmolli_segmented = TensorMap(
 )
 
 
-def sax_tensor(b_series_prefix):
+def sax_tensor(b_series_prefix, b_series_offset=1):
     def sax_tensor_from_file(tm, hd5, dependents={}):
         missing = 0
         tensor = np.zeros(tm.shape, dtype=np.float32)
@@ -1241,7 +1241,7 @@ def sax_tensor(b_series_prefix):
             for b in range(tm.shape[-1]):
                 try:
                     tm_shape = (tm.shape[0], tm.shape[1])
-                    tensor[:, :, b] = pad_or_crop_array_to_shape(tm_shape, np.array(hd5[f'{tm.path_prefix}/{b_series_prefix}/instance_{(50*b)+1}'], dtype=np.float32))
+                    tensor[:, :, b] = pad_or_crop_array_to_shape(tm_shape, np.array(hd5[f'{tm.path_prefix}/{b_series_prefix}/instance_{(50*b)+b_series_offset}'], dtype=np.float32))
                 except KeyError:
                     missing += 1
                     tensor[:, :, b] = 0
@@ -1249,7 +1249,7 @@ def sax_tensor(b_series_prefix):
             for b in range(tm.shape[-2]):
                 try:
                     tm_shape = (tm.shape[0], tm.shape[1])
-                    hd5_array = np.array(hd5[f'{tm.path_prefix}/{b_series_prefix}/instance_{(50*b)+1}'], dtype=np.float32)
+                    hd5_array = np.array(hd5[f'{tm.path_prefix}/{b_series_prefix}/instance_{(50*b)+b_series_offset}'], dtype=np.float32)
                     if tm.is_categorical():
                         categorical_index_slice = pad_or_crop_array_to_shape(tm_shape, hd5_array)
                         tensor[:, :, b] = to_categorical(categorical_index_slice, len(tm.channel_map))
@@ -1293,6 +1293,10 @@ sax_all_diastole = TensorMap(
 )
 sax_all_diastole_3d = TensorMap(
     'sax_all_diastole', shape=(224, 224, 13), tensor_from_file=sax_tensor('cine_segmented_sax_inlinevf/2'),
+    path_prefix='ukb_cardiac_mri', normalization=ZeroMeanStd1(),
+)
+sax_all_systole_3d = TensorMap(
+    'sax_all_systole_3d', shape=(224, 224, 13), tensor_from_file=sax_tensor('cine_segmented_sax_inlinevf/2', 18),
     path_prefix='ukb_cardiac_mri', normalization=ZeroMeanStd1(),
 )
 sax_all_diastole_192 = TensorMap(
