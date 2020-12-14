@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
-NAME=${1:-sam-p4}
+NAME=${1:-sam-t4}
 shift 1
 INSTANCE_TYPE=${1:-n1-standard-4}
 shift 1
-DISK_SIZE=${1:-100GB}
+DISK_SIZE=${1:-160GB}
 shift 1
-ACCEL=${1:-nvidia-tesla-k80}
+ACCEL=${1:-nvidia-tesla-t4}
 shift 1
 
 echo "Creating GPU instance ${NAME} from family dl-image of type ${INSTANCE_TYPE} with GPU ${ACCEL}..."
@@ -17,7 +17,7 @@ gcloud compute instances create ${NAME} \
 --project broad-ml4cvd \
 --zone us-central1-a \
 --image-project broad-ml4cvd \
---image-family dl-image \
+--image-family ml4h-gpu-family \
 --accelerator=type=${ACCEL},count=1 \
 --maintenance-policy=TERMINATE \
 --boot-disk-type=pd-ssd \
