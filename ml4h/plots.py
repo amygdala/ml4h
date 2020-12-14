@@ -2023,11 +2023,11 @@ def plot_saliency_maps(data: np.ndarray, gradients: np.ndarray, paths: List, pre
         _plot_3d_tensor_slices_as_rgb(_scale_tensor_inplace(mean_saliency), f'{prefix}_batch_mean_saliency{IMAGE_EXT}', cols, rows)
         _, axes = plt.subplots(1, 1, figsize=(cols * 4, rows * 4))
         mean_batch_slice = np.mean(data, axis=(0, -1))
+        mean_batch_slice[mean_batch_slice == 0] = 255
         mean_batch_saliency = np.mean(mean_saliency, axis=-2)
         mean_batch_saliency[..., 0] += mean_batch_slice
         mean_batch_saliency[..., 1] += mean_batch_slice
         mean_batch_saliency[..., 2] += mean_batch_slice
-        mean_batch_saliency[mean_batch_saliency == 0] = 255
         axes.imshow(mean_batch_saliency)
         axes.axis('off')
         plt.savefig(f'{prefix}_global_mean_saliency{IMAGE_EXT}')
