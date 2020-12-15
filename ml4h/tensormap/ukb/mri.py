@@ -1299,9 +1299,23 @@ sax_all_systole_3d = TensorMap(
     'sax_all_systole_3d', shape=(224, 224, 13), tensor_from_file=sax_tensor('cine_segmented_sax_inlinevf/2', 18),
     path_prefix='ukb_cardiac_mri', normalization=ZeroMeanStd1(),
 )
-sax_all_diastole_192 = TensorMap(
-    'sax_all_diastole_192', shape=(192, 192, 13, 1), tensor_from_file=sax_tensor('cine_segmented_sax_inlinevf/2'),
-    dependent_map=sax_all_diastole_segmented, path_prefix='ukb_cardiac_mri', normalization=ZeroMeanStd1(),
+
+
+def sax_random_slice(b_series_prefix, b_segmented_prefix):
+    def sax_slice_from_file(tm, hd5, dependents={}):
+        tensor = np.zeros(tm.shape, dtype=np.float32)
+        tm_shape = (tm.shape[0], tm.shape[1])
+        random_key = np.random.choice(list(hd5[f'{tm.path_prefix}/{b_series_prefix}/'].keys()))
+        tensor[:, :, 0] = pad_or_crop_array_to_shape(tm_shape, np.array(hd5[f'{tm.path_prefix}/{b_series_prefix}/{random_key}'], dtype=np.float32))
+        categorical_index_slice = pad_or_crop_array_to_shape(tm_shape, np.array(hd5[f'{tm.path_prefix}/{b_segmented_prefix}/{random_key}'], dtype=np.float32))
+        dependents[tm.dependent_map] = to_categorical(categorical_index_slice, len(tm.dependent_map.channel_map))
+        return tensor
+    return sax_slice_from_file
+
+sax_random_slice_segmented = TensorMap('sax_random_slice_segmented', Interpretation.CATEGORICAL, shape=(224, 224, len(MRI_SEGMENTED_CHANNEL_MAP)))
+sax_random_slice = TensorMap(
+    'sax_random_slice', shape=(224, 224, 1), tensor_from_file=sax_tensor('cine_segmented_sax_inlinevf/2', 'cine_segmented_sax_inlinevf_segmented/2'),
+    path_prefix='ukb_cardiac_mri', normalization=ZeroMeanStd1(), dependent_map=sax_random_slice_segmented,
 )
 
 
