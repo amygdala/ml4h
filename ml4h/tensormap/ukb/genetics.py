@@ -10,16 +10,22 @@ rs2234962 = TensorMap('rs2234962', Interpretation.CATEGORICAL, channel_map=diplo
 rs2042995 = TensorMap('rs2042995', Interpretation.CATEGORICAL, channel_map=diploid_cm)
 
 
+KCNJ5 = TensorMap('KCNJ5', Interpretation.CONTIG, channel_map={'postion': 0, 'genotype': 1})
+KCNH2 = TensorMap('KCNH2', Interpretation.CONTIG, channel_map={'postion': 0, 'genotype': 1})
+SCN5A = TensorMap('SCN5A', Interpretation.CONTIG, channel_map={'postion': 0, 'genotype': 1})
+TTN = TensorMap('TTN', Interpretation.CONTIG, channel_map={'postion': 0, 'genotype': 1})
+
+akap9_lof = TensorMap('AKAP9', Interpretation.CATEGORICAL, channel_map={'no_akap9_lof': 0, 'akap9_lof': 1})
+dsc2_lof = TensorMap('DSC2', Interpretation.CATEGORICAL, channel_map={'no_dsc2_lof': 0, 'dsc2_lof': 1})
+ryr2_lof = TensorMap('RYR2', Interpretation.CATEGORICAL, channel_map={'no_ryr2_lof': 0, 'ryr2_lof': 1})
+ttn_lof = TensorMap('ttn_lof', Interpretation.CATEGORICAL, channel_map={'no_ttn_lof': 0, 'ttn_lof': 1})
 
 rs3829740_weighted = TensorMap('rs3829740', Interpretation.CATEGORICAL, channel_map=diploid_cm, loss=weighted_crossentropy([1, 1, 1.5], 'rs3829740'))
 rs2234962_weighted = TensorMap('rs2234962', Interpretation.CATEGORICAL, channel_map=diploid_cm, loss=weighted_crossentropy([.8, 1, 1.5], 'rs2234962'))
 rs2042995_weighted = TensorMap('rs2042995', Interpretation.CATEGORICAL, channel_map=diploid_cm, loss=weighted_crossentropy([.6, 1.5, 2], 'rs2042995'))
 
 
-akap9_lof = TensorMap('AKAP9', Interpretation.CATEGORICAL, channel_map={'no_akap9_lof': 0, 'akap9_lof': 1})
-dsc2_lof = TensorMap('DSC2', Interpretation.CATEGORICAL, channel_map={'no_dsc2_lof': 0, 'dsc2_lof': 1})
-ryr2_lof = TensorMap('RYR2', Interpretation.CATEGORICAL, channel_map={'no_ryr2_lof': 0, 'ryr2_lof': 1})
-ttn_lof = TensorMap('TTN', Interpretation.CATEGORICAL, channel_map={'no_ttn_lof': 0, 'ttn_lof': 1})
+
 
 ttntv = TensorMap(
     'has_ttntv',  Interpretation.CATEGORICAL, path_prefix='categorical', storage_type=StorageType.CATEGORICAL_INDEX,
