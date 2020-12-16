@@ -82,7 +82,6 @@ DENSE_REGULARIZATION_CLASSES = {
     'dropout': Dropout,  # TODO: add l1, l2
 }
 
-
 def make_shallow_model(
     tensor_maps_in: List[TensorMap], tensor_maps_out: List[TensorMap],
     learning_rate: float, model_file: str = None, model_layers: str = None,
@@ -354,6 +353,7 @@ Tensor = tf.Tensor
 Encoder = Callable[[Tensor], Tuple[Tensor, List[Tensor]]]
 Decoder = Callable[[Tensor, Dict[TensorMap, List[Tensor]], Dict[TensorMap, Tensor]], Tensor]
 BottleNeck = Callable[[Dict[TensorMap, Tensor]], Dict[TensorMap, Tensor]]
+Block = Callable[[Tensor], Tuple[Tensor, List[Tensor]]]
 
 
 class PreprocessBlock:
@@ -1300,6 +1300,257 @@ def make_paired_autoencoder_model(
         logging.info(f"Loaded model weights from:{real_serial_layers}")
 
     return m, encoders, decoders
+
+
+BLOCK_CLASSES = {
+    'densenet': DenseConvolutionalBlock,
+    'resnet': ResidualBlock,
+    'dense': FullyConnectedBlock,
+    'concat': ConcatenateRestructure,
+    'conv_encoder': ConvEncoder,
+    'conv_decoder': ConvDecoder,
+    'lstm_encoder': LSTMEncoder,
+}
+
+
+def block_make_multimodal_multitask_model(
+        tensor_maps_in: List[TensorMap],
+        tensor_maps_out: List[TensorMap],
+        encoder_blocks: List[str],
+        decoder_blocks: List[str],
+        merge_blocks: List[str],
+        activation: str,
+        learning_rate: float,
+        bottleneck_type: BottleneckType,
+        optimizer: str,
+        dense_layers: List[int] = None,
+        dense_normalize: str = None,
+        dense_regularize: str = None,
+        dense_regularize_rate: float = None,
+        conv_layers: List[int] = None,
+        dense_blocks: List[int] = None,
+        block_size: int = None,
+        conv_type: str = None,
+        conv_normalize: str = None,
+        conv_regularize: str = None,
+        conv_regularize_rate: float = None,
+        conv_x: List[int] = None,
+        conv_y: List[int] = None,
+        conv_z: List[int] = None,
+        conv_width: List[int] = None,
+        conv_dilate: bool = None,
+        u_connect: DefaultDict[TensorMap, Set[TensorMap]] = None,
+        pool_x: int = None,
+        pool_y: int = None,
+        pool_z: int = None,
+        pool_type: str = None,
+        training_steps: int = None,
+        learning_rate_schedule: str = None,
+        **kwargs,
+) -> Model:
+    """Make multi-task, multi-modal feed forward neural network for all kinds of prediction
+
+    This model factory can be used to make networks for classification, regression, and segmentation
+    The tasks attempted are given by the output TensorMaps.
+    The modalities and the first layers in the architecture are determined by the input TensorMaps.
+
+    Hyperparameters are exposed to the command line.
+    Model summary printed to output
+
+    :param tensor_maps_in: List of input TensorMaps
+    :param tensor_maps_out: List of output TensorMaps
+    :param activation: Activation function as a string (e.g. 'relu', 'linear, or 'softmax)
+    :param learning_rate: learning rate for optimizer
+    :param bottleneck_type: How to merge the representations coming from the different input modalities
+    :param dense_layers: List of number of filters in each dense layer.
+    :param dense_normalize: How to normalize dense layers (e.g. batchnorm)
+    :param dense_regularize: How to regularize dense leayers (e.g. dropout)
+    :param dense_regularize_rate: Rate of dense_regularize
+    :param conv_layers: List of number of filters in each convolutional layer
+    :param dense_blocks: List of number of filters in densenet modules for densenet convolutional models
+    :param block_size: Number of layers within each Densenet module for densenet convolutional models
+    :param conv_type: Type of convolution to use, e.g. separable
+    :param conv_normalize: Type of normalization layer for convolutions, e.g. batch norm
+    :param conv_regularize: Type of regularization for convolutions (e.g. dropout)
+    :param conv_regularize_rate: Rate of conv_regularize
+    :param conv_width: Size of X dimension for 1D convolutional kernels
+    :param conv_x: Size of X dimension for 2D and 3D convolutional kernels
+    :param conv_y: Size of Y dimension for 2D and 3D convolutional kernels
+    :param conv_z: Size of Z dimension for 3D convolutional kernels
+    :param conv_dilate: whether to use dilation in conv layers
+    :param u_connect: dictionary of input TensorMap -> output TensorMaps to u connect to
+    :param pool_x: Pooling in the X dimension for Convolutional models.
+    :param pool_y: Pooling in the Y dimension for Convolutional models.
+    :param pool_z: Pooling in the Z dimension for 3D Convolutional models.
+    :param pool_type: max or average pooling following convolutional blocks
+    :param optimizer: which optimizer to use. See optimizers.py.
+    :return: a compiled keras model
+    :param learning_rate_schedule: learning rate schedule to train with, e.g. triangular
+    :param training_steps: How many training steps to train the model. Only needed if learning_rate_schedule given
+    :param model_file: HD5 model file to load and return.
+    :param model_layers: HD5 model file whose weights will be loaded into this model when layer names match.
+    :param freeze_model_layers: Whether to freeze layers from loaded from model_layers
+    """
+
+    tensor_maps_out = parent_sort(tensor_maps_out)
+    u_connect: DefaultDict[TensorMap, Set[TensorMap]] = u_connect or defaultdict(set)
+    custom_dict = _get_custom_objects(tensor_maps_out)
+    opt = get_optimizer(
+        optimizer, learning_rate, steps_per_epoch=training_steps, learning_rate_schedule=learning_rate_schedule,
+        optimizer_kwargs=kwargs.get('optimizer_kwargs'),
+    )
+    if 'model_file' in kwargs and kwargs['model_file'] is not None:
+        logging.info("Attempting to load model file from: {}".format(kwargs['model_file']))
+        m = load_model(kwargs['model_file'], custom_objects=custom_dict, compile=False)
+        m.compile(optimizer=opt, loss=custom_dict['loss'])
+        m.summary()
+        logging.info("Loaded model file from: {}".format(kwargs['model_file']))
+        return m
+
+    # list of filter dimensions should match the number of convolutional layers = len(dense_blocks) + [ + len(conv_layers) if convolving input tensors]
+    num_dense = len(dense_blocks)
+    num_res = len(conv_layers) if any(tm.axes() > 1 for tm in tensor_maps_in) else 0
+    num_filters_needed = num_res + num_dense
+    conv_x = _repeat_dimension(conv_x, 'x', num_filters_needed)
+    conv_y = _repeat_dimension(conv_y, 'y', num_filters_needed)
+    conv_z = _repeat_dimension(conv_z, 'z', num_filters_needed)
+
+    encoders: Dict[TensorMap: Layer] = defaultdict
+    for tm in tensor_maps_in:
+        for encode_block in encoders:
+            if not encode_block.is_applicable(tm):
+                continue
+
+        if tm.is_language():
+            encoders[tm] = LSTMEncoder(tm)
+        elif tm.axes() > 1:
+            encoders[tm] = ConvEncoder(
+                filters_per_dense_block=dense_blocks,
+                dimension=tm.axes(),
+                res_filters=conv_layers,
+                conv_layer_type=conv_type,
+                conv_x=conv_x if tm.axes() > 2 else conv_width,
+                conv_y=conv_y,
+                conv_z=conv_z,
+                block_size=block_size,
+                activation=activation,
+                normalization=conv_normalize,
+                regularization=conv_regularize,
+                regularization_rate=conv_regularize_rate,
+                dilate=conv_dilate,
+                pool_type=pool_type,
+                pool_x=pool_x,
+                pool_y=pool_y,
+                pool_z=pool_z,
+            )
+        else:
+            encoders[tm] = FullyConnectedBlock(
+                widths=[tm.annotation_units],
+                activation=activation,
+                normalization=dense_normalize,
+                regularization=dense_regularize,
+                regularization_rate=dense_regularize_rate,
+                is_encoder=True,
+            )
+
+    pre_decoder_shapes: Dict[TensorMap, Optional[Tuple[int, ...]]] = {}
+    for tm in tensor_maps_out:
+        if any([tm in out for out in u_connect.values()]) or tm.axes() == 1 or tm.is_language():
+            pre_decoder_shapes[tm] = None
+        else:
+            pre_decoder_shapes[tm] = _calc_start_shape(
+                num_upsamples=len(dense_blocks), output_shape=tm.shape, upsample_rates=[pool_x, pool_y, pool_z],
+                channels=dense_blocks[-1],
+            )
+
+    if bottleneck_type in {BottleneckType.FlattenRestructure, BottleneckType.GlobalAveragePoolStructured}:
+        bottleneck = ConcatenateRestructure(
+            widths=dense_layers,
+            activation=activation,
+            regularization=dense_regularize,
+            regularization_rate=dense_regularize_rate,
+            normalization=dense_normalize,
+            pre_decoder_shapes=pre_decoder_shapes,
+            u_connect=u_connect,
+            bottleneck_type=bottleneck_type,
+        )
+    elif bottleneck_type == BottleneckType.Variational:
+        bottleneck = VariationalBottleNeck(
+            fully_connected_widths=dense_layers[:-1],
+            latent_size=dense_layers[-1],
+            activation=activation,
+            regularization=dense_regularize,
+            regularization_rate=dense_regularize_rate,
+            normalization=dense_normalize,
+            pre_decoder_shapes=pre_decoder_shapes,
+        )
+    elif bottleneck_type == BottleneckType.NoBottleNeck:
+        if not check_no_bottleneck(u_connect, tensor_maps_out):
+            bottleneck = None
+        else:
+            bottleneck = UConnectBottleNeck(u_connect)
+    else:
+        raise NotImplementedError(f'Unknown BottleneckType {bottleneck_type}.')
+
+    conv_x, conv_y, conv_z = conv_x[num_res:], conv_y[num_res:], conv_z[num_res:]
+    decoders: Dict[TensorMap, Layer] = {}
+    for tm in tensor_maps_out:
+        if tm.is_language():
+            decoders[tm] = LanguageDecoder(tensor_map_out=tm)
+        elif tm.axes() > 1:
+            decoders[tm] = ConvDecoder(
+                tensor_map_out=tm,
+                filters_per_dense_block=dense_blocks[::-1],
+                conv_layer_type=conv_type,
+                conv_x=conv_x if tm.axes() > 2 else conv_width,
+                conv_y=conv_y,
+                conv_z=conv_z,
+                block_size=block_size,
+                activation=activation,
+                normalization=conv_normalize,
+                regularization=conv_regularize,
+                regularization_rate=conv_regularize_rate,
+                upsample_x=pool_x,
+                upsample_y=pool_y,
+                upsample_z=pool_z,
+                u_connect_parents=[tm_in for tm_in in tensor_maps_in if tm in u_connect[tm_in]],
+            )
+        else:
+            decoders[tm] = DenseDecoder(
+                tensor_map_out=tm,
+                parents=tm.parents,
+                activation=activation,
+            )
+
+    m = _make_multimodal_multitask_model(encoders, bottleneck, decoders)
+
+    # load layers for transfer learning
+    model_layers = kwargs.get('model_layers', False)
+    if model_layers:
+        loaded = 0
+        freeze = kwargs.get('freeze_model_layers', False)
+        m.load_weights(model_layers, by_name=True)
+        try:
+            m_other = load_model(model_layers, custom_objects=custom_dict, compile=False)
+            for other_layer in m_other.layers:
+                try:
+                    target_layer = m.get_layer(other_layer.name)
+                    target_layer.set_weights(other_layer.get_weights())
+                    loaded += 1
+                    if freeze:
+                        target_layer.trainable = False
+                except (ValueError, KeyError):
+                    logging.warning(f'Error loading layer {other_layer.name} from model: {model_layers}. Will still try to load other layers.')
+        except ValueError as e:
+            logging.info(f'Loaded model weights, but got ValueError in model loading: {str(e)}')
+        logging.info(f'Loaded {"and froze " if freeze else ""}{loaded} layers from {model_layers}.')
+    m.compile(
+        optimizer=opt, loss=[tm.loss for tm in tensor_maps_out],
+        metrics={tm.output_name(): tm.metrics for tm in tensor_maps_out},
+    )
+    m.summary()
+    return m
+
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
