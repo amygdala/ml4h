@@ -1539,12 +1539,7 @@ def block_make_multimodal_multitask_model(
         merge_blocks: List[str],
         activation: str,
         learning_rate: float,
-        bottleneck_type: BottleneckType,
         optimizer: str,
-        dense_layers: List[int] = None,
-        dense_normalize: str = None,
-        dense_regularize: str = None,
-        dense_regularize_rate: float = None,
         conv_layers: List[int] = None,
         dense_blocks: List[int] = None,
         block_size: int = None,
@@ -1663,12 +1658,6 @@ def block_make_multimodal_multitask_model(
     merge = identity
     for merge_block in merge_blocks:
         merge = compose(merge, BLOCK_CLASSES[merge_block](
-            activation=activation,
-            dense_normalize=dense_normalize,
-            dense_layers=dense_layers,
-            dense_regularize=dense_regularize,
-            dense_regularize_rate=dense_regularize_rate,
-            bottleneck_type=bottleneck_type,
             **kwargs,
         ))
 
