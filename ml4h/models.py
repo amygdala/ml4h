@@ -1000,6 +1000,7 @@ class ConcatenateRestructureBlock:
             regularization_rate: float,
             u_connect: DefaultDict[TensorMap, Set[TensorMap]],
             bottleneck_type: BottleneckType,
+            **kwargs,
     ):
         self.fully_connected = FullyConnectedBlock(
             widths=widths,
@@ -1615,12 +1616,12 @@ def block_make_multimodal_multitask_model(
             )
     for merge_block in merge_blocks:
         bottleneck = BLOCK_CLASSES[merge_block](
-            widths=dense_layers,
+            pre_decoder_shapes=pre_decoder_shapes,
             activation=activation,
+            normalization=dense_normalize,
+            widths=dense_layers,
             regularization=dense_regularize,
             regularization_rate=dense_regularize_rate,
-            normalization=dense_normalize,
-            pre_decoder_shapes=pre_decoder_shapes,
             u_connect=u_connect,
             bottleneck_type=bottleneck_type,
         )
