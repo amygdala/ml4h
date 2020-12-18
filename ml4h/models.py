@@ -1691,14 +1691,16 @@ def _make_multimodal_multitask_model_block(
     for tm, encoder in encoders.items():
         x = Input(shape=tm.shape, name=tm.input_name())
         inputs[tm] = x
-        y = encoder(x, intermediates)
-        encoder_outputs.append(y)
-    merge_input = Concatenate()(encoder_outputs)
-    y = bottle_neck(merge_input, intermediates)
+        x = encoder(x, intermediates)
+        encoder_outputs.append(x)
+
+    if len(encoders) > 1:
+        x = Concatenate()(encoder_outputs)
+    x = bottle_neck(x, intermediates)
 
     decoder_outputs = []
     for tm, decoder in decoders.items():
-        decoder_outputs.append(decoder(y, intermediates))
+        decoder_outputs.append(decoder(x, intermediates))
 
     return Model(inputs=list(inputs.values()), outputs=decoder_outputs.values())
 
