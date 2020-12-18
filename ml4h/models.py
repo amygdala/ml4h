@@ -733,7 +733,7 @@ class FlatToStructure:
         self.norm = _normalization_layer(normalization)
 
     def __call__(self, x: Tensor) -> Tensor:
-        return self.reshape(self.norm(self.activation(self.dense(Flatten(x)))))
+        return self.reshape(self.norm(self.activation(self.dense(x))))
 
 
 class ConvEncoder:
@@ -1043,12 +1043,12 @@ class ConcatenateRestructureBlock:
         # for input_tm, output_tms in self.u_connect.items():
         #     for output_tm in output_tms:
         #         intermediates[output_tm] = [adaptive_normalize_from_tensor(y, intermediates[input_tm][-1])]
-        for tm, restructure in self.restructures.items():
-            y = restructure(y)
-            intermediates[tm].append(y)
-        for tm in self.no_restructures:
-            if tm not in intermediates:
-                intermediates[tm].append(y)
+        # for tm, restructure in self.restructures.items():
+        #     y = restructure(y)
+        #     intermediates[tm].append(y)
+        # for tm in self.no_restructures:
+        #     if tm not in intermediates:
+        #         intermediates[tm].append(y)
         return y
 
 
