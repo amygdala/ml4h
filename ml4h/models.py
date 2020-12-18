@@ -973,7 +973,6 @@ class ConvDecoderBlock:
         self.start_shape = _calc_start_shape(num_upsamples=len(filters_per_dense_block), output_shape=tensor_map_out.shape,
                                              upsample_rates=[upsample_x, upsample_y, upsample_z], channels=filters_per_dense_block[-1])
         self.reshape = FlatToStructure(output_shape=self.start_shape, activation=activation, normalization=normalization)
-    )
 
     @staticmethod
     def can_apply(tm: TensorMap):
