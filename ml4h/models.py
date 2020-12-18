@@ -733,7 +733,7 @@ class FlatToStructure:
         self.norm = _normalization_layer(normalization)
 
     def __call__(self, x: Tensor) -> Tensor:
-        return self.reshape(self.norm(self.activation(self.dense(x))))
+        return self.reshape(self.norm(self.activation(self.dense(Flatten(x)))))
 
 
 class ConvEncoder:
@@ -970,12 +970,18 @@ class ConvDecoderBlock:
         self.conv_label = conv_layer(tensor_map_out.shape[-1], _one_by_n_kernel(dimension), activation=tensor_map_out.activation, name=tensor_map_out.output_name())
         self.upsamples = [_upsampler(dimension, upsample_x, upsample_y, upsample_z) for _ in range(len(filters_per_dense_block) + 1)]
         self.u_connect_parents = u_connect_parents or []
+        self.start_shape = _calc_start_shape(num_upsamples=len(filters_per_dense_block), output_shape=tensor_map_out.shape,
+                                             upsample_rates=[upsample_x, upsample_y, upsample_z], channels=filters_per_dense_block[-1])
+        self.reshape = FlatToStructure(output_shape=self.start_shape, activation=activation, normalization=normalization)
+    )
 
     @staticmethod
     def can_apply(tm: TensorMap):
         return tm.axes() > 1
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
+        if x.shape != self.start_shape:
+            x = self.reshape(x)
         for i, (dense_block, upsample) in enumerate(zip(self.dense_blocks, self.upsamples)):
             intermediate = [intermediates[tm][-(i + 1)] for tm in self.u_connect_parents]
             x = concatenate(intermediate + [x]) if intermediate else x
