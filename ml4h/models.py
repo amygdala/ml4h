@@ -881,21 +881,17 @@ class FullyConnectedBlockBlock:
     def __init__(
             self,
             *,
-            widths: List[int],
+            dense_layers: List[int],
             activation: str,
-            normalization: str,
-            regularization: str,
-            regularization_rate: float,
-            name: str = None,
-            parents: List[TensorMap] = None,
+            dense_normalize: str,
+            dense_regularize: str,
+            dense_regularize_rate: float,
             **kwargs,
     ):
-        final_dense = Dense(units=widths[-1], name=name) if name else Dense(units=widths[-1])
-        self.denses = [Dense(units=width) for width in widths[:-1]] + [final_dense]
-        self.activations = [_activation_layer(activation) for _ in widths]
-        self.regularizations = [_regularization_layer(1, regularization, regularization_rate) for _ in widths]
-        self.norms = [_normalization_layer(normalization) for _ in widths]
-        self.parents = parents or []
+        self.denses = [Dense(units=width) for width in dense_layers]
+        self.activations = [_activation_layer(activation) for _ in dense_layers]
+        self.regularizations = [_regularization_layer(1, dense_regularize, dense_regularize_rate) for _ in dense_layers]
+        self.norms = [_normalization_layer(dense_normalize) for _ in dense_layers]
 
     @staticmethod
     def can_apply(tm: TensorMap):
@@ -1049,28 +1045,28 @@ class ConvDecoderBlock:
         return self.conv_label(x)
 
 
-class FlatDenseBlock:
+class FlatConcatDenseBlock:
     """
     Flattens or GAPs then concatenates all inputs, applies a dense layer, then restructures to provided shapes
     """
     def __init__(
             self,
             activation: str,
-            normalization: str,
-            widths: List[int],
-            regularization: str,
-            regularization_rate: float,
+            dense_layers: List[int],
+            dense_normalize: str,
+            dense_regularize: str,
+            dense_regularize_rate: float,
             bottleneck_type: BottleneckType,
             **kwargs,
     ):
         self.fully_connected = FullyConnectedBlock(
-            widths=widths,
+            widths=dense_layers,
             activation=activation,
-            normalization=normalization,
-            regularization=regularization,
-            regularization_rate=regularization_rate,
+            normalization=dense_normalize,
+            regularization=dense_regularize,
+            regularization_rate=dense_regularize_rate,
             name='embed',
-        ) if widths else None
+        ) if dense_layers else None
         self.bottleneck_type = bottleneck_type
 
     @staticmethod
@@ -1521,7 +1517,7 @@ def make_paired_autoencoder_model(
 BLOCK_CLASSES = {
     'conv_encode': ConvEncoderBlock,
     'conv_decode': ConvDecoderBlock,
-    'concat': FlatDenseBlock,
+    'concat': FlatConcatDenseBlock,
     'fc': FullyConnectedBlockBlock,
     'fc_decode': DenseDecoderBlock,
 }
@@ -1661,17 +1657,19 @@ def block_make_multimodal_multitask_model(
                 pool_x=pool_x,
                 pool_y=pool_y,
                 pool_z=pool_z,
+                **kwargs,
             ))
 
     merge = identity
     for merge_block in merge_blocks:
         merge = compose(merge, BLOCK_CLASSES[merge_block](
             activation=activation,
-            normalization=dense_normalize,
-            widths=dense_layers,
-            regularization=dense_regularize,
-            regularization_rate=dense_regularize_rate,
+            dense_normalize=dense_normalize,
+            dense_layers=dense_layers,
+            dense_regularize=dense_regularize,
+            dense_regularize_rate=dense_regularize_rate,
             bottleneck_type=bottleneck_type,
+            **kwargs,
         ))
 
     conv_x, conv_y, conv_z = conv_x[num_res:], conv_y[num_res:], conv_z[num_res:]
@@ -1696,6 +1694,8 @@ def block_make_multimodal_multitask_model(
                 upsample_y=pool_y,
                 upsample_z=pool_z,
                 u_connect_parents=[tm_in for tm_in in tensor_maps_in if tm in u_connect[tm_in]],
+                parents=tm.parents,
+                **kwargs,
             ))
 
     m = _make_multimodal_multitask_model_block(encoders, merge, decoders)
