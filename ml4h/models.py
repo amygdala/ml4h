@@ -925,15 +925,16 @@ class ConvEncoderBlock:
         return tm.axes() > 1
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
- #       intermediates = []
         #x = self.preprocess_block(x)
         x = self.res_block(x)
         intermediates[self.map_in].append(x)
         x = self.pools[0](x)
         for i, (dense_block, pool) in enumerate(zip(self.dense_blocks, self.pools[1:])):
             x = dense_block(x)
-            x = pool(x) if i < len(self.dense_blocks) - 1 else x  # don't pool after final dense block
             intermediates[self.map_in].append(x)
+            x = pool(x) if i < len(self.dense_blocks) - 1 else x  # don't pool after final dense block
+
+        intermediates[self.map_in].append(x)
         return x
 
 
