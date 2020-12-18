@@ -881,6 +881,7 @@ class FullyConnectedBlockBlock:
     def __init__(
             self,
             *,
+            tensor_map_in: TensorMap,
             dense_layers: List[int],
             activation: str,
             dense_normalize: str,
@@ -888,6 +889,7 @@ class FullyConnectedBlockBlock:
             dense_regularize_rate: float,
             **kwargs,
     ):
+        self.tensor_map_in = tensor_map_in
         self.denses = [Dense(units=width) for width in dense_layers]
         self.activations = [_activation_layer(activation) for _ in dense_layers]
         self.regularizations = [_regularization_layer(1, dense_regularize, dense_regularize_rate) for _ in dense_layers]
@@ -900,7 +902,7 @@ class FullyConnectedBlockBlock:
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
         for dense, normalize, activate, regularize in zip(self.denses, self.norms, self.activations, self.regularizations):
             x = normalize(regularize(activate(dense(x))))
-            intermediates[self.tensor_map].append(x)
+            intermediates[self.tensor_map_in].append(x)
         return x
 
 
@@ -934,7 +936,7 @@ class ConvEncoderBlock:
     def __init__(
             self,
             *,
-            map_in: TensorMap,
+            tensor_map_in: TensorMap,
             filters_per_dense_block: List[int],
             dimension: int,
             res_filters: List[int],
@@ -954,7 +956,7 @@ class ConvEncoderBlock:
             pool_z: int,
             **kwargs,
     ):
-        self.map_in = map_in
+        self.map_in = tensor_map_in
         num_res = len(res_filters)
         res_x, res_y, res_z = conv_x[:num_res], conv_y[:num_res], conv_z[:num_res]
         #self.preprocess_block = PreprocessBlock(['rotate'], [0.3])
@@ -1633,7 +1635,7 @@ def block_make_multimodal_multitask_model(
             if not BLOCK_CLASSES[encode_block].can_apply(tm):
                 continue
             encoders[tm] = compose(encoders[tm], BLOCK_CLASSES[encode_block](
-                map_in=tm,
+                tensor_map_in=tm,
                 filters_per_dense_block=dense_blocks,
                 dimension=tm.axes(),
                 res_filters=conv_layers,
