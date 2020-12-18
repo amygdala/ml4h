@@ -1704,7 +1704,7 @@ def _make_multimodal_multitask_model_block(
     for tm, decoder in decoders.items():
         decoder_outputs.append(decoder(x, intermediates))
 
-    return Model(inputs=list(inputs.values()), outputs=decoder_outputs.values())
+    return Model(inputs=list(inputs.values()), outputs=decoder_outputs)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~ Training ~~~~~~~~~~~~~~~~
