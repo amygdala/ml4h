@@ -877,6 +877,63 @@ class ConvDecoder:
         return self.conv_label(x)
 
 
+class FullyConnectedBlockBlock:
+    def __init__(
+            self,
+            *,
+            widths: List[int],
+            activation: str,
+            normalization: str,
+            regularization: str,
+            regularization_rate: float,
+            name: str = None,
+            parents: List[TensorMap] = None,
+            **kwargs,
+    ):
+        final_dense = Dense(units=widths[-1], name=name) if name else Dense(units=widths[-1])
+        self.denses = [Dense(units=width) for width in widths[:-1]] + [final_dense]
+        self.activations = [_activation_layer(activation) for _ in widths]
+        self.regularizations = [_regularization_layer(1, regularization, regularization_rate) for _ in widths]
+        self.norms = [_normalization_layer(normalization) for _ in widths]
+        self.parents = parents or []
+
+    @staticmethod
+    def can_apply(tm: TensorMap):
+        return tm.axes() == 1
+
+    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
+        for dense, normalize, activate, regularize in zip(self.denses, self.norms, self.activations, self.regularizations):
+            x = normalize(regularize(activate(dense(x))))
+            intermediates[self.tensor_map].append(x)
+        return x
+
+
+class DenseDecoderBlock:
+    def __init__(
+            self,
+            tensor_map_out: TensorMap,
+            activation: str,
+            parents: List[TensorMap] = None,
+            **kwargs,
+    ):
+        self.parents = parents
+        self.activation = _activation_layer(activation)
+        self.dense = Dense(units=tensor_map_out.shape[0], name=tensor_map_out.output_name(), activation=tensor_map_out.activation)
+        self.units = tensor_map_out.annotation_units
+
+    @staticmethod
+    def can_apply(tm: TensorMap):
+        return tm.axes() == 1
+
+    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
+        if self.parents:
+            x = Concatenate()([x] + [intermediates[parent][-1] for parent in self.parents])
+            x = Dense(units=self.units)(x)
+            x = self.dense(self.activation(x))
+            intermediates[self.tensor_map_out].append(x)
+        return x
+
+
 class ConvEncoderBlock:
     def __init__(
             self,
@@ -899,6 +956,7 @@ class ConvEncoderBlock:
             pool_x: int,
             pool_y: int,
             pool_z: int,
+            **kwargs,
     ):
         self.map_in = map_in
         num_res = len(res_filters)
@@ -955,6 +1013,7 @@ class ConvDecoderBlock:
             upsample_y: int,
             upsample_z: int,
             u_connect_parents: List[TensorMap] = None,
+            **kwargs,
     ):
         dimension = tensor_map_out.axes()
         self.dense_blocks = [
@@ -1463,6 +1522,8 @@ BLOCK_CLASSES = {
     'conv_encode': ConvEncoderBlock,
     'conv_decode': ConvDecoderBlock,
     'concat': FlatDenseBlock,
+    'fc': FullyConnectedBlockBlock,
+    'fc_decode': DenseDecoderBlock,
 }
 
 
