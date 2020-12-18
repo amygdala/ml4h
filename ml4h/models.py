@@ -1466,6 +1466,12 @@ BLOCK_CLASSES = {
 }
 
 
+def compose(f, g):
+    return lambda x: g(f(x))
+
+def identity(x):
+    return x
+
 def block_make_multimodal_multitask_model(
         tensor_maps_in: List[TensorMap],
         tensor_maps_out: List[TensorMap],
@@ -1568,13 +1574,12 @@ def block_make_multimodal_multitask_model(
     conv_y = _repeat_dimension(conv_y, 'y', num_filters_needed)
     conv_z = _repeat_dimension(conv_z, 'z', num_filters_needed)
 
-
-    encoders = {}  # Dict[TensorMap, Block]
+    encoders = {tm: identity for tm in tensor_maps_in}  # Dict[TensorMap, Block]
     for tm in tensor_maps_in:
         for encode_block in encoder_blocks:
             if not BLOCK_CLASSES[encode_block].can_apply(tm):
                 continue
-            encoders[tm] = BLOCK_CLASSES[encode_block](
+            encoders[tm] = compose(encoders[tm], BLOCK_CLASSES[encode_block](
                 map_in=tm,
                 filters_per_dense_block=dense_blocks,
                 dimension=tm.axes(),
@@ -1593,10 +1598,11 @@ def block_make_multimodal_multitask_model(
                 pool_x=pool_x,
                 pool_y=pool_y,
                 pool_z=pool_z,
-            )
-    merges = []
+            ))
+
+    merge = identity
     for merge_block in merge_blocks:
-        merges.append(BLOCK_CLASSES[merge_block](
+        merge = compose(merge, BLOCK_CLASSES[merge_block](
             activation=activation,
             normalization=dense_normalize,
             widths=dense_layers,
@@ -1606,12 +1612,12 @@ def block_make_multimodal_multitask_model(
         ))
 
     conv_x, conv_y, conv_z = conv_x[num_res:], conv_y[num_res:], conv_z[num_res:]
-    decoders: Dict[TensorMap, Block] = {}
+    decoders = {tm: identity for tm in tensor_maps_out}
     for tm in tensor_maps_out:
         for decode_block in decoder_blocks:
             if not BLOCK_CLASSES[decode_block].can_apply(tm):
                 continue
-            decoders[tm] = BLOCK_CLASSES[decode_block](
+            decoders[tm] = compose(decoders[tm], BLOCK_CLASSES[decode_block](
                 tensor_map_out=tm,
                 filters_per_dense_block=dense_blocks[::-1],
                 conv_layer_type=conv_type,
@@ -1627,9 +1633,9 @@ def block_make_multimodal_multitask_model(
                 upsample_y=pool_y,
                 upsample_z=pool_z,
                 u_connect_parents=[tm_in for tm_in in tensor_maps_in if tm in u_connect[tm_in]],
-            )
+            ))
 
-    m = _make_multimodal_multitask_model_block(encoders, merges, decoders)
+    m = _make_multimodal_multitask_model_block(encoders, merge, decoders)
 
     # load layers for transfer learning
     model_layers = kwargs.get('model_layers', False)
@@ -1661,7 +1667,7 @@ def block_make_multimodal_multitask_model(
 
 def _make_multimodal_multitask_model_block(
         encoders: Dict[TensorMap, Block],
-        merges: List[Block],
+        merge: Block,
         decoders: Dict[TensorMap, Block],  # Assumed to be topologically sorted according to parents hierarchy
 ) -> Model:
     inputs: Dict[TensorMap, Input] = {}
@@ -1673,8 +1679,7 @@ def _make_multimodal_multitask_model_block(
         x = encoder(x, intermediates)
         encoder_outputs.append(x)
 
-    for merge in merges:
-        x = merge(x, intermediates)
+    x = merge(x, intermediates)
 
     print(f'intermediates: {[(tm, [ti.shape for ti in t]) for tm, t in intermediates.items()]}')
     decoder_outputs = []
