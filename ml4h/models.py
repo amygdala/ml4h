@@ -928,7 +928,8 @@ class DenseDecoderBlock:
             x = Concatenate()([x] + [intermediates[parent][-1] for parent in self.parents])
             x = Dense(units=self.units)(x)
             x = self.dense(self.activation(x))
-            intermediates[self.tensor_map_out].append(x)
+        x = self.dense(x)
+        intermediates[self.tensor_map_out].append(x)
         return x
 
 
