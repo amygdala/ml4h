@@ -914,6 +914,7 @@ class DenseDecoderBlock:
             parents: List[TensorMap] = None,
             **kwargs,
     ):
+        self.tensor_map_out = tensor_map_out
         self.parents = parents
         self.activation = _activation_layer(activation)
         self.dense = Dense(units=tensor_map_out.shape[0], name=tensor_map_out.output_name(), activation=tensor_map_out.activation)
