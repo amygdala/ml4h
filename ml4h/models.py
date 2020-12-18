@@ -1677,6 +1677,7 @@ def _make_multimodal_multitask_model_block(
     for merge in merges:
         x = merge(x, intermediates)
 
+    print(f'intermediates: {[(tm, [ti.shape for ti in t]) for tm, t in intermediates.items()]}')
     decoder_outputs = []
     for tm, decoder in decoders.items():
         decoder_outputs.append(decoder(x, intermediates))
