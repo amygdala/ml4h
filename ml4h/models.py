@@ -1703,7 +1703,7 @@ def _make_multimodal_multitask_model_block(
 
     decoder_outputs = []
     #import pdb; pdb.set_trace()
-    print(f'intermediates: {[(tm, t[0].shape) for tm, t in intermediates.items()]}')
+    print(f'intermediates: {[(tm, [ti.shape for ti in t]) for tm, t in intermediates.items()]}')
     for tm, decoder in decoders.items():
         decoder_outputs.append(decoder(x, intermediates))
 
