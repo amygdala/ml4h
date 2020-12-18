@@ -928,13 +928,11 @@ class ConvEncoderBlock:
         #x = self.preprocess_block(x)
         x = self.res_block(x)
         intermediates[self.map_in].append(x)
-        x = self.pools[0](x)
-        for i, (dense_block, pool) in enumerate(zip(self.dense_blocks, self.pools[1:])):
+        for i, (dense_block, pool) in enumerate(zip(self.dense_blocks, self.pools)):
+            x = pool(x)
             x = dense_block(x)
             intermediates[self.map_in].append(x)
-            x = pool(x) if i < len(self.dense_blocks) - 1 else x  # don't pool after final dense block
 
-        intermediates[self.map_in].append(x)
         return x
 
 
@@ -983,7 +981,7 @@ class ConvDecoderBlock:
         if x.shape != self.start_shape:
             x = self.reshape(x)
         for i, (dense_block, upsample) in enumerate(zip(self.dense_blocks, self.upsamples)):
-            intermediate = [intermediates[tm][-(i + 2)] for tm in self.u_connect_parents]
+            intermediate = [intermediates[tm][-(i + 1)] for tm in self.u_connect_parents]
             x = concatenate(intermediate + [x]) if intermediate else x
             x = upsample(x)
             x = dense_block(x)
