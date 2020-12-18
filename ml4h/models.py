@@ -1467,10 +1467,12 @@ BLOCK_CLASSES = {
 
 
 def compose(f, g):
-    return lambda x: g(f(x))
+    return lambda x, y: g(f(x, y), y)
 
-def identity(x):
+
+def identity(x, _):
     return x
+
 
 def block_make_multimodal_multitask_model(
         tensor_maps_in: List[TensorMap],
