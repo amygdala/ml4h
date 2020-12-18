@@ -1702,6 +1702,7 @@ def _make_multimodal_multitask_model_block(
     x = bottle_neck(x, intermediates)
 
     decoder_outputs = []
+    import pdb; pdb.set_trace()
     for tm, decoder in decoders.items():
         decoder_outputs.append(decoder(x, intermediates))
 
