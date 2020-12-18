@@ -900,6 +900,7 @@ class ConvEncoderBlock:
             pool_y: int,
             pool_z: int,
     ):
+        self.map_in = map_in
         num_res = len(res_filters)
         res_x, res_y, res_z = conv_x[:num_res], conv_y[:num_res], conv_z[:num_res]
         #self.preprocess_block = PreprocessBlock(['rotate'], [0.3])
@@ -1583,6 +1584,7 @@ def block_make_multimodal_multitask_model(
             if not BLOCK_CLASSES[encode_block].can_apply(tm):
                 continue
             encoders[tm] = BLOCK_CLASSES[encode_block](
+                map_in=tm,
                 filters_per_dense_block=dense_blocks,
                 dimension=tm.axes(),
                 res_filters=conv_layers,
