@@ -1040,10 +1040,10 @@ class ConcatenateRestructureBlock:
         #         intermediates[output_tm] = [adaptive_normalize_from_tensor(y, intermediates[input_tm][-1])]
         for tm, restructure in self.restructures.items():
             y = restructure(y)
-            intermediates[tm] = y
+            intermediates[tm].append(y)
         for tm in self.no_restructures:
             if tm not in intermediates:
-                intermediates[tm] = y
+                intermediates[tm].append(y)
         return y
 
 
