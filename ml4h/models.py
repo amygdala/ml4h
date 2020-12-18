@@ -1570,7 +1570,7 @@ def block_make_multimodal_multitask_model(
     conv_z = _repeat_dimension(conv_z, 'z', num_filters_needed)
 
 
-    encoders = {}  Dict[TensorMap, Block]
+    encoders = {}  # Dict[TensorMap, Block]
     for tm in tensor_maps_in:
         for encode_block in encoder_blocks:
             if not BLOCK_CLASSES[encode_block].can_apply(tm):
