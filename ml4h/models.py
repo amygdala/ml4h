@@ -1037,7 +1037,7 @@ class ConcatenateRestructureBlock:
         y = self.fully_connected(y) if self.fully_connected else y
         for input_tm, output_tms in self.u_connect.items():
             for output_tm in output_tms:
-                intermediates[output_tm] = [adaptive_normalize_from_tensor(y, intermediates[input_tm])]
+                intermediates[output_tm] = [adaptive_normalize_from_tensor(y, intermediates[input_tm][-1])]
         for tm, restructure in self.restructures.items():
             y = restructure(y)
         for tm in self.no_restructures:
