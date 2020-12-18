@@ -26,7 +26,7 @@ from collections import defaultdict
 from ml4h.logger import load_config
 from ml4h.TensorMap import TensorMap, TimeSeriesOrder
 from ml4h.models import parent_sort, BottleneckType, check_no_bottleneck
-from ml4h.models import NORMALIZATION_CLASSES, CONV_REGULARIZATION_CLASSES, DENSE_REGULARIZATION_CLASSES
+from ml4h.models import NORMALIZATION_CLASSES, CONV_REGULARIZATION_CLASSES, DENSE_REGULARIZATION_CLASSES, BLOCK_CLASSES
 from ml4h.tensormap.mgb.dynamic import make_mgb_dynamic_tensor_maps
 from ml4h.defines import IMPUTATION_RANDOM, IMPUTATION_MEAN
 from ml4h.tensormap.tensor_map_maker import generate_continuous_tensor_map_from_file, generate_random_text_tensor_maps
@@ -164,6 +164,9 @@ def parse_args():
     parser.add_argument('--pool_z', default=1, type=int, help='Pooling size in the z-axis, if 1 no pooling will be performed.')
     parser.add_argument('--padding', default='same', help='Valid or same border padding on the convolutional layers.')
     parser.add_argument('--dense_blocks', nargs='*', default=[32, 24, 16], type=int, help='List of number of kernels in convolutional layers.')
+    parser.add_argument('--encoder_blocks', nargs='*', default=['conv_encode'], choices=list(BLOCK_CLASSES), help='List of encoding blocks.')
+    parser.add_argument('--bottleneck_blocks', nargs='*', default=['conv_decode'], choices=list(BLOCK_CLASSES), help='List of decoding blocks.')
+    parser.add_argument('--decoder_blocks', nargs='*', default=['concat'], choices=list(BLOCK_CLASSES), help='List of number of merge blocks.')
     parser.add_argument('--block_size', default=3, type=int, help='Number of convolutional layers within a block.')
     parser.add_argument(
         '--u_connect', nargs=2, action='append',

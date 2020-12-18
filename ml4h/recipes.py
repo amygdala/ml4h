@@ -20,7 +20,8 @@ from ml4h.tensor_generators import BATCH_INPUT_INDEX, BATCH_OUTPUT_INDEX, BATCH_
 from ml4h.explorations import mri_dates, ecg_dates, predictions_to_pngs, sample_from_language_model
 from ml4h.explorations import plot_while_learning, plot_histograms_of_tensors_in_pdf, cross_reference
 from ml4h.tensor_generators import TensorGenerator, test_train_valid_tensor_generators, big_batch_from_minibatch_generator
-from ml4h.models import make_character_model_plus, embed_model_predict, make_siamese_model, make_multimodal_multitask_model, make_paired_autoencoder_model
+from ml4h.models import make_character_model_plus, embed_model_predict, make_siamese_model, make_multimodal_multitask_model, make_paired_autoencoder_model, \
+    block_make_multimodal_multitask_model
 from ml4h.metrics import get_roc_aucs, get_precision_recall_aucs, get_pearson_coefficients, log_aucs, log_pearson_coefficients
 from ml4h.models import train_model_from_generators, get_model_inputs_outputs, make_shallow_model, make_hidden_layer_model, saliency_map
 from ml4h.plots import evaluate_predictions, plot_scatters, plot_rocs, plot_precision_recalls, subplot_roc_per_class, plot_tsne, plot_prediction_calibrations, \
@@ -61,6 +62,8 @@ def run(args):
             infer_with_pixels(args)
         elif 'test_scalar' == args.mode:
             test_multimodal_scalar_tasks(args)
+        elif 'train_block' == args.mode:
+            train_block(args)
         elif 'compare_scalar' == args.mode:
             compare_multimodal_scalar_task_models(args)
         elif 'plot_predictions' == args.mode:
@@ -137,6 +140,22 @@ def _find_learning_rate(args) -> float:
 def train_multimodal_multitask(args):
     generate_train, generate_valid, generate_test = test_train_valid_tensor_generators(**args.__dict__)
     model = make_multimodal_multitask_model(**args.__dict__)
+    model = train_model_from_generators(
+        model, generate_train, generate_valid, args.training_steps, args.validation_steps, args.batch_size, args.epochs,
+        args.patience, args.output_folder, args.id, args.inspect_model, args.inspect_show_labels, save_last_model=args.save_last_model
+    )
+
+    out_path = os.path.join(args.output_folder, args.id + '/')
+    test_data, test_labels, test_paths = big_batch_from_minibatch_generator(generate_test, args.test_steps)
+    return _predict_and_evaluate(
+        model, test_data, test_labels, args.tensor_maps_in, args.tensor_maps_out, args.tensor_maps_protected,
+        args.batch_size, args.hidden_layer, out_path, test_paths, args.embed_visualization, args.alpha,
+    )
+
+
+def train_block(args):
+    generate_train, generate_valid, generate_test = test_train_valid_tensor_generators(**args.__dict__)
+    model = block_make_multimodal_multitask_model(**args.__dict__)
     model = train_model_from_generators(
         model, generate_train, generate_valid, args.training_steps, args.validation_steps, args.batch_size, args.epochs,
         args.patience, args.output_folder, args.id, args.inspect_model, args.inspect_show_labels, save_last_model=args.save_last_model
