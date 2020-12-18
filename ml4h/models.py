@@ -1038,6 +1038,8 @@ class ConcatenateRestructureBlock:
         for input_tm, output_tms in self.u_connect.items():
             for output_tm in output_tms:
                 intermediates[output_tm] = [adaptive_normalize_from_tensor(y, intermediates[input_tm])]
+        for tm, restructure in self.restructures.items():
+            y = restructure(y)
         for tm in self.no_restructures:
             if tm not in intermediates:
                 intermediates[tm] = y
