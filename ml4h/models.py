@@ -82,6 +82,7 @@ DENSE_REGULARIZATION_CLASSES = {
     'dropout': Dropout,  # TODO: add l1, l2
 }
 
+
 def make_shallow_model(
     tensor_maps_in: List[TensorMap], tensor_maps_out: List[TensorMap],
     learning_rate: float, model_file: str = None, model_layers: str = None,
@@ -906,6 +907,127 @@ class FullyConnectedBlockBlock:
         return x
 
 
+class ConvEncoderBlock:
+    def __init__(
+            self,
+            *,
+            tensor_map_in: TensorMap,
+            dense_blocks: List[int],
+            conv_layers: List[int],
+            conv_type: str,
+            conv_width: List[int],
+            conv_x: List[int],
+            conv_y: List[int],
+            conv_z: List[int],
+            block_size: int,
+            activation: str,
+            conv_normalize: str,
+            conv_regularize: str,
+            conv_regularize_rate: float,
+            conv_dilate: bool,
+            pool_type: str,
+            pool_x: int,
+            pool_y: int,
+            pool_z: int,
+            **kwargs,
+    ):
+        self.map_in = tensor_map_in
+        dimension = self.map_in.axes()
+        if dimension == 2:
+            conv_x = conv_width
+
+        # list of filter dimensions should match the total number of convolutional layers
+        conv_x = _repeat_dimension(conv_x, len(conv_layers)+len(dense_blocks))
+        conv_y = _repeat_dimension(conv_y, len(conv_layers)+len(dense_blocks))
+        conv_z = _repeat_dimension(conv_z, len(conv_layers)+len(dense_blocks))
+
+        #self.preprocess_block = PreprocessBlock(['rotate'], [0.3])
+        self.res_block = ResidualBlock(
+            dimension=dimension, filters_per_conv=conv_layers, conv_layer_type=conv_type, conv_x=conv_x[:len(conv_layers)],
+            conv_y=conv_y[:len(conv_layers)], conv_z=conv_z[:len(conv_layers)], activation=activation, normalization=conv_normalize,
+            regularization=conv_regularize, regularization_rate=conv_regularize_rate, dilate=conv_dilate,
+        )
+
+        self.dense_blocks = [
+            DenseConvolutionalBlock(
+                dimension=dimension, conv_layer_type=conv_type, filters=filters, conv_x=[x] * block_size, conv_y=[y] * block_size,
+                conv_z=[z]*block_size, block_size=block_size, activation=activation, normalization=conv_normalize,
+                regularization=conv_regularize, regularization_rate=conv_regularize_rate,
+            ) for filters, x, y, z in zip(dense_blocks, conv_x[len(conv_layers):], conv_y[len(conv_layers):], conv_z[len(conv_layers):])
+        ]
+        self.pools = _pool_layers_from_kind_and_dimension(dimension, pool_type, len(dense_blocks) + 1, pool_x, pool_y, pool_z)
+
+    @staticmethod
+    def can_apply(tm: TensorMap):
+        return tm.axes() > 1
+
+    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
+        #x = self.preprocess_block(x)
+        x = self.res_block(x)
+        intermediates[self.map_in].append(x)
+        for i, (dense_block, pool) in enumerate(zip(self.dense_blocks, self.pools)):
+            x = pool(x)
+            x = dense_block(x)
+            intermediates[self.map_in].append(x)
+
+        return x
+
+
+class ConvDecoderBlock:
+    def __init__(
+            self,
+            *,
+            tensor_map_out: TensorMap,
+            dense_blocks: List[int],
+            conv_type: str,
+            conv_x: List[int],
+            conv_y: List[int],
+            conv_z: List[int],
+            block_size: int,
+            activation: str,
+            conv_normalize: str,
+            conv_regularize: str,
+            conv_regularize_rate: float,
+            pool_x: int,
+            pool_y: int,
+            pool_z: int,
+            u_connect_parents: List[TensorMap] = None,
+            **kwargs,
+    ):
+        dimension = tensor_map_out.axes()
+        self.dense_blocks = [
+            DenseConvolutionalBlock(
+                dimension=tensor_map_out.axes(), conv_layer_type=conv_type, filters=filters, conv_x=[x] * block_size,
+                conv_y=[y]*block_size, conv_z=[z]*block_size, block_size=block_size, activation=activation, normalization=conv_normalize,
+                regularization=conv_regularize, regularization_rate=conv_regularize_rate,
+            )
+            for filters, x, y, z in zip(dense_blocks, conv_x, conv_y, conv_z)
+        ]
+        conv_layer, _ = _conv_layer_from_kind_and_dimension(dimension, 'conv', conv_x, conv_y, conv_z)
+        self.conv_label = conv_layer(tensor_map_out.shape[-1], _one_by_n_kernel(dimension), activation=tensor_map_out.activation, name=tensor_map_out.output_name())
+        self.upsamples = [_upsampler(dimension, pool_x, pool_y, pool_z) for _ in range(len(dense_blocks) + 1)]
+        self.u_connect_parents = u_connect_parents or []
+        self.start_shape = _calc_start_shape(num_upsamples=len(dense_blocks), output_shape=tensor_map_out.shape,
+                                             upsample_rates=[pool_x, pool_y, pool_z], channels=dense_blocks[-1])
+        self.reshape = FlatToStructure(output_shape=self.start_shape, activation=activation, normalization=conv_normalize)
+
+    @staticmethod
+    def can_apply(tm: TensorMap):
+        return tm.axes() > 1
+
+    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
+        if x.shape != self.start_shape:
+            x = self.reshape(x)
+        for i, (dense_block, upsample) in enumerate(zip(self.dense_blocks, self.upsamples)):
+            intermediate = [intermediates[tm][-(i + 1)] for tm in self.u_connect_parents]
+            x = concatenate(intermediate + [x]) if intermediate else x
+            x = upsample(x)
+            x = dense_block(x)
+        intermediate = [intermediates[tm][0] for tm in self.u_connect_parents]
+        x = concatenate(intermediate + [x]) if intermediate else x
+        return self.conv_label(x)
+
+
 class DenseDecoderBlock:
     def __init__(
             self,
@@ -932,121 +1054,6 @@ class DenseDecoderBlock:
         x = self.dense(x)
         intermediates[self.tensor_map_out].append(x)
         return x
-
-
-class ConvEncoderBlock:
-    def __init__(
-            self,
-            *,
-            tensor_map_in: TensorMap,
-            filters_per_dense_block: List[int],
-            dimension: int,
-            res_filters: List[int],
-            conv_layer_type: str,
-            conv_x: List[int],
-            conv_y: List[int],
-            conv_z: List[int],
-            block_size: int,
-            activation: str,
-            normalization: str,
-            regularization: str,
-            regularization_rate: float,
-            dilate: bool,
-            pool_type: str,
-            pool_x: int,
-            pool_y: int,
-            pool_z: int,
-            **kwargs,
-    ):
-        self.map_in = tensor_map_in
-        num_res = len(res_filters)
-        res_x, res_y, res_z = conv_x[:num_res], conv_y[:num_res], conv_z[:num_res]
-        #self.preprocess_block = PreprocessBlock(['rotate'], [0.3])
-        self.res_block = ResidualBlock(
-            dimension=dimension, filters_per_conv=res_filters, conv_layer_type=conv_layer_type, conv_x=res_x,
-            conv_y=res_y, conv_z=res_z, activation=activation, normalization=normalization,
-            regularization=regularization, regularization_rate=regularization_rate, dilate=dilate,
-        )
-
-        dense_x, dense_y, dense_z = conv_x[num_res:], conv_y[num_res:], conv_z[num_res:]
-        self.dense_blocks = [
-            DenseConvolutionalBlock(
-                dimension=dimension, conv_layer_type=conv_layer_type, filters=filters, conv_x=[x]*block_size, conv_y=[y]*block_size,
-                conv_z=[z]*block_size, block_size=block_size, activation=activation, normalization=normalization,
-                regularization=regularization, regularization_rate=regularization_rate,
-            ) for filters, x, y, z in zip(filters_per_dense_block, dense_x, dense_y, dense_z)
-        ]
-        self.pools = _pool_layers_from_kind_and_dimension(dimension, pool_type, len(filters_per_dense_block) + 1, pool_x, pool_y, pool_z)
-
-    @staticmethod
-    def can_apply(tm: TensorMap):
-        return tm.axes() > 1
-
-    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
-        #x = self.preprocess_block(x)
-        x = self.res_block(x)
-        intermediates[self.map_in].append(x)
-        for i, (dense_block, pool) in enumerate(zip(self.dense_blocks, self.pools)):
-            x = pool(x)
-            x = dense_block(x)
-            intermediates[self.map_in].append(x)
-
-        return x
-
-
-class ConvDecoderBlock:
-    def __init__(
-            self,
-            *,
-            tensor_map_out: TensorMap,
-            filters_per_dense_block: List[int],
-            conv_layer_type: str,
-            conv_x: List[int],
-            conv_y: List[int],
-            conv_z: List[int],
-            block_size: int,
-            activation: str,
-            normalization: str,
-            regularization: str,
-            regularization_rate: float,
-            upsample_x: int,
-            upsample_y: int,
-            upsample_z: int,
-            u_connect_parents: List[TensorMap] = None,
-            **kwargs,
-    ):
-        dimension = tensor_map_out.axes()
-        self.dense_blocks = [
-            DenseConvolutionalBlock(
-                dimension=tensor_map_out.axes(), conv_layer_type=conv_layer_type, filters=filters, conv_x=[x]*block_size,
-                conv_y=[y]*block_size, conv_z=[z]*block_size, block_size=block_size, activation=activation, normalization=normalization,
-                regularization=regularization, regularization_rate=regularization_rate,
-            )
-            for filters, x, y, z in zip(filters_per_dense_block, conv_x, conv_y, conv_z)
-        ]
-        conv_layer, _ = _conv_layer_from_kind_and_dimension(dimension, 'conv', conv_x, conv_y, conv_z)
-        self.conv_label = conv_layer(tensor_map_out.shape[-1], _one_by_n_kernel(dimension), activation=tensor_map_out.activation, name=tensor_map_out.output_name())
-        self.upsamples = [_upsampler(dimension, upsample_x, upsample_y, upsample_z) for _ in range(len(filters_per_dense_block) + 1)]
-        self.u_connect_parents = u_connect_parents or []
-        self.start_shape = _calc_start_shape(num_upsamples=len(filters_per_dense_block), output_shape=tensor_map_out.shape,
-                                             upsample_rates=[upsample_x, upsample_y, upsample_z], channels=filters_per_dense_block[-1])
-        self.reshape = FlatToStructure(output_shape=self.start_shape, activation=activation, normalization=normalization)
-
-    @staticmethod
-    def can_apply(tm: TensorMap):
-        return tm.axes() > 1
-
-    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
-        if x.shape != self.start_shape:
-            x = self.reshape(x)
-        for i, (dense_block, upsample) in enumerate(zip(self.dense_blocks, self.upsamples)):
-            intermediate = [intermediates[tm][-(i + 1)] for tm in self.u_connect_parents]
-            x = concatenate(intermediate + [x]) if intermediate else x
-            x = upsample(x)
-            x = dense_block(x)
-        intermediate = [intermediates[tm][0] for tm in self.u_connect_parents]
-        x = concatenate(intermediate + [x]) if intermediate else x
-        return self.conv_label(x)
 
 
 class FlatConcatDenseBlock:
@@ -1123,16 +1130,11 @@ def _get_custom_objects(tensor_maps_out: List[TensorMap]) -> Dict[str, Any]:
     return {**custom_objects, **get_metric_dict(tensor_maps_out)}
 
 
-def _repeat_dimension(dim: List[int], name: str, num_filters_needed: int) -> List[int]:
-        if len(dim) != num_filters_needed:
-            logging.warning(
-                f'Number of {name} dimensions for convolutional kernel sizes ({len(dim)}) '
-                f'do not match number of convolutional layers/blocks ({num_filters_needed}), '
-                f'matching values to fit {num_filters_needed} convolutional layers/blocks.',
-            )
-            repeat = num_filters_needed // len(dim) + 1
-            dim = (dim * repeat)[:num_filters_needed]
-        return dim
+def _repeat_dimension(filters: List[int], num_filters_needed: int) -> List[int]:
+    if len(filters) < num_filters_needed:
+        repeat = num_filters_needed // len(filters) + 1
+        filters = (filters * repeat)[:num_filters_needed]
+    return filters
 
 
 def make_multimodal_multitask_model(
@@ -1229,9 +1231,9 @@ def make_multimodal_multitask_model(
     num_dense = len(dense_blocks)
     num_res = len(conv_layers) if any(tm.axes() > 1 for tm in tensor_maps_in) else 0
     num_filters_needed = num_res + num_dense
-    conv_x = _repeat_dimension(conv_x, 'x', num_filters_needed)
-    conv_y = _repeat_dimension(conv_y, 'y', num_filters_needed)
-    conv_z = _repeat_dimension(conv_z, 'z', num_filters_needed)
+    conv_x = _repeat_dimension(conv_x, num_filters_needed)
+    conv_y = _repeat_dimension(conv_y, num_filters_needed)
+    conv_z = _repeat_dimension(conv_z, num_filters_needed)
 
     encoders: Dict[TensorMap: Layer] = {}
     for tm in tensor_maps_in:
@@ -1575,13 +1577,7 @@ def block_make_multimodal_multitask_model(
 
     :param tensor_maps_in: List of input TensorMaps
     :param tensor_maps_out: List of output TensorMaps
-    :param activation: Activation function as a string (e.g. 'relu', 'linear, or 'softmax)
     :param learning_rate: learning rate for optimizer
-    :param bottleneck_type: How to merge the representations coming from the different input modalities
-    :param dense_layers: List of number of filters in each dense layer.
-    :param dense_normalize: How to normalize dense layers (e.g. batchnorm)
-    :param dense_regularize: How to regularize dense leayers (e.g. dropout)
-    :param dense_regularize_rate: Rate of dense_regularize
     :param conv_layers: List of number of filters in each convolutional layer
     :param dense_blocks: List of number of filters in densenet modules for densenet convolutional models
     :param block_size: Number of layers within each Densenet module for densenet convolutional models
@@ -1623,45 +1619,16 @@ def block_make_multimodal_multitask_model(
         logging.info("Loaded model file from: {}".format(kwargs['model_file']))
         return m
 
-    # list of filter dimensions should match the number of convolutional layers = len(dense_blocks) + [ + len(conv_layers) if convolving input tensors]
-    num_dense = len(dense_blocks)
-    num_res = len(conv_layers) if any(tm.axes() > 1 for tm in tensor_maps_in) else 0
-    num_filters_needed = num_res + num_dense
-    conv_x = _repeat_dimension(conv_x, 'x', num_filters_needed)
-    conv_y = _repeat_dimension(conv_y, 'y', num_filters_needed)
-    conv_z = _repeat_dimension(conv_z, 'z', num_filters_needed)
-
     encoders = {tm: identity for tm in tensor_maps_in}  # Dict[TensorMap, Block]
     for tm in tensor_maps_in:
         for encode_block in encoder_blocks:
             if not BLOCK_CLASSES[encode_block].can_apply(tm):
                 continue
-            encoders[tm] = compose(encoders[tm], BLOCK_CLASSES[encode_block](
-                tensor_map_in=tm,
-                filters_per_dense_block=dense_blocks,
-                dimension=tm.axes(),
-                res_filters=conv_layers,
-                conv_layer_type=conv_type,
-                conv_x=conv_x if tm.axes() > 2 else conv_width,
-                conv_y=conv_y,
-                conv_z=conv_z,
-                block_size=block_size,
-                normalization=conv_normalize,
-                regularization=conv_regularize,
-                regularization_rate=conv_regularize_rate,
-                dilate=conv_dilate,
-                pool_type=pool_type,
-                pool_x=pool_x,
-                pool_y=pool_y,
-                pool_z=pool_z,
-                **kwargs,
-            ))
+            encoders[tm] = compose(encoders[tm], BLOCK_CLASSES[encode_block](tensor_map_in=tm, **kwargs))
 
     merge = identity
     for merge_block in merge_blocks:
-        merge = compose(merge, BLOCK_CLASSES[merge_block](
-            **kwargs,
-        ))
+        merge = compose(merge, BLOCK_CLASSES[merge_block](**kwargs))
 
     conv_x, conv_y, conv_z = conv_x[num_res:], conv_y[num_res:], conv_z[num_res:]
     decoders = {tm: identity for tm in tensor_maps_out}
@@ -1671,18 +1638,6 @@ def block_make_multimodal_multitask_model(
                 continue
             decoders[tm] = compose(decoders[tm], BLOCK_CLASSES[decode_block](
                 tensor_map_out=tm,
-                filters_per_dense_block=dense_blocks[::-1],
-                conv_layer_type=conv_type,
-                conv_x=conv_x if tm.axes() > 2 else conv_width,
-                conv_y=conv_y,
-                conv_z=conv_z,
-                block_size=block_size,
-                normalization=conv_normalize,
-                regularization=conv_regularize,
-                regularization_rate=conv_regularize_rate,
-                upsample_x=pool_x,
-                upsample_y=pool_y,
-                upsample_z=pool_z,
                 u_connect_parents=[tm_in for tm_in in tensor_maps_in if tm in u_connect[tm_in]],
                 parents=tm.parents,
                 **kwargs,
@@ -1740,6 +1695,7 @@ def _make_multimodal_multitask_model_block(
         decoder_outputs.append(decoder(x, intermediates))
 
     return Model(inputs=list(inputs.values()), outputs=decoder_outputs)
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~ Training ~~~~~~~~~~~~~~~~
