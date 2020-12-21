@@ -995,7 +995,7 @@ class ConvDecoderBlock:
             **kwargs,
     ):
         dimension = tensor_map_out.axes()
-        self.dense_blocks = [
+        self.dense_conv_blocks = [
             DenseConvolutionalBlock(
                 dimension=tensor_map_out.axes(), conv_layer_type=conv_type, filters=filters, conv_x=[x] * block_size,
                 conv_y=[y]*block_size, conv_z=[z]*block_size, block_size=block_size, activation=activation, normalization=conv_normalize,
@@ -1006,6 +1006,7 @@ class ConvDecoderBlock:
         conv_layer, _ = _conv_layer_from_kind_and_dimension(dimension, 'conv', conv_x, conv_y, conv_z)
         self.conv_label = conv_layer(tensor_map_out.shape[-1], _one_by_n_kernel(dimension), activation=tensor_map_out.activation, name=tensor_map_out.output_name())
         self.upsamples = [_upsampler(dimension, pool_x, pool_y, pool_z) for _ in range(len(dense_blocks) + 1)]
+        logging.info(f'Got something pooly: {len(self.upsamples)} from dbolx : {dense_blocks}')
         self.u_connect_parents = u_connect_parents or []
         self.start_shape = _calc_start_shape(num_upsamples=len(dense_blocks), output_shape=tensor_map_out.shape,
                                              upsample_rates=[pool_x, pool_y, pool_z], channels=dense_blocks[-1])
@@ -1018,7 +1019,7 @@ class ConvDecoderBlock:
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
         if x.shape != self.start_shape:
             x = self.reshape(x)
-        for i, (dense_block, upsample) in enumerate(zip(self.dense_blocks, self.upsamples)):
+        for i, (dense_block, upsample) in enumerate(zip(self.dense_conv_blocks, self.upsamples)):
             intermediate = [intermediates[tm][-(i + 1)] for tm in self.u_connect_parents]
             x = concatenate(intermediate + [x]) if intermediate else x
             x = upsample(x)
