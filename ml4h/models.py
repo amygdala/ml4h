@@ -937,14 +937,14 @@ class ConvEncoderBlock:
             conv_x = conv_width
 
         # list of filter dimensions should match the total number of convolutional layers
-        conv_x = _repeat_dimension(conv_x, len(conv_layers)+len(dense_blocks))
-        conv_y = _repeat_dimension(conv_y, len(conv_layers)+len(dense_blocks))
-        conv_z = _repeat_dimension(conv_z, len(conv_layers)+len(dense_blocks))
+        x_filters = _repeat_dimension(conv_x, len(conv_layers)+len(dense_blocks))
+        y_filters = _repeat_dimension(conv_y, len(conv_layers)+len(dense_blocks))
+        z_filters = _repeat_dimension(conv_z, len(conv_layers)+len(dense_blocks))
 
         #self.preprocess_block = PreprocessBlock(['rotate'], [0.3])
         self.res_block = ResidualBlock(
-            dimension=dimension, filters_per_conv=conv_layers, conv_layer_type=conv_type, conv_x=conv_x[:len(conv_layers)],
-            conv_y=conv_y[:len(conv_layers)], conv_z=conv_z[:len(conv_layers)], activation=activation, normalization=conv_normalize,
+            dimension=dimension, filters_per_conv=conv_layers, conv_layer_type=conv_type, conv_x=x_filters[:len(conv_layers)],
+            conv_y=y_filters[:len(conv_layers)], conv_z=z_filters[:len(conv_layers)], activation=activation, normalization=conv_normalize,
             regularization=conv_regularize, regularization_rate=conv_regularize_rate, dilate=conv_dilate,
         )
 
@@ -953,7 +953,7 @@ class ConvEncoderBlock:
                 dimension=dimension, conv_layer_type=conv_type, filters=filters, conv_x=[x] * block_size, conv_y=[y] * block_size,
                 conv_z=[z]*block_size, block_size=block_size, activation=activation, normalization=conv_normalize,
                 regularization=conv_regularize, regularization_rate=conv_regularize_rate,
-            ) for filters, x, y, z in zip(dense_blocks, conv_x[len(conv_layers):], conv_y[len(conv_layers):], conv_z[len(conv_layers):])
+            ) for filters, x, y, z in zip(dense_blocks, x_filters[len(conv_layers):], y_filters[len(conv_layers):], z_filters[len(conv_layers):])
         ]
         logging.info(f'ENCCGot something conv_x: {conv_x} from conv_x : {conv_y} conv conv_x: {conv_z} {len(self.dense_blocks)}')
         self.pools = _pool_layers_from_kind_and_dimension(dimension, pool_type, len(dense_blocks) + 1, pool_x, pool_y, pool_z)
@@ -996,13 +996,16 @@ class ConvDecoderBlock:
             **kwargs,
     ):
         dimension = tensor_map_out.axes()
+        x_filters = _repeat_dimension(conv_x, len(dense_blocks))
+        y_filters = _repeat_dimension(conv_y, len(dense_blocks))
+        z_filters = _repeat_dimension(conv_z, len(dense_blocks))
         self.dense_conv_blocks = [
             DenseConvolutionalBlock(
                 dimension=tensor_map_out.axes(), conv_layer_type=conv_type, filters=filters, conv_x=[x] * block_size,
                 conv_y=[y]*block_size, conv_z=[z]*block_size, block_size=block_size, activation=activation, normalization=conv_normalize,
                 regularization=conv_regularize, regularization_rate=conv_regularize_rate,
             )
-            for filters, x, y, z in zip(dense_blocks, conv_x, conv_y, conv_z)
+            for filters, x, y, z in zip(dense_blocks, x_filters, y_filters, z_filters)
         ]
         logging.info(f'Got something conv_x: {conv_x} from conv_x : {conv_y} conv conv_x: {conv_z} {len(self.dense_conv_blocks)}')
         conv_layer, _ = _conv_layer_from_kind_and_dimension(dimension, 'conv', conv_x, conv_y, conv_z)
