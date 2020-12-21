@@ -1545,23 +1545,7 @@ def block_make_multimodal_multitask_model(
         merge_blocks: List[str],
         learning_rate: float,
         optimizer: str,
-        conv_layers: List[int] = None,
-        dense_blocks: List[int] = None,
-        block_size: int = None,
-        conv_type: str = None,
-        conv_normalize: str = None,
-        conv_regularize: str = None,
-        conv_regularize_rate: float = None,
-        conv_x: List[int] = None,
-        conv_y: List[int] = None,
-        conv_z: List[int] = None,
-        conv_width: List[int] = None,
-        conv_dilate: bool = None,
         u_connect: DefaultDict[TensorMap, Set[TensorMap]] = None,
-        pool_x: int = None,
-        pool_y: int = None,
-        pool_z: int = None,
-        pool_type: str = None,
         training_steps: int = None,
         learning_rate_schedule: str = None,
         **kwargs,
@@ -1578,23 +1562,7 @@ def block_make_multimodal_multitask_model(
     :param tensor_maps_in: List of input TensorMaps
     :param tensor_maps_out: List of output TensorMaps
     :param learning_rate: learning rate for optimizer
-    :param conv_layers: List of number of filters in each convolutional layer
-    :param dense_blocks: List of number of filters in densenet modules for densenet convolutional models
-    :param block_size: Number of layers within each Densenet module for densenet convolutional models
-    :param conv_type: Type of convolution to use, e.g. separable
-    :param conv_normalize: Type of normalization layer for convolutions, e.g. batch norm
-    :param conv_regularize: Type of regularization for convolutions (e.g. dropout)
-    :param conv_regularize_rate: Rate of conv_regularize
-    :param conv_width: Size of X dimension for 1D convolutional kernels
-    :param conv_x: Size of X dimension for 2D and 3D convolutional kernels
-    :param conv_y: Size of Y dimension for 2D and 3D convolutional kernels
-    :param conv_z: Size of Z dimension for 3D convolutional kernels
-    :param conv_dilate: whether to use dilation in conv layers
     :param u_connect: dictionary of input TensorMap -> output TensorMaps to u connect to
-    :param pool_x: Pooling in the X dimension for Convolutional models.
-    :param pool_y: Pooling in the Y dimension for Convolutional models.
-    :param pool_z: Pooling in the Z dimension for 3D Convolutional models.
-    :param pool_type: max or average pooling following convolutional blocks
     :param optimizer: which optimizer to use. See optimizers.py.
     :return: a compiled keras model
     :param learning_rate_schedule: learning rate schedule to train with, e.g. triangular
@@ -1630,7 +1598,6 @@ def block_make_multimodal_multitask_model(
     for merge_block in merge_blocks:
         merge = compose(merge, BLOCK_CLASSES[merge_block](**kwargs))
 
-    conv_x, conv_y, conv_z = conv_x[num_res:], conv_y[num_res:], conv_z[num_res:]
     decoders = {tm: identity for tm in tensor_maps_out}
     for tm in tensor_maps_out:
         for decode_block in decoder_blocks:
