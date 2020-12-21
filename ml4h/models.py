@@ -955,6 +955,7 @@ class ConvEncoderBlock:
                 regularization=conv_regularize, regularization_rate=conv_regularize_rate,
             ) for filters, x, y, z in zip(dense_blocks, conv_x[len(conv_layers):], conv_y[len(conv_layers):], conv_z[len(conv_layers):])
         ]
+        logging.info(f'ENCCGot something conv_x: {conv_x} from conv_x : {conv_y} conv conv_x: {conv_z} {len(self.dense_blocks)}')
         self.pools = _pool_layers_from_kind_and_dimension(dimension, pool_type, len(dense_blocks) + 1, pool_x, pool_y, pool_z)
 
     @staticmethod
@@ -1003,6 +1004,7 @@ class ConvDecoderBlock:
             )
             for filters, x, y, z in zip(dense_blocks, conv_x, conv_y, conv_z)
         ]
+        logging.info(f'Got something conv_x: {conv_x} from conv_x : {conv_y} conv conv_x: {conv_z} {len(self.dense_conv_blocks)}')
         conv_layer, _ = _conv_layer_from_kind_and_dimension(dimension, 'conv', conv_x, conv_y, conv_z)
         self.conv_label = conv_layer(tensor_map_out.shape[-1], _one_by_n_kernel(dimension), activation=tensor_map_out.activation, name=tensor_map_out.output_name())
         self.upsamples = [_upsampler(dimension, pool_x, pool_y, pool_z) for _ in range(len(dense_blocks) + 1)]
