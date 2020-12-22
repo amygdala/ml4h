@@ -897,7 +897,7 @@ class FullyConnectedBlockBlock:
         self.norms = [_normalization_layer(dense_normalize) for _ in dense_layers]
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
-        if self.map_in.axes() > 1:
+        if self.tensor_map_in.axes() > 1:
             return x
         for dense, normalize, activate, regularize in zip(self.denses, self.norms, self.activations, self.regularizations):
             x = normalize(regularize(activate(dense(x))))
@@ -989,6 +989,7 @@ class ConvDecoderBlock:
             u_connect_parents: List[TensorMap] = None,
             **kwargs,
     ):
+        self.tensor_map_out = tensor_map_out
         dimension = tensor_map_out.axes()
         x_filters = _repeat_dimension(conv_width if dimension == 2 else conv_x, len(dense_blocks))
         y_filters = _repeat_dimension(conv_y, len(dense_blocks))
@@ -1009,9 +1010,8 @@ class ConvDecoderBlock:
                                              upsample_rates=[pool_x, pool_y, pool_z], channels=dense_blocks[-1])
         self.reshape = FlatToStructure(output_shape=self.start_shape, activation=activation, normalization=conv_normalize)
 
-
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
-        if self.map_in.axes() == 1:
+        if self.tensor_map_out.axes() == 1:
             return x
         if x.shape != self.start_shape:
             x = self.reshape(x)
@@ -1039,9 +1039,8 @@ class DenseDecoderBlock:
         self.dense = Dense(units=tensor_map_out.shape[0], name=tensor_map_out.output_name(), activation=tensor_map_out.activation)
         self.units = tensor_map_out.annotation_units
 
-
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
-        if self.map_in.axes() > 1:
+        if self.tensor_map_out.axes() > 1:
             return x
         if self.parents:
             x = Concatenate()([x] + [intermediates[parent][-1] for parent in self.parents])
@@ -1075,7 +1074,6 @@ class FlatConcatDenseBlock:
             name='embed',
         ) if dense_layers else None
         self.bottleneck_type = bottleneck_type
-
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
         if self.bottleneck_type == BottleneckType.FlattenRestructure:
