@@ -1651,12 +1651,17 @@ def block_make_multimodal_multitask_model(
     decoder_block_functions = {tm: identity for tm in tensor_maps_out}
     for tm in tensor_maps_out:
         for decode_block in decoder_blocks:
-            decoder_block_functions[tm] = compose(decoder_block_functions[tm], BLOCK_CLASSES[decode_block](
-                tensor_map=tm,
-                u_connect_parents=[tm_in for tm_in in tensor_maps_in if tm in u_connect[tm_in]],
-                parents=tm.parents,
-                **kwargs,
-            ))
+            if decode_block in BLOCK_CLASSES:
+                decoder_block_functions[tm] = compose(decoder_block_functions[tm], BLOCK_CLASSES[decode_block](
+                    tensor_map=tm,
+                    u_connect_parents=[tm_in for tm_in in tensor_maps_in if tm in u_connect[tm_in]],
+                    parents=tm.parents,
+                    **kwargs,
+                ))
+            elif decode_block.endswith(f'decoder_{tm.name}.h5'):
+                logging.info(f'Print it all out {tm} and {decode_block}')
+                serialized_decoder = load_model(decode_block, custom_objects=custom_dict, compile=False)
+                decoder_block_functions[tm] = compose(decoder_block_functions[tm], ModelAsBlock(tensor_map=tm, model=serialized_decoder))
 
     m, encoders, decoders = _make_multimodal_multitask_model_block(encoder_block_functions, merge, decoder_block_functions)
     m.compile(
