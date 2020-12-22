@@ -1622,7 +1622,7 @@ def block_make_multimodal_multitask_model(
         for encode_block in encoder_blocks:
             if encode_block in BLOCK_CLASSES:
                 encoder_block_functions[tm] = compose(encoder_block_functions[tm], BLOCK_CLASSES[encode_block](tensor_map_in=tm, **kwargs))
-            elif encode_block.endswith(MODEL_EXT):
+            elif encode_block.endswith(f'encoder_{tm.name}.h5'):
                 serialized_encoder = load_model(encode_block, custom_objects=custom_dict, compile=False)
                 encoder_block_functions[tm] = compose(encoder_block_functions[tm], serialized_encoder)
 
