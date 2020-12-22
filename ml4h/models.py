@@ -882,7 +882,7 @@ class FullyConnectedBlockBlock:
     def __init__(
             self,
             *,
-            tensor_map_in: TensorMap,
+            tensor_map: TensorMap,
             dense_layers: List[int],
             activation: str,
             dense_normalize: str,
@@ -890,7 +890,7 @@ class FullyConnectedBlockBlock:
             dense_regularize_rate: float,
             **kwargs,
     ):
-        self.tensor_map_in = tensor_map_in
+        self.tensor_map = tensor_map
         if not self.can_apply():
             return
         self.denses = [Dense(units=width) for width in dense_layers]
@@ -899,14 +899,31 @@ class FullyConnectedBlockBlock:
         self.norms = [_normalization_layer(dense_normalize) for _ in dense_layers]
 
     def can_apply(self):
-        return self.tensor_map_in.axes() == 1
+        return self.tensor_map.axes() == 1
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
         if not self.can_apply():
             return x
         for dense, normalize, activate, regularize in zip(self.denses, self.norms, self.activations, self.regularizations):
             x = normalize(regularize(activate(dense(x))))
-            intermediates[self.tensor_map_in].append(x)
+            intermediates[self.tensor_map].append(x)
+        return x
+
+
+class ModelAsBlock:
+    def __init__(
+            self,
+            *,
+            tensor_map: TensorMap,
+            model: Model,
+            **kwargs,
+    ):
+        self.tensor_map = tensor_map
+        self.model = model
+
+    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
+        x = self.model(x)
+        intermediates[self.tensor_map].append(x)
         return x
 
 
@@ -914,7 +931,7 @@ class ConvEncoderBlock:
     def __init__(
             self,
             *,
-            tensor_map_in: TensorMap,
+            tensor_map: TensorMap,
             dense_blocks: List[int],
             conv_layers: List[int],
             conv_type: str,
@@ -934,10 +951,10 @@ class ConvEncoderBlock:
             pool_z: int,
             **kwargs,
     ):
-        self.tensor_map_in = tensor_map_in
+        self.tensor_map = tensor_map
         if not self.can_apply():
             return
-        dimension = self.tensor_map_in.axes()
+        dimension = self.tensor_map.axes()
 
         # list of filter dimensions should match the total number of convolutional layers
         x_filters = _repeat_dimension(conv_width if dimension == 2 else conv_x, len(conv_layers)+len(dense_blocks))
@@ -961,18 +978,18 @@ class ConvEncoderBlock:
         self.pools = _pool_layers_from_kind_and_dimension(dimension, pool_type, len(dense_blocks) + 1, pool_x, pool_y, pool_z)
 
     def can_apply(self):
-        return self.tensor_map_in.axes() > 1
+        return self.tensor_map.axes() > 1
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
         if not self.can_apply():
             return x
         #x = self.preprocess_block(x)  # TODO: upgrade to tensorflow 2.3+
         x = self.res_block(x)
-        intermediates[self.tensor_map_in].append(x)
+        intermediates[self.tensor_map].append(x)
         for i, (dense_block, pool) in enumerate(zip(self.dense_blocks, self.pools)):
             x = pool(x)
             x = dense_block(x)
-            intermediates[self.tensor_map_in].append(x)
+            intermediates[self.tensor_map].append(x)
 
         return x
 
@@ -981,7 +998,7 @@ class ConvDecoderBlock:
     def __init__(
             self,
             *,
-            tensor_map_out: TensorMap,
+            tensor_map: TensorMap,
             dense_blocks: List[int],
             conv_type: str,
             conv_width: List[int],
@@ -999,33 +1016,33 @@ class ConvDecoderBlock:
             u_connect_parents: List[TensorMap] = None,
             **kwargs,
     ):
-        self.tensor_map_out = tensor_map_out
+        self.tensor_map = tensor_map
         if not self.can_apply():
-            logging.info(f'Built a decoder with cannot APPPLY {self.tensor_map_out}')
+            logging.info(f'Built a decoder with cannot APPPLY {self.tensor_map}')
             return
-        dimension = tensor_map_out.axes()
+        dimension = tensor_map.axes()
         x_filters = _repeat_dimension(conv_width if dimension == 2 else conv_x, len(dense_blocks))
         y_filters = _repeat_dimension(conv_y, len(dense_blocks))
         z_filters = _repeat_dimension(conv_z, len(dense_blocks))
         self.dense_conv_blocks = [
             DenseConvolutionalBlock(
-                dimension=tensor_map_out.axes(), conv_layer_type=conv_type, filters=filters, conv_x=[x] * block_size,
+                dimension=tensor_map.axes(), conv_layer_type=conv_type, filters=filters, conv_x=[x] * block_size,
                 conv_y=[y]*block_size, conv_z=[z]*block_size, block_size=block_size, activation=activation, normalization=conv_normalize,
                 regularization=conv_regularize, regularization_rate=conv_regularize_rate,
             )
             for filters, x, y, z in zip(dense_blocks, x_filters, y_filters, z_filters)
         ]
         conv_layer, _ = _conv_layer_from_kind_and_dimension(dimension, 'conv', conv_x, conv_y, conv_z)
-        self.conv_label = conv_layer(tensor_map_out.shape[-1], _one_by_n_kernel(dimension), activation=tensor_map_out.activation, name=tensor_map_out.output_name())
+        self.conv_label = conv_layer(tensor_map.shape[-1], _one_by_n_kernel(dimension), activation=tensor_map.activation, name=tensor_map.output_name())
         self.upsamples = [_upsampler(dimension, pool_x, pool_y, pool_z) for _ in range(len(dense_blocks) + 1)]
         self.u_connect_parents = u_connect_parents or []
-        self.start_shape = _calc_start_shape(num_upsamples=len(dense_blocks), output_shape=tensor_map_out.shape,
+        self.start_shape = _calc_start_shape(num_upsamples=len(dense_blocks), output_shape=tensor_map.shape,
                                              upsample_rates=[pool_x, pool_y, pool_z], channels=dense_blocks[-1])
         self.reshape = FlatToStructure(output_shape=self.start_shape, activation=activation, normalization=conv_normalize)
         logging.info(f'Built a decoder with: {len(self.dense_conv_blocks)} and reshape {self.start_shape}')
 
     def can_apply(self):
-        return self.tensor_map_out.axes() > 1
+        return self.tensor_map.axes() > 1
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
         if not self.can_apply():
@@ -1045,21 +1062,21 @@ class ConvDecoderBlock:
 class DenseDecoderBlock:
     def __init__(
             self,
-            tensor_map_out: TensorMap,
+            tensor_map: TensorMap,
             activation: str,
             parents: List[TensorMap] = None,
             **kwargs,
     ):
-        self.tensor_map_out = tensor_map_out
+        self.tensor_map = tensor_map
         if not self.can_apply():
             return
         self.parents = parents
         self.activation = _activation_layer(activation)
-        self.dense = Dense(units=tensor_map_out.shape[0], name=tensor_map_out.output_name(), activation=tensor_map_out.activation)
-        self.units = tensor_map_out.annotation_units
+        self.dense = Dense(units=tensor_map.shape[0], name=tensor_map.output_name(), activation=tensor_map.activation)
+        self.units = tensor_map.annotation_units
 
     def can_apply(self):
-        return self.tensor_map_out.axes() == 1
+        return self.tensor_map.axes() == 1
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
         if not self.can_apply():
@@ -1069,7 +1086,7 @@ class DenseDecoderBlock:
             x = Dense(units=self.units)(x)
             x = self.dense(self.activation(x))
         x = self.dense(x)
-        intermediates[self.tensor_map_out].append(x)
+        intermediates[self.tensor_map].append(x)
         return x
 
 
@@ -1621,7 +1638,7 @@ def block_make_multimodal_multitask_model(
     for tm in tensor_maps_in:
         for encode_block in encoder_blocks:
             if encode_block in BLOCK_CLASSES:
-                encoder_block_functions[tm] = compose(encoder_block_functions[tm], BLOCK_CLASSES[encode_block](tensor_map_in=tm, **kwargs))
+                encoder_block_functions[tm] = compose(encoder_block_functions[tm], BLOCK_CLASSES[encode_block](tensor_map=tm, **kwargs))
             elif encode_block.endswith(f'encoder_{tm.name}.h5'):
                 logging.info(f'Print it all out {tm} and {encode_block}')
                 serialized_encoder = load_model(encode_block, custom_objects=custom_dict, compile=False)
@@ -1635,7 +1652,7 @@ def block_make_multimodal_multitask_model(
     for tm in tensor_maps_out:
         for decode_block in decoder_blocks:
             decoder_block_functions[tm] = compose(decoder_block_functions[tm], BLOCK_CLASSES[decode_block](
-                tensor_map_out=tm,
+                tensor_map=tm,
                 u_connect_parents=[tm_in for tm_in in tensor_maps_in if tm in u_connect[tm_in]],
                 parents=tm.parents,
                 **kwargs,
