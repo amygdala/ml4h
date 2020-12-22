@@ -891,13 +891,18 @@ class FullyConnectedBlockBlock:
             **kwargs,
     ):
         self.tensor_map_in = tensor_map_in
+        if not self.can_apply():
+            return
         self.denses = [Dense(units=width) for width in dense_layers]
         self.activations = [_activation_layer(activation) for _ in dense_layers]
         self.regularizations = [_regularization_layer(1, dense_regularize, dense_regularize_rate) for _ in dense_layers]
         self.norms = [_normalization_layer(dense_normalize) for _ in dense_layers]
 
+    def can_apply(self):
+        return self.map_in.axes() == 1
+
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
-        if self.tensor_map_in.axes() > 1:
+        if not self.can_apply():
             return x
         for dense, normalize, activate, regularize in zip(self.denses, self.norms, self.activations, self.regularizations):
             x = normalize(regularize(activate(dense(x))))
@@ -930,6 +935,8 @@ class ConvEncoderBlock:
             **kwargs,
     ):
         self.map_in = tensor_map_in
+        if not self.can_apply():
+            return
         dimension = self.map_in.axes()
 
         # list of filter dimensions should match the total number of convolutional layers
@@ -953,8 +960,11 @@ class ConvEncoderBlock:
         ]
         self.pools = _pool_layers_from_kind_and_dimension(dimension, pool_type, len(dense_blocks) + 1, pool_x, pool_y, pool_z)
 
+    def can_apply(self):
+        return self.map_in.axes() > 1
+
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
-        if self.map_in.axes() == 1:
+        if not self.can_apply():
             return x
         #x = self.preprocess_block(x)  # TODO: upgrade to tensorflow 2.3+
         x = self.res_block(x)
@@ -990,6 +1000,8 @@ class ConvDecoderBlock:
             **kwargs,
     ):
         self.tensor_map_out = tensor_map_out
+        if not self.can_apply():
+            return
         dimension = tensor_map_out.axes()
         x_filters = _repeat_dimension(conv_width if dimension == 2 else conv_x, len(dense_blocks))
         y_filters = _repeat_dimension(conv_y, len(dense_blocks))
@@ -1010,8 +1022,11 @@ class ConvDecoderBlock:
                                              upsample_rates=[pool_x, pool_y, pool_z], channels=dense_blocks[-1])
         self.reshape = FlatToStructure(output_shape=self.start_shape, activation=activation, normalization=conv_normalize)
 
+    def can_apply(self):
+        return self.tensor_map_out.axes() > 1
+
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
-        if self.tensor_map_out.axes() == 1:
+        if not self.can_apply():
             return x
         if x.shape != self.start_shape:
             x = self.reshape(x)
@@ -1034,13 +1049,18 @@ class DenseDecoderBlock:
             **kwargs,
     ):
         self.tensor_map_out = tensor_map_out
+        if not self.can_apply():
+            return
         self.parents = parents
         self.activation = _activation_layer(activation)
         self.dense = Dense(units=tensor_map_out.shape[0], name=tensor_map_out.output_name(), activation=tensor_map_out.activation)
         self.units = tensor_map_out.annotation_units
 
+    def can_apply(self):
+        return self.tensor_map_out.axes() == 1
+
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
-        if self.tensor_map_out.axes() > 1:
+        if not self.can_apply():
             return x
         if self.parents:
             x = Concatenate()([x] + [intermediates[parent][-1] for parent in self.parents])
@@ -1637,13 +1657,18 @@ def _make_multimodal_multitask_model_block(
         x = encoder_block(x, intermediates)
         encoders[tm] = Model(inputs[tm], x)
 
-    x = merge(x, intermediates)
-    latent_inputs = Input(shape=(x.shape[-1]), name='input_multimodal_space')
+    multimodal_activation = merge(x, intermediates)
+    latent_inputs = Input(shape=(64,), name='input_multimodal_space')
     print(f'intermediates: {[(tm, [ti.shape for ti in t]) for tm, t in intermediates.items()]}')
     decoders: Dict[TensorMap, Model] = {}
     decoder_outputs = []
     for tm, decoder_block in decoder_block_functions.items():  # TODO this needs to be a topological sorted according to parents hierarchy
-        reconstruction = decoder_block(x, intermediates)
+        reconstruction = decoder_block(multimodal_activation, intermediates)
+
+        # decoder = Model(latent_inputs, reconstruction, name=tm.output_name())
+        # decoders[tm] = decoder
+        # outputs[tm.output_name()] = decoder(multimodal_activation)
+
         decoders[tm] = Model(latent_inputs, reconstruction, name=tm.output_name())
         decoder_outputs[tm.output_name()].append(reconstruction)
 
