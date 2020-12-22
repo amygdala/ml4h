@@ -896,11 +896,9 @@ class FullyConnectedBlockBlock:
         self.regularizations = [_regularization_layer(1, dense_regularize, dense_regularize_rate) for _ in dense_layers]
         self.norms = [_normalization_layer(dense_normalize) for _ in dense_layers]
 
-    @staticmethod
-    def can_apply(tm: TensorMap):
-        return tm.axes() == 1
-
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
+        if self.map_in.axes() > 1:
+            return x
         for dense, normalize, activate, regularize in zip(self.denses, self.norms, self.activations, self.regularizations):
             x = normalize(regularize(activate(dense(x))))
             intermediates[self.tensor_map_in].append(x)
@@ -933,11 +931,9 @@ class ConvEncoderBlock:
     ):
         self.map_in = tensor_map_in
         dimension = self.map_in.axes()
-        if dimension == 2:
-            conv_x = conv_width
 
         # list of filter dimensions should match the total number of convolutional layers
-        x_filters = _repeat_dimension(conv_x, len(conv_layers)+len(dense_blocks))
+        x_filters = _repeat_dimension(conv_width if dimension == 2 else conv_x, len(conv_layers)+len(dense_blocks))
         y_filters = _repeat_dimension(conv_y, len(conv_layers)+len(dense_blocks))
         z_filters = _repeat_dimension(conv_z, len(conv_layers)+len(dense_blocks))
 
@@ -955,15 +951,12 @@ class ConvEncoderBlock:
                 regularization=conv_regularize, regularization_rate=conv_regularize_rate,
             ) for filters, x, y, z in zip(dense_blocks, x_filters[len(conv_layers):], y_filters[len(conv_layers):], z_filters[len(conv_layers):])
         ]
-        logging.info(f'ENCCGot something conv_x: {conv_x} from conv_x : {conv_y} conv conv_x: {conv_z} {len(self.dense_blocks)}')
         self.pools = _pool_layers_from_kind_and_dimension(dimension, pool_type, len(dense_blocks) + 1, pool_x, pool_y, pool_z)
 
-    @staticmethod
-    def can_apply(tm: TensorMap):
-        return tm.axes() > 1
-
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
-        #x = self.preprocess_block(x)
+        if self.map_in.axes() == 1:
+            return x
+        #x = self.preprocess_block(x)  # TODO: upgrade to tensorflow 2.3+
         x = self.res_block(x)
         intermediates[self.map_in].append(x)
         for i, (dense_block, pool) in enumerate(zip(self.dense_blocks, self.pools)):
@@ -981,6 +974,7 @@ class ConvDecoderBlock:
             tensor_map_out: TensorMap,
             dense_blocks: List[int],
             conv_type: str,
+            conv_width: List[int],
             conv_x: List[int],
             conv_y: List[int],
             conv_z: List[int],
@@ -996,7 +990,7 @@ class ConvDecoderBlock:
             **kwargs,
     ):
         dimension = tensor_map_out.axes()
-        x_filters = _repeat_dimension(conv_x, len(dense_blocks))
+        x_filters = _repeat_dimension(conv_width if dimension == 2 else conv_x, len(dense_blocks))
         y_filters = _repeat_dimension(conv_y, len(dense_blocks))
         z_filters = _repeat_dimension(conv_z, len(dense_blocks))
         self.dense_conv_blocks = [
@@ -1007,21 +1001,18 @@ class ConvDecoderBlock:
             )
             for filters, x, y, z in zip(dense_blocks, x_filters, y_filters, z_filters)
         ]
-        logging.info(f'Got something conv_x: {conv_x} from conv_x : {conv_y} conv conv_x: {conv_z} {len(self.dense_conv_blocks)}')
         conv_layer, _ = _conv_layer_from_kind_and_dimension(dimension, 'conv', conv_x, conv_y, conv_z)
         self.conv_label = conv_layer(tensor_map_out.shape[-1], _one_by_n_kernel(dimension), activation=tensor_map_out.activation, name=tensor_map_out.output_name())
         self.upsamples = [_upsampler(dimension, pool_x, pool_y, pool_z) for _ in range(len(dense_blocks) + 1)]
-        logging.info(f'Got something pooly: {self.upsamples} from dbolx : {dense_blocks} conv blox: {len(self.dense_conv_blocks)}')
         self.u_connect_parents = u_connect_parents or []
         self.start_shape = _calc_start_shape(num_upsamples=len(dense_blocks), output_shape=tensor_map_out.shape,
                                              upsample_rates=[pool_x, pool_y, pool_z], channels=dense_blocks[-1])
         self.reshape = FlatToStructure(output_shape=self.start_shape, activation=activation, normalization=conv_normalize)
 
-    @staticmethod
-    def can_apply(tm: TensorMap):
-        return tm.axes() > 1
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
+        if self.map_in.axes() == 1:
+            return x
         if x.shape != self.start_shape:
             x = self.reshape(x)
         for i, (dense_block, upsample) in enumerate(zip(self.dense_conv_blocks, self.upsamples)):
@@ -1048,11 +1039,10 @@ class DenseDecoderBlock:
         self.dense = Dense(units=tensor_map_out.shape[0], name=tensor_map_out.output_name(), activation=tensor_map_out.activation)
         self.units = tensor_map_out.annotation_units
 
-    @staticmethod
-    def can_apply(tm: TensorMap):
-        return tm.axes() == 1
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
+        if self.map_in.axes() > 1:
+            return x
         if self.parents:
             x = Concatenate()([x] + [intermediates[parent][-1] for parent in self.parents])
             x = Dense(units=self.units)(x)
@@ -1086,9 +1076,6 @@ class FlatConcatDenseBlock:
         ) if dense_layers else None
         self.bottleneck_type = bottleneck_type
 
-    @staticmethod
-    def can_apply(tm: TensorMap):
-        return True
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
         if self.bottleneck_type == BottleneckType.FlattenRestructure:
@@ -1398,6 +1385,42 @@ def _make_multimodal_multitask_model(
     return Model(inputs=list(inputs.values()), outputs=list(decoder_outputs.values()))
 
 
+def _transfer_layers_by_name(model_layers: str, freeze_model_layers: str, custom_dict: Dict[str, Any], m: Model):
+    # load layers for transfer learning
+    loaded = 0
+    m.load_weights(model_layers, by_name=True)
+    try:
+        m_other = load_model(model_layers, custom_objects=custom_dict, compile=False)
+        for other_layer in m_other.layers:
+            try:
+                target_layer = m.get_layer(other_layer.name)
+                target_layer.set_weights(other_layer.get_weights())
+                loaded += 1
+                if freeze_model_layers:
+                    target_layer.trainable = False
+            except (ValueError, KeyError):
+                logging.warning(f'Error loading layer {other_layer.name} from model: {model_layers}. Will still try to load other layers.')
+    except ValueError as e:
+        logging.info(f'Loaded model weights, but got ValueError in model loading: {str(e)}')
+    logging.info(f'Loaded {"and froze " if freeze_model_layers else ""}{loaded} layers from {model_layers}.')
+
+
+def _load_model_encoders_and_decoders(tensor_maps_in: List[TensorMap], tensor_maps_out: List[TensorMap], custom_dict: Dict[str, Any],
+                                      optimizer: tf.python.keras.optimizers.Optimizer, model_file: str):
+    encoders = {}
+    for tm in tensor_maps_in:
+        encoders[tm] = load_model(f"{os.path.dirname(model_file)}/encoder_{tm.name}.h5", custom_objects=custom_dict, compile=False)
+    decoders = {}
+    for tm in tensor_maps_out:
+        decoders[tm] = load_model(f"{os.path.dirname(model_file)}/decoder_{tm.name}.h5", custom_objects=custom_dict, compile=False)
+    logging.info(f"Attempting to load model file from: {model_file}")
+    m = load_model(model_file, custom_objects=custom_dict, compile=False)
+    m.compile(optimizer=optimizer, loss=custom_dict['loss'])
+    m.summary()
+    logging.info(f"Loaded encoder, decoders and model file from: {model_file}")
+    return m, encoders, decoders
+
+
 def make_paired_autoencoder_model(
         pairs: List[Tuple[TensorMap, TensorMap]],
         pair_loss: str = 'cosine',
@@ -1405,24 +1428,13 @@ def make_paired_autoencoder_model(
         multimodal_merge: str = 'average',
         **kwargs
 ) -> Model:
+    custom_dict = _get_custom_objects(kwargs['tensor_maps_out'])
     opt = get_optimizer(
         kwargs['optimizer'], kwargs['learning_rate'], steps_per_epoch=kwargs['training_steps'],
         learning_rate_schedule=kwargs['learning_rate_schedule'], optimizer_kwargs=kwargs.get('optimizer_kwargs'),
     )
     if 'model_file' in kwargs and kwargs['model_file'] is not None:
-        custom_dict = _get_custom_objects(kwargs['tensor_maps_out'])
-        encoders = {}
-        for tm in kwargs['tensor_maps_in']:
-            encoders[tm] = load_model(f"{os.path.dirname(kwargs['model_file'])}/encoder_{tm.name}.h5", custom_objects=custom_dict, compile=False)
-        decoders = {}
-        for tm in kwargs['tensor_maps_out']:
-            decoders[tm] = load_model(f"{os.path.dirname(kwargs['model_file'])}/decoder_{tm.name}.h5", custom_objects=custom_dict, compile=False)
-        logging.info(f"Attempting to load model file from: {kwargs['model_file']}")
-        m = load_model(kwargs['model_file'], custom_objects=custom_dict, compile=False)
-        m.compile(optimizer=opt, loss=custom_dict['loss'])
-        m.summary()
-        logging.info(f"Loaded model file from: {kwargs['model_file']}")
-        return m, encoders, decoders
+        return _load_model_encoders_and_decoders(kwargs['tensor_maps_in'], kwargs['tensor_maps_out'], custom_dict, opt, kwargs['model_file'])
 
     inputs = {tm: Input(shape=tm.shape, name=tm.input_name()) for tm in kwargs['tensor_maps_in']}
     real_serial_layers = kwargs['model_layers']
@@ -1555,7 +1567,7 @@ def block_make_multimodal_multitask_model(
         training_steps: int = None,
         learning_rate_schedule: str = None,
         **kwargs,
-) -> Model:
+) -> Tuple[Model, Dict[TensorMap, Model], Dict[TensorMap, Model]]:
     """Make multi-task, multi-modal feed forward neural network for all kinds of prediction
 
     This model factory can be used to make networks for classification, regression, and segmentation
@@ -1573,11 +1585,7 @@ def block_make_multimodal_multitask_model(
     :return: a compiled keras model
     :param learning_rate_schedule: learning rate schedule to train with, e.g. triangular
     :param training_steps: How many training steps to train the model. Only needed if learning_rate_schedule given
-    :param model_file: HD5 model file to load and return.
-    :param model_layers: HD5 model file whose weights will be loaded into this model when layer names match.
-    :param freeze_model_layers: Whether to freeze layers from loaded from model_layers
     """
-
     tensor_maps_out = parent_sort(tensor_maps_out)
     u_connect: DefaultDict[TensorMap, Set[TensorMap]] = u_connect or defaultdict(set)
     custom_dict = _get_custom_objects(tensor_maps_out)
@@ -1585,89 +1593,63 @@ def block_make_multimodal_multitask_model(
         optimizer, learning_rate, steps_per_epoch=training_steps, learning_rate_schedule=learning_rate_schedule,
         optimizer_kwargs=kwargs.get('optimizer_kwargs'),
     )
-    if 'model_file' in kwargs and kwargs['model_file'] is not None:
-        logging.info("Attempting to load model file from: {}".format(kwargs['model_file']))
-        m = load_model(kwargs['model_file'], custom_objects=custom_dict, compile=False)
-        m.compile(optimizer=opt, loss=custom_dict['loss'])
-        m.summary()
-        logging.info("Loaded model file from: {}".format(kwargs['model_file']))
-        return m
 
-    encoders = {tm: identity for tm in tensor_maps_in}  # Dict[TensorMap, Block]
+    if kwargs.get('model_file', False):
+        return _load_model_encoders_and_decoders(kwargs['tensor_maps_in'], kwargs['tensor_maps_out'], custom_dict, opt, kwargs['model_file'])
+
+    encoder_block_functions = {tm: identity for tm in tensor_maps_in}  # Dict[TensorMap, Block]
     for tm in tensor_maps_in:
         for encode_block in encoder_blocks:
-            if not BLOCK_CLASSES[encode_block].can_apply(tm):
-                continue
-            encoders[tm] = compose(encoders[tm], BLOCK_CLASSES[encode_block](tensor_map_in=tm, **kwargs))
+            encoder_block_functions[tm] = compose(encoder_block_functions[tm], BLOCK_CLASSES[encode_block](tensor_map_in=tm, **kwargs))
 
     merge = identity
     for merge_block in merge_blocks:
         merge = compose(merge, BLOCK_CLASSES[merge_block](**kwargs))
 
-    decoders = {tm: identity for tm in tensor_maps_out}
+    decoder_block_functions = {tm: identity for tm in tensor_maps_out}
     for tm in tensor_maps_out:
         for decode_block in decoder_blocks:
-            if not BLOCK_CLASSES[decode_block].can_apply(tm):
-                continue
-            decoders[tm] = compose(decoders[tm], BLOCK_CLASSES[decode_block](
+            decoder_block_functions[tm] = compose(decoder_block_functions[tm], BLOCK_CLASSES[decode_block](
                 tensor_map_out=tm,
                 u_connect_parents=[tm_in for tm_in in tensor_maps_in if tm in u_connect[tm_in]],
                 parents=tm.parents,
                 **kwargs,
             ))
 
-    m = _make_multimodal_multitask_model_block(encoders, merge, decoders)
-
-    # load layers for transfer learning
-    model_layers = kwargs.get('model_layers', False)
-    if model_layers:
-        loaded = 0
-        freeze = kwargs.get('freeze_model_layers', False)
-        m.load_weights(model_layers, by_name=True)
-        try:
-            m_other = load_model(model_layers, custom_objects=custom_dict, compile=False)
-            for other_layer in m_other.layers:
-                try:
-                    target_layer = m.get_layer(other_layer.name)
-                    target_layer.set_weights(other_layer.get_weights())
-                    loaded += 1
-                    if freeze:
-                        target_layer.trainable = False
-                except (ValueError, KeyError):
-                    logging.warning(f'Error loading layer {other_layer.name} from model: {model_layers}. Will still try to load other layers.')
-        except ValueError as e:
-            logging.info(f'Loaded model weights, but got ValueError in model loading: {str(e)}')
-        logging.info(f'Loaded {"and froze " if freeze else ""}{loaded} layers from {model_layers}.')
+    m, encoders, decoders = _make_multimodal_multitask_model_block(encoder_block_functions, merge, decoder_block_functions)
     m.compile(
         optimizer=opt, loss=[tm.loss for tm in tensor_maps_out],
         metrics={tm.output_name(): tm.metrics for tm in tensor_maps_out},
     )
     m.summary()
-    return m
+    return m, encoders, decoders
 
 
 def _make_multimodal_multitask_model_block(
-        encoders: Dict[TensorMap, Block],
+        encoder_block_functions: Dict[TensorMap, Block],
         merge: Block,
-        decoders: Dict[TensorMap, Block],  # Assumed to be topologically sorted according to parents hierarchy
-) -> Model:
+        decoder_block_functions: Dict[TensorMap, Block],  # Assumed to be topologically sorted according to parents hierarchy
+) -> Tuple[Model, Dict[TensorMap, Model], Dict[TensorMap, Model]]:
     inputs: Dict[TensorMap, Input] = {}
-    encoder_outputs: List[Tensor] = []
+    encoders: Dict[TensorMap, Model] = []
     intermediates = defaultdict(list)  # Dict[TensorMap, List[Layer]]
-    for tm, encoder in encoders.items():
+    for tm, encoder_block in encoder_block_functions.items():
         x = Input(shape=tm.shape, name=tm.input_name())
         inputs[tm] = x
-        x = encoder(x, intermediates)
-        encoder_outputs.append(x)
+        x = encoder_block(x, intermediates)
+        encoders[tm] = Model(inputs[tm], x)
 
     x = merge(x, intermediates)
-
+    latent_inputs = Input(shape=(x.shape[-1]), name='input_multimodal_space')
     print(f'intermediates: {[(tm, [ti.shape for ti in t]) for tm, t in intermediates.items()]}')
+    decoders: Dict[TensorMap, Model] = {}
     decoder_outputs = []
-    for tm, decoder in decoders.items():
-        decoder_outputs.append(decoder(x, intermediates))
+    for tm, decoder_block in decoder_block_functions.items():  # TODO this needs to be a topological sorted according to parents hierarchy
+        reconstruction = decoder_block(x, intermediates)
+        decoders[tm] = Model(latent_inputs, reconstruction, name=tm.output_name())
+        decoder_outputs[tm.output_name()] = reconstruction
 
-    return Model(inputs=list(inputs.values()), outputs=decoder_outputs)
+    return Model(inputs=list(inputs.values()), outputs=decoder_outputs), encoders, decoders
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

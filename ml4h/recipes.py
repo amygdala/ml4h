@@ -155,12 +155,15 @@ def train_multimodal_multitask(args):
 
 def train_block(args):
     generate_train, generate_valid, generate_test = test_train_valid_tensor_generators(**args.__dict__)
-    model = block_make_multimodal_multitask_model(**args.__dict__)
+    model, encoders, decoders = block_make_multimodal_multitask_model(**args.__dict__)
     model = train_model_from_generators(
         model, generate_train, generate_valid, args.training_steps, args.validation_steps, args.batch_size, args.epochs,
         args.patience, args.output_folder, args.id, args.inspect_model, args.inspect_show_labels, save_last_model=args.save_last_model
     )
-
+    for tm in encoders:
+        encoders[tm].save(f'{args.output_folder}{args.id}/encoder_{tm.name}.h5')
+    for tm in decoders:
+        decoders[tm].save(f'{args.output_folder}{args.id}/decoder_{tm.name}.h5')
     out_path = os.path.join(args.output_folder, args.id + '/')
     test_data, test_labels, test_paths = big_batch_from_minibatch_generator(generate_test, args.test_steps)
     return _predict_and_evaluate(
