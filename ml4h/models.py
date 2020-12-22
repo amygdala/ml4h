@@ -1676,10 +1676,10 @@ def _make_multimodal_multitask_model_block(
     encoders: Dict[TensorMap, Model] = {}
     intermediates = defaultdict(list)  # Dict[TensorMap, List[Layer]]
     for tm, encoder_block in encoder_block_functions.items():
-        x = Input(shape=tm.shape, name=tm.input_name())
-        inputs[tm] = x
-        x = encoder_block(x, intermediates)
-        encoders[tm] = Model(inputs[tm], x)
+        inputs[tm] = Input(shape=tm.shape, name=tm.input_name())
+        encoding = encoder_block(inputs[tm], intermediates)
+        encoders[tm] = Model(inputs[tm], encoding)
+        x = encoders[tm](inputs[tm])
 
     multimodal_activation = merge(x, intermediates)
     latent_inputs = Input(shape=(64,), name='input_multimodal_space')
