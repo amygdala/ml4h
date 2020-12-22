@@ -1613,7 +1613,7 @@ def block_make_multimodal_multitask_model(
     )
 
     if kwargs.get('model_file', False):
-        return _load_model_encoders_and_decoders(kwargs['tensor_maps_in'], tensor_maps_out, custom_dict, opt, kwargs['model_file'])
+        return _load_model_encoders_and_decoders(tensor_maps_in, tensor_maps_out, custom_dict, opt, kwargs['model_file'])
 
     encoder_block_functions = {tm: identity for tm in tensor_maps_in}  # Dict[TensorMap, Block]
     for tm in tensor_maps_in:
