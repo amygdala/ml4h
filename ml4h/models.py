@@ -1670,7 +1670,7 @@ def _make_multimodal_multitask_model_block(
         # outputs[tm.output_name()] = decoder(multimodal_activation)
 
         #decoders[tm] = Model(latent_inputs, reconstruction, name=tm.output_name())
-        decoder_outputs[tm.output_name()].append(reconstruction)
+        decoder_outputs.append(reconstruction)
 
     return Model(inputs=list(inputs.values()), outputs=decoder_outputs), encoders, decoders
 
