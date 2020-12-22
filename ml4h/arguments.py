@@ -164,9 +164,9 @@ def parse_args():
     parser.add_argument('--pool_z', default=1, type=int, help='Pooling size in the z-axis, if 1 no pooling will be performed.')
     parser.add_argument('--padding', default='same', help='Valid or same border padding on the convolutional layers.')
     parser.add_argument('--dense_blocks', nargs='*', default=[32, 24, 16], type=int, help='List of number of kernels in convolutional layers.')
-    parser.add_argument('--encoder_blocks', nargs='*', default=['conv_encode'], choices=list(BLOCK_CLASSES), help='List of encoding blocks.')
-    parser.add_argument('--merge_blocks', nargs='*', default=['concat'], choices=list(BLOCK_CLASSES), help='List of merge blocks.')
-    parser.add_argument('--decoder_blocks', nargs='*', default=['conv_decode'], choices=list(BLOCK_CLASSES), help='List of decoding blocks.')
+    parser.add_argument('--encoder_blocks', nargs='*', default=['conv_encode'], help='List of encoding blocks.')
+    parser.add_argument('--merge_blocks', nargs='*', default=['concat'], help='List of merge blocks.')
+    parser.add_argument('--decoder_blocks', nargs='*', default=['conv_decode'], help='List of decoding blocks.')
     parser.add_argument('--block_size', default=3, type=int, help='Number of convolutional layers within a block.')
     parser.add_argument(
         '--u_connect', nargs=2, action='append',
