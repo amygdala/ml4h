@@ -1001,6 +1001,7 @@ class ConvDecoderBlock:
     ):
         self.tensor_map_out = tensor_map_out
         if not self.can_apply():
+            logging.info(f'Built a decoder with cannot APPPLY {self.tensor_map_out}')
             return
         dimension = tensor_map_out.axes()
         x_filters = _repeat_dimension(conv_width if dimension == 2 else conv_x, len(dense_blocks))
@@ -1021,6 +1022,7 @@ class ConvDecoderBlock:
         self.start_shape = _calc_start_shape(num_upsamples=len(dense_blocks), output_shape=tensor_map_out.shape,
                                              upsample_rates=[pool_x, pool_y, pool_z], channels=dense_blocks[-1])
         self.reshape = FlatToStructure(output_shape=self.start_shape, activation=activation, normalization=conv_normalize)
+        logging.info(f'Built a decoder with: {len(self.dense_conv_blocks)} and reshape {self.start_shape}')
 
     def can_apply(self):
         return self.tensor_map_out.axes() > 1
