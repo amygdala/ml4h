@@ -899,7 +899,7 @@ class FullyConnectedBlockBlock:
         self.norms = [_normalization_layer(dense_normalize) for _ in dense_layers]
 
     def can_apply(self):
-        return self.map_in.axes() == 1
+        return self.tensor_map_in.axes() == 1
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
         if not self.can_apply():
@@ -934,10 +934,10 @@ class ConvEncoderBlock:
             pool_z: int,
             **kwargs,
     ):
-        self.map_in = tensor_map_in
+        self.tensor_map_in = tensor_map_in
         if not self.can_apply():
             return
-        dimension = self.map_in.axes()
+        dimension = self.tensor_map_in.axes()
 
         # list of filter dimensions should match the total number of convolutional layers
         x_filters = _repeat_dimension(conv_width if dimension == 2 else conv_x, len(conv_layers)+len(dense_blocks))
@@ -961,18 +961,18 @@ class ConvEncoderBlock:
         self.pools = _pool_layers_from_kind_and_dimension(dimension, pool_type, len(dense_blocks) + 1, pool_x, pool_y, pool_z)
 
     def can_apply(self):
-        return self.map_in.axes() > 1
+        return self.tensor_map_in.axes() > 1
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
         if not self.can_apply():
             return x
         #x = self.preprocess_block(x)  # TODO: upgrade to tensorflow 2.3+
         x = self.res_block(x)
-        intermediates[self.map_in].append(x)
+        intermediates[self.tensor_map_in].append(x)
         for i, (dense_block, pool) in enumerate(zip(self.dense_blocks, self.pools)):
             x = pool(x)
             x = dense_block(x)
-            intermediates[self.map_in].append(x)
+            intermediates[self.tensor_map_in].append(x)
 
         return x
 
