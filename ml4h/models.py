@@ -1620,7 +1620,11 @@ def block_make_multimodal_multitask_model(
     encoder_block_functions = {tm: identity for tm in tensor_maps_in}  # Dict[TensorMap, Block]
     for tm in tensor_maps_in:
         for encode_block in encoder_blocks:
-            encoder_block_functions[tm] = compose(encoder_block_functions[tm], BLOCK_CLASSES[encode_block](tensor_map_in=tm, **kwargs))
+            if encode_block in BLOCK_CLASSES:
+                encoder_block_functions[tm] = compose(encoder_block_functions[tm], BLOCK_CLASSES[encode_block](tensor_map_in=tm, **kwargs))
+            elif encode_block.endswith(MODEL_EXT):
+                serialized_encoder = load_model(encode_block, custom_objects=custom_dict, compile=False)
+                encoder_block_functions[tm] = compose(encoder_block_functions[tm], serialized_encoder)
 
     merge = identity
     for merge_block in merge_blocks:
