@@ -1406,7 +1406,7 @@ def _transfer_layers_by_name(model_layers: str, freeze_model_layers: str, custom
 
 
 def _load_model_encoders_and_decoders(tensor_maps_in: List[TensorMap], tensor_maps_out: List[TensorMap], custom_dict: Dict[str, Any],
-                                      optimizer: tf.python.keras.optimizers.Optimizer, model_file: str):
+                                      optimizer, model_file: str):
     encoders = {}
     for tm in tensor_maps_in:
         encoders[tm] = load_model(f"{os.path.dirname(model_file)}/encoder_{tm.name}.h5", custom_objects=custom_dict, compile=False)
