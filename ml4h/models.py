@@ -1642,7 +1642,7 @@ def block_make_multimodal_multitask_model(
             elif encode_block.endswith(f'encoder_{tm.name}.h5'):
                 logging.info(f'Print it all out {tm} and {encode_block}')
                 serialized_encoder = load_model(encode_block, custom_objects=custom_dict, compile=False)
-                encoder_block_functions[tm] = compose(encoder_block_functions[tm], serialized_encoder)
+                encoder_block_functions[tm] = compose(encoder_block_functions[tm], ModelAsBlock(serialized_encoder))
 
     merge = identity
     for merge_block in merge_blocks:
