@@ -1098,24 +1098,18 @@ class FlatDenseBlock:
             self,
             activation: str,
             dense_layers: List[int],
-            dense_normalize: str,
-            dense_regularize: str,
-            dense_regularize_rate: float,
             **kwargs,
     ):
-        self.fully_connected = FullyConnectedBlock(
-            widths=dense_layers,
-            activation=activation,
-            normalization=dense_normalize,
-            regularization=dense_regularize,
-            regularization_rate=dense_regularize_rate,
-        ) if dense_layers else None
+        self.activation = activation
+        self.dense_layers = dense_layers
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
         for tm, x in intermediates.items():
             if tm.axes() > 1:
                 y = Flatten()(x[-1])
-                x.append(self.fully_connected(y))
+                for units in self.dense_layers:
+                    y = Dense(units=units, activation=self.activation)(y)
+                x.append(y)
         return y
 
 
