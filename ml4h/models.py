@@ -1174,7 +1174,8 @@ class PairLossBlock:
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
         for left, right in self.pairs:
             x = self.loss_layer([intermediates[left][-1], intermediates[right][-1]])
-            intermediates[left].append(x)
+            intermediates[left].extend(x)
+            intermediates[right].extend(x)
         return x
 
 
