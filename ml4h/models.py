@@ -1090,6 +1090,35 @@ class DenseDecoderBlock:
         return x
 
 
+class FlatDenseBlock:
+    """
+    Flattens or GAPs then concatenates all inputs, applies a dense layer, then restructures to provided shapes
+    """
+    def __init__(
+            self,
+            activation: str,
+            dense_layers: List[int],
+            dense_normalize: str,
+            dense_regularize: str,
+            dense_regularize_rate: float,
+            **kwargs,
+    ):
+        self.fully_connected = FullyConnectedBlock(
+            widths=dense_layers,
+            activation=activation,
+            normalization=dense_normalize,
+            regularization=dense_regularize,
+            regularization_rate=dense_regularize_rate,
+        ) if dense_layers else None
+
+    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
+        for tm, x in intermediates.items():
+            if tm.axes() > 1:
+                y = Flatten()(x[-1])
+                x.append(self.fully_connected(y))
+        return y
+
+
 class FlatConcatDenseBlock:
     """
     Flattens or GAPs then concatenates all inputs, applies a dense layer, then restructures to provided shapes
@@ -1128,6 +1157,31 @@ class FlatConcatDenseBlock:
             y = y[0]
         y = self.fully_connected(y) if self.fully_connected else y
         return y
+
+
+class PairLossBlock:
+    """
+    Flattens or GAPs then concatenates all inputs, applies a dense layer, then restructures to provided shapes
+    """
+    def __init__(
+            self,
+            pairs: List[Tuple[TensorMap, TensorMap]],
+            pair_loss: str = 'cosine',
+            pair_loss_weight: float = 1.0,
+            **kwargs,
+    ):
+        self.pairs = pairs
+        if pair_loss == 'cosine':
+            self.loss_layer = CosineLossLayer(pair_loss_weight)
+        elif pair_loss == 'euclid':
+            self.loss_layer = L2LossLayer(pair_loss_weight)
+
+    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
+        for left, right in self.pairs:
+            x = self.loss_layer([intermediates[left][-1], intermediates[right][-1]])
+            intermediates[left].append(x)
+            intermediates[right].append(x)
+        return x
 
 
 def parent_sort(tms: List[TensorMap]) -> List[TensorMap]:
@@ -1579,6 +1633,8 @@ BLOCK_CLASSES = {
     'conv_encode': ConvEncoderBlock,
     'conv_decode': ConvDecoderBlock,
     'concat': FlatConcatDenseBlock,
+    'flat': FlatDenseBlock,
+    'pair': PairLossBlock,
     'fc': FullyConnectedBlockBlock,
     'fc_decode': DenseDecoderBlock,
 }
