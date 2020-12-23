@@ -1755,7 +1755,7 @@ def _make_multimodal_multitask_model_block(
 
     multimodal_activation = merge(x, intermediates)
     latent_inputs = Input(shape=(multimodal_activation.shape[-1],), name='input_multimodal_space')
-    print(f'intermediates: {[(tm, [ti.shape for ti in t]) for tm, t in intermediates.items()]}')
+    logging.info(f'Graph from input TensorMaps has intermediates: {[(tm, [ti.shape for ti in t]) for tm, t in intermediates.items()]}')
     decoders: Dict[TensorMap, Model] = {}
     decoder_outputs = []
     for tm, decoder_block in decoder_block_functions.items():  # TODO this needs to be a topological sorted according to parents hierarchy
