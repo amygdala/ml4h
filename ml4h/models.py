@@ -1175,7 +1175,6 @@ class PairLossBlock:
         for left, right in self.pairs:
             x = self.loss_layer([intermediates[left][-1], intermediates[right][-1]])
             intermediates[left].append(x)
-            intermediates[right].append(x)
         return x
 
 
