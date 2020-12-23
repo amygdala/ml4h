@@ -1108,7 +1108,8 @@ class FlatDenseBlock:
             if tm.axes() > 1:
                 y = Flatten()(x[-1])
                 for units in self.dense_layers:
-                    y = Dense(units=units, activation=self.activation)(y)
+                    y = Dense(units=units)(y)
+                    y = _activation_layer(self.activation)(y)
                 x.append(y)
         return y
 
