@@ -933,6 +933,10 @@ class ConvEncoderBlock:
             *,
             tensor_map: TensorMap,
             dense_blocks: List[int],
+            dense_layers: List[int],
+            dense_normalize: str,
+            dense_regularize: str,
+            dense_regularize_rate: float,
             conv_layers: List[int],
             conv_type: str,
             conv_width: List[int],
@@ -976,6 +980,14 @@ class ConvEncoderBlock:
             ) for filters, x, y, z in zip(dense_blocks, x_filters[len(conv_layers):], y_filters[len(conv_layers):], z_filters[len(conv_layers):])
         ]
         self.pools = _pool_layers_from_kind_and_dimension(dimension, pool_type, len(dense_blocks) + 1, pool_x, pool_y, pool_z)
+        self.fully_connected = FullyConnectedBlock(
+            widths=dense_layers,
+            activation=activation,
+            normalization=dense_normalize,
+            regularization=dense_regularize,
+            regularization_rate=dense_regularize_rate,
+            name=f'embed_{self.tensor_map.name}',
+        ) if dense_layers else None
 
     def can_apply(self):
         return self.tensor_map.axes() > 1
@@ -990,7 +1002,10 @@ class ConvEncoderBlock:
             x = pool(x)
             x = dense_block(x)
             intermediates[self.tensor_map].append(x)
-
+        if self.fully_connected:
+            x = Flatten()(x)
+            x = self.fully_connected(x)
+            intermediates[self.tensor_map].append(x)
         return x
 
 
