@@ -1516,7 +1516,8 @@ def _load_model_encoders_and_decoders(tensor_maps_in: List[TensorMap], tensor_ma
         decoders[tm] = load_model(f"{os.path.dirname(model_file)}/decoder_{tm.name}.h5", custom_objects=custom_dict, compile=False)
     logging.info(f"Attempting to load model file from: {model_file}")
     m = load_model(model_file, custom_objects=custom_dict, compile=False)
-    m.compile(optimizer=optimizer, loss=custom_dict['loss'])
+    m.compile(optimizer=optimizer, loss=[tm.loss for tm in tensor_maps_out],
+              metrics={tm.output_name(): tm.metrics for tm in tensor_maps_out})
     m.summary()
     logging.info(f"Loaded encoder, decoders and model file from: {model_file}")
     return m, encoders, decoders
