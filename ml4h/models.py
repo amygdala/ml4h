@@ -1642,6 +1642,7 @@ def block_make_multimodal_multitask_model(
             elif encode_block.endswith(f'encoder_{tm.name}.h5'):
                 serialized_encoder = load_model(encode_block, custom_objects=custom_dict, compile=False)
                 encoder_block_functions[tm] = compose(encoder_block_functions[tm], ModelAsBlock(tensor_map=tm, model=serialized_encoder))
+                break
 
     merge = identity
     for merge_block in merge_blocks:
@@ -1660,6 +1661,7 @@ def block_make_multimodal_multitask_model(
             elif decode_block.endswith(f'decoder_{tm.name}.h5'):
                 serialized_decoder = load_model(decode_block, custom_objects=custom_dict, compile=False)
                 decoder_block_functions[tm] = compose(decoder_block_functions[tm], ModelAsBlock(tensor_map=tm, model=serialized_decoder))
+                break
 
     m, encoders, decoders = _make_multimodal_multitask_model_block(encoder_block_functions, merge, decoder_block_functions)
     m.compile(
@@ -1691,7 +1693,7 @@ def _make_multimodal_multitask_model_block(
     decoder_outputs = []
     for tm, decoder_block in decoder_block_functions.items():  # TODO this needs to be a topological sorted according to parents hierarchy
         reconstruction = decoder_block(latent_inputs, intermediates)
-        decoders[tm] = Model(latent_inputs, reconstruction)
+        decoders[tm] = Model(latent_inputs, reconstruction, name=tm.output_name())
         decoder_outputs.append(decoders[tm](multimodal_activation))
 
     return Model(inputs=list(inputs.values()), outputs=decoder_outputs), encoders, decoders
