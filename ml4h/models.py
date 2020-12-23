@@ -1750,7 +1750,7 @@ def _make_multimodal_multitask_model_block(
     for tm, encoder_block in encoder_block_functions.items():
         inputs[tm] = Input(shape=tm.shape, name=tm.input_name())
         encoding = encoder_block(inputs[tm], intermediates)
-        encoders[tm] = Model(inputs[tm], encoding, name=tm.name)
+        encoders[tm] = Model(inputs[tm], encoding, name=f'encode_{tm.name}')
         x = encoders[tm](inputs[tm])
 
     multimodal_activation = merge(x, intermediates)
