@@ -1702,6 +1702,9 @@ BLOCK_CLASSES = {
     'concat': FlatConcatDenseBlock,
     'flat': FlatDenseBlock,
     'pair': PairLossBlock,
+    'gap': GlobalAveragePoolBlock,
+    'lstm_encode': LSTMEncoderBlock,
+    'language_decode': LanguageDecoderBlock,
     'fc': FullyConnectedBlockBlock,
     'fc_decode': DenseDecoderBlock,
 }
