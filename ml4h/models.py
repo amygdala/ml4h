@@ -1040,10 +1040,10 @@ class ConvEncoderBlock:
             x = pool(x)
             x = dense_block(x)
             intermediates[self.tensor_map].append(x)
-        if self.fully_connected:
-            x = Flatten()(x)
-            x = self.fully_connected(x)
-            intermediates[self.tensor_map].append(x)
+        # if self.fully_connected:
+        #     x = Flatten()(x)
+        #     x = self.fully_connected(x)
+        #     intermediates[self.tensor_map].append(x)
         return x
 
 
