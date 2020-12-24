@@ -1040,10 +1040,10 @@ class ConvEncoderBlock:
             x = pool(x)
             x = dense_block(x)
             intermediates[self.tensor_map].append(x)
-        # if self.fully_connected:
-        #     x = Flatten()(x)
-        #     x = self.fully_connected(x)
-        #     intermediates[self.tensor_map].append(x)
+        if self.fully_connected:
+            x = Flatten()(x)
+            x = self.fully_connected(x)
+            intermediates[self.tensor_map].append(x)
         return x
 
 
@@ -1102,7 +1102,7 @@ class ConvDecoderBlock:
         if x.shape != self.start_shape:
             x = self.reshape(x)
         for i, (dense_block, upsample) in enumerate(zip(self.dense_conv_blocks, self.upsamples)):
-            intermediate = [intermediates[tm][-(i+1)] for tm in self.u_connect_parents]
+            intermediate = [intermediates[tm][len(self.upsamples)-i] for tm in self.u_connect_parents]
             x = concatenate(intermediate + [x]) if intermediate else x
             x = upsample(x)
             x = dense_block(x)
@@ -1786,7 +1786,7 @@ def block_make_multimodal_multitask_model(
                 decoder_block_functions[tm] = compose(decoder_block_functions[tm], ModelAsBlock(tensor_map=tm, model=serialized_decoder))
                 break
 
-    m, encoders, decoders = _make_multimodal_multitask_model_block(encoder_block_functions, merge, decoder_block_functions)
+    m, encoders, decoders = _make_multimodal_multitask_model_block(encoder_block_functions, merge, decoder_block_functions, u_connect)
     m.compile(
         optimizer=opt, loss=[tm.loss for tm in tensor_maps_out],
         metrics={tm.output_name(): tm.metrics for tm in tensor_maps_out},
@@ -1799,6 +1799,7 @@ def _make_multimodal_multitask_model_block(
         encoder_block_functions: Dict[TensorMap, Block],
         merge: Block,
         decoder_block_functions: Dict[TensorMap, Block],  # Assumed to be topologically sorted according to parents hierarchy
+        u_connect: DefaultDict[TensorMap, Set[TensorMap]],
 ) -> Tuple[Model, Dict[TensorMap, Model], Dict[TensorMap, Model]]:
     inputs: Dict[TensorMap, Input] = {}
     encoders: Dict[TensorMap, Model] = {}
@@ -1815,12 +1816,13 @@ def _make_multimodal_multitask_model_block(
     decoders: Dict[TensorMap, Model] = {}
     decoder_outputs = []
     for tm, decoder_block in decoder_block_functions.items():  # TODO this needs to be a topological sorted according to parents hierarchy
-        #reconstruction = decoder_block(latent_inputs, intermediates)
-        #decoders[tm] = Model(latent_inputs, reconstruction, name=tm.output_name())
-        #decoder_outputs.append(decoders[tm](multimodal_activation))
-        reconstruction = decoder_block(multimodal_activation, intermediates)
-        decoder_outputs.append(reconstruction)
-
+        if len(u_connect) > 0:  # Cannot save isolated decoders for UNETs because they require skip connection as inputs as well as latent space
+            reconstruction = decoder_block(multimodal_activation, intermediates)
+            decoder_outputs.append(reconstruction)
+        else:
+            reconstruction = decoder_block(latent_inputs, intermediates)
+            decoders[tm] = Model(latent_inputs, reconstruction, name=tm.output_name())
+            decoder_outputs.append(decoders[tm](multimodal_activation))
     return Model(inputs=list(inputs.values()), outputs=decoder_outputs, name='block_model'), encoders, decoders
 
 
