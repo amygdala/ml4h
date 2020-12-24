@@ -927,6 +927,44 @@ class ModelAsBlock:
         return x
 
 
+class LSTMEncoderBlock:
+    def __init__(
+            self,
+            tensor_map,
+    ):
+        self.tensor_map = tensor_map
+        if not self.can_apply():
+            return
+        self.lstm = LSTM(tensor_map.annotation_units)
+
+    def can_apply(self):
+        return self.tensor_map.is_language()
+
+    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
+        if not self.can_apply():
+            return x
+        return self.lstm(x)
+
+
+class LanguageDecoderBlock:
+    def __init__(
+            self,
+            tensor_map: TensorMap,
+    ):
+        self.tensor_map = tensor_map
+        if not self.can_apply():
+            return
+        self.dense = Dense(tensor_map.shape[-1], activation=tensor_map.activation, name=tensor_map.output_name())
+
+    def can_apply(self):
+        return self.tensor_map.is_language()
+
+    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
+        if not self.can_apply():
+            return x
+        return self.dense(x)
+
+
 class ConvEncoderBlock:
     def __init__(
             self,
@@ -1033,7 +1071,6 @@ class ConvDecoderBlock:
     ):
         self.tensor_map = tensor_map
         if not self.can_apply():
-            logging.info(f'Built a decoder with cannot APPPLY {self.tensor_map}')
             return
         dimension = tensor_map.axes()
         x_filters = _repeat_dimension(conv_width if dimension == 2 else conv_x, len(dense_blocks))
@@ -1065,7 +1102,7 @@ class ConvDecoderBlock:
         if x.shape != self.start_shape:
             x = self.reshape(x)
         for i, (dense_block, upsample) in enumerate(zip(self.dense_conv_blocks, self.upsamples)):
-            intermediate = [intermediates[tm][-(i + 1)] for tm in self.u_connect_parents]
+            intermediate = [intermediates[tm][len(self.upsamples)-i] for tm in self.u_connect_parents]
             x = concatenate(intermediate + [x]) if intermediate else x
             x = upsample(x)
             x = dense_block(x)
@@ -1131,7 +1168,7 @@ class FlatDenseBlock:
 
 class FlatConcatDenseBlock:
     """
-    Flattens or GAPs then concatenates all inputs, applies a dense layer, then restructures to provided shapes
+    Flattens then concatenates all inputs, applies a dense layer
     """
     def __init__(
             self,
@@ -1140,7 +1177,6 @@ class FlatConcatDenseBlock:
             dense_normalize: str,
             dense_regularize: str,
             dense_regularize_rate: float,
-            bottleneck_type: BottleneckType,
             **kwargs,
     ):
         self.fully_connected = FullyConnectedBlock(
@@ -1151,20 +1187,40 @@ class FlatConcatDenseBlock:
             regularization_rate=dense_regularize_rate,
             name='embed',
         ) if dense_layers else None
-        self.bottleneck_type = bottleneck_type
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
-        if self.bottleneck_type == BottleneckType.FlattenRestructure:
-            y = [Flatten()(x[-1]) for x in intermediates.values()]
-        elif self.bottleneck_type == BottleneckType.GlobalAveragePoolStructured:
-            y = [Flatten()(x[-1]) for tm, x in intermediates.items() if len(x[-1].shape) == 2]  # Flat tensors
-            y += [global_average_pool(x[-1]) for tm, x in intermediates.items() if len(x[-1].shape) > 2]  # Structured tensors
-        else:
-            raise NotImplementedError(f'bottleneck_type {self.bottleneck_type} does not exist.')
-        if len(y) > 1:
-            y = concatenate(y)
-        else:
-            y = y[0]
+        y = [Flatten()(x[-1]) for x in intermediates.values()]
+        y = concatenate(y) if len(y) > 1 else y[0]
+        y = self.fully_connected(y) if self.fully_connected else y
+        return y
+
+
+class GlobalAveragePoolBlock:
+    """
+    GAPs then concatenates all inputs, applies a dense layer
+    """
+    def __init__(
+            self,
+            activation: str,
+            dense_layers: List[int],
+            dense_normalize: str,
+            dense_regularize: str,
+            dense_regularize_rate: float,
+            **kwargs,
+    ):
+        self.fully_connected = FullyConnectedBlock(
+            widths=dense_layers,
+            activation=activation,
+            normalization=dense_normalize,
+            regularization=dense_regularize,
+            regularization_rate=dense_regularize_rate,
+            name='embed',
+        ) if dense_layers else None
+
+    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
+        y = [Flatten()(x[-1]) for tm, x in intermediates.items() if len(x[-1].shape) == 2]  # Flat tensors
+        y += [global_average_pool(x[-1]) for tm, x in intermediates.items() if len(x[-1].shape) > 2]  # Structured tensors
+        y = concatenate(y) if len(y) > 1 else y[0]
         y = self.fully_connected(y) if self.fully_connected else y
         return y
 
