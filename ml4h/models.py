@@ -1102,7 +1102,7 @@ class ConvDecoderBlock:
         if x.shape != self.start_shape:
             x = self.reshape(x)
         for i, (dense_block, upsample) in enumerate(zip(self.dense_conv_blocks, self.upsamples)):
-            intermediate = [intermediates[tm][len(self.upsamples)-(i+1)] for tm in self.u_connect_parents]
+            intermediate = [intermediates[tm][-(i+1)] for tm in self.u_connect_parents]
             x = concatenate(intermediate + [x]) if intermediate else x
             x = upsample(x)
             x = dense_block(x)
