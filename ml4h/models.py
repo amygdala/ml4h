@@ -1219,9 +1219,9 @@ class GlobalAveragePoolBlock:
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
         y = [Flatten()(x[-1]) for tm, x in intermediates.items() if tm.axes() == 1]  # Flat tensors
-        y += [global_average_pool(x[-1 if self.fully_connected else -2]) for tm, x in intermediates.items() if tm.axes() > 1]  # Structured tensors
+        y += [global_average_pool(x[-2 if self.fully_connected else -1]) for tm, x in intermediates.items() if tm.axes() > 1]  # Structured tensors
         y = concatenate(y) if len(y) > 1 else y[0]
-        #y = self.fully_connected(y) if self.fully_connected else y
+        y = self.fully_connected(y) if self.fully_connected else y
         return y
 
 
