@@ -1833,6 +1833,7 @@ def _make_multimodal_multitask_model_block(
     decoders: Dict[TensorMap, Model] = {}
     decoder_outputs = []
     for tm, decoder_block in decoder_block_functions.items():  # TODO this needs to be a topological sorted according to parents hierarchy
+        logging.info(f'U Connect is: {u_connect} with len  {len(u_connect)}')
         if False and len(u_connect) > 0:  # Cannot save isolated decoders for UNETs because they require skip connection as inputs as well as latent space
             reconstruction = decoder_block(multimodal_activation, intermediates)
             decoder_outputs.append(reconstruction)
