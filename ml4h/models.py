@@ -1815,10 +1815,11 @@ def _make_multimodal_multitask_model_block(
     decoders: Dict[TensorMap, Model] = {}
     decoder_outputs = []
     for tm, decoder_block in decoder_block_functions.items():  # TODO this needs to be a topological sorted according to parents hierarchy
-        reconstruction = decoder_block(latent_inputs, intermediates)
-        decoder_outputs.append(reconstruction)
+        #reconstruction = decoder_block(latent_inputs, intermediates)
         #decoders[tm] = Model(latent_inputs, reconstruction, name=tm.output_name())
         #decoder_outputs.append(decoders[tm](multimodal_activation))
+        reconstruction = decoder_block(multimodal_activation, intermediates)
+        decoder_outputs.append(reconstruction)
 
     return Model(inputs=list(inputs.values()), outputs=decoder_outputs, name='block_model'), encoders, decoders
 
