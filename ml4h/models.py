@@ -1748,11 +1748,14 @@ def block_make_multimodal_multitask_model(
     The tasks attempted are given by the output TensorMaps.
     The modalities and the first layers in the architecture are determined by the input TensorMaps.
 
-    Hyperparameters are exposed to the command line.
+    Hyperparameters are exposed to the command line and passed through to Block constructors via **kwargs.
     Model summary printed to output
 
     :param tensor_maps_in: List of input TensorMaps
     :param tensor_maps_out: List of output TensorMaps
+    :param encoder_blocks: One or more BLOCK_CLASS keys or hd5 model files to encode applicable input TensorMaps
+    :param decoder_blocks: One or more BLOCK_CLASS keys or hd5 model files to decode applicable output TensorMaps
+    :param merge_blocks: Zero or more BLOCK_CLASS keys to construct multimodal latent space or apply loss functions based on internal activations, etc..
     :param learning_rate: learning rate for optimizer
     :param u_connect: dictionary of input TensorMap -> output TensorMaps to u connect to
     :param optimizer: which optimizer to use. See optimizers.py.
@@ -1779,7 +1782,7 @@ def block_make_multimodal_multitask_model(
             elif encode_block.endswith(f'encoder_{tm.name}.h5'):
                 serialized_encoder = load_model(encode_block, custom_objects=custom_dict, compile=False)
                 encoder_block_functions[tm] = compose(encoder_block_functions[tm], ModelAsBlock(tensor_map=tm, model=serialized_encoder))
-                break
+                break  # Don't also reconstruct from scratch if model is serialized, hd5 models must preceed BLOCK_CLASS keys
 
     merge = identity
     for merge_block in merge_blocks:
@@ -1800,13 +1803,13 @@ def block_make_multimodal_multitask_model(
                 decoder_block_functions[tm] = compose(decoder_block_functions[tm], ModelAsBlock(tensor_map=tm, model=serialized_decoder))
                 break
 
-    m, encoders, decoders = _make_multimodal_multitask_model_block(encoder_block_functions, merge, decoder_block_functions, u_connect)
-    m.compile(
+    full_model, encoders, decoders = _make_multimodal_multitask_model_block(encoder_block_functions, merge, decoder_block_functions, u_connect)
+    full_model.compile(
         optimizer=opt, loss=[tm.loss for tm in tensor_maps_out],
         metrics={tm.output_name(): tm.metrics for tm in tensor_maps_out},
     )
-    m.summary()
-    return m, encoders, decoders
+    full_model.summary()
+    return full_model, encoders, decoders
 
 
 def _make_multimodal_multitask_model_block(
@@ -1830,7 +1833,7 @@ def _make_multimodal_multitask_model_block(
     decoders: Dict[TensorMap, Model] = {}
     decoder_outputs = []
     for tm, decoder_block in decoder_block_functions.items():  # TODO this needs to be a topological sorted according to parents hierarchy
-        if len(u_connect) > 0:  # Cannot save isolated decoders for UNETs because they require skip connection as inputs as well as latent space
+        if False and len(u_connect) > 0:  # Cannot save isolated decoders for UNETs because they require skip connection as inputs as well as latent space
             reconstruction = decoder_block(multimodal_activation, intermediates)
             decoder_outputs.append(reconstruction)
         else:
