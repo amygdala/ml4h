@@ -174,6 +174,8 @@ def train_block(args):
     test_data, test_labels, test_paths = big_batch_from_minibatch_generator(generate_test, args.test_steps)
     samples = min(args.test_steps * args.batch_size, 12)
     predictions_list = model.predict(test_data)
+    if len(args.tensor_maps_out) == 1:
+        predictions_list = [predictions_list]
     predictions_dict = {name: pred for name, pred in zip(model.output_names, predictions_list)}
     logging.info(f'Predictions and shapes are: {[(p, predictions_dict[p].shape) for p in predictions_dict]}')
     performance_metrics = {}
