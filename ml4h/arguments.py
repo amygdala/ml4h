@@ -432,7 +432,7 @@ def _process_args(args):
             args.tensor_maps_in.extend([input_map, burn_in])
         args.tensor_maps_out.append(output_map)
 
-    args.tensor_maps_in = [tensormap_lookup(it, args.tensormap_prefix) for it in args.input_tensors]
+    args.tensor_maps_in.extend([tensormap_lookup(it, args.tensormap_prefix) for it in args.input_tensors])
 
     if args.continuous_file is not None:
         # Continuous TensorMap generated from file is given the name specified by the first output_tensors argument
