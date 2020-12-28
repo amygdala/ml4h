@@ -1581,13 +1581,14 @@ def _load_model_encoders_and_decoders(tensor_maps_in: List[TensorMap], tensor_ma
     decoders = {}
     for tm in tensor_maps_out:
         decoders[tm] = load_model(f"{os.path.dirname(model_file)}/decoder_{tm.name}.h5", custom_objects=custom_dict, compile=False)
+    merger = load_model(f"{os.path.dirname(model_file)}/merger.h5", custom_objects=custom_dict, compile=False)
     logging.info(f"Attempting to load model file from: {model_file}")
     m = load_model(model_file, custom_objects=custom_dict, compile=False)
     m.compile(optimizer=optimizer, loss=[tm.loss for tm in tensor_maps_out],
               metrics={tm.output_name(): tm.metrics for tm in tensor_maps_out})
     m.summary()
     logging.info(f"Loaded encoders, decoders and model file from: {model_file}")
-    return m, encoders, decoders
+    return m, encoders, decoders, merger
 
 
 def make_paired_autoencoder_model(
@@ -1803,13 +1804,13 @@ def block_make_multimodal_multitask_model(
                 decoder_block_functions[tm] = compose(decoder_block_functions[tm], ModelAsBlock(tensor_map=tm, model=serialized_decoder))
                 break
 
-    full_model, encoders, decoders = _make_multimodal_multitask_model_block(encoder_block_functions, merge, decoder_block_functions, u_connect)
+    full_model, encoders, decoders, merger = _make_multimodal_multitask_model_block(encoder_block_functions, merge, decoder_block_functions, u_connect)
     full_model.compile(
         optimizer=opt, loss=[tm.loss for tm in tensor_maps_out],
         metrics={tm.output_name(): tm.metrics for tm in tensor_maps_out},
     )
     full_model.summary()
-    return full_model, encoders, decoders
+    return full_model, encoders, decoders, merger
 
 
 def _make_multimodal_multitask_model_block(
@@ -1846,7 +1847,7 @@ def _make_multimodal_multitask_model_block(
             reconstruction = decoder_block(latent_inputs, intermediates)
             decoders[tm] = Model(latent_inputs, reconstruction, name=tm.output_name())
             decoder_outputs.append(decoders[tm](multimodal_activation))
-    return Model(inputs=list(inputs.values()), outputs=decoder_outputs, name='block_model'), encoders, decoders
+    return Model(inputs=list(inputs.values()), outputs=decoder_outputs, name='block_model'), encoders, decoders, merge_model
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
