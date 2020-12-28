@@ -1820,15 +1820,22 @@ def _make_multimodal_multitask_model_block(
 ) -> Tuple[Model, Dict[TensorMap, Model], Dict[TensorMap, Model]]:
     inputs: Dict[TensorMap, Input] = {}
     encoders: Dict[TensorMap, Model] = {}
-    intermediates = defaultdict(list)  # Dict[TensorMap, List[Layer]]
+    encodings: List[Layer] = []
+    encodings_as_inputs: List[Input] = []
+    intermediates: Dict[TensorMap, List[Layer]] = defaultdict(list)
+
     for tm, encoder_block in encoder_block_functions.items():
         inputs[tm] = Input(shape=tm.shape, name=tm.input_name())
         encoding = encoder_block(inputs[tm], intermediates)
         encoders[tm] = Model(inputs[tm], encoding, name=f'encode_{tm.name}')
-        x = encoders[tm](inputs[tm])
+        encodings.append(encoders[tm](inputs[tm]))
+        encodings_as_inputs.append(Input(shape=encodings[-1].shape, name=f'encoding_{tm.name}'))
 
-    multimodal_activation = merge(x, intermediates)
+    merged = merge(encodings_as_inputs, intermediates)
+    merge_model = Model(encodings_as_inputs, merged)
+    multimodal_activation = merge_model(encodings)
     latent_inputs = Input(shape=(multimodal_activation.shape[-1],), name='input_multimodal_space')
+
     logging.info(f'Graph from input TensorMaps has intermediates: {[(tm, [ti.shape for ti in t]) for tm, t in intermediates.items()]}')
     decoders: Dict[TensorMap, Model] = {}
     decoder_outputs = []
