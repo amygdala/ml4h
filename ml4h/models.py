@@ -1832,7 +1832,7 @@ def _make_multimodal_multitask_model_block(
         encodings_as_inputs.append(Input(shape=encodings[-1].shape, name=f'encoding_{tm.name}'))
 
     multimodal_activation = merge(encodings, intermediates)
-    merge_model = Model(encodings, multimodal_activation)
+    merge_model = Model(encodings_as_inputs, multimodal_activation)
     latent_inputs = Input(shape=(multimodal_activation.shape[-1],), name='input_multimodal_space')
     logging.info(f'Graph from input TensorMaps has intermediates: {[(tm, [ti.shape for ti in t]) for tm, t in intermediates.items()]}')
     decoders: Dict[TensorMap, Model] = {}
