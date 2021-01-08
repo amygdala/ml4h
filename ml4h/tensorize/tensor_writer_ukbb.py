@@ -42,7 +42,6 @@ from ml4h.defines import StorageType, IMAGE_EXT, TENSOR_EXT, DICOM_EXT, JOIN_CHA
 from ml4h.defines import MRI_PIXEL_WIDTH, MRI_PIXEL_HEIGHT, MRI_SLICE_THICKNESS, MRI_PATIENT_ORIENTATION, MRI_PATIENT_POSITION
 
 
-
 MRI_MIN_RADIUS = 2
 MRI_MAX_MYOCARDIUM = 20
 MRI_BIG_RADIUS_FACTOR = 0.9
@@ -654,32 +653,33 @@ def _write_tensors_from_xml(xml_field_ids, xml_folder, hd5, sample_id, write_png
 def _write_ecg_rest_tensors(ecgs, xml_field, hd5, sample_id, write_pngs, stats, continuous_stats) -> None:
     rest_group = 'ukb_ecg_rest'
     for ecg in ecgs:
-        logging.info('Got ECG for sample:{} XML field:{}'.format(sample_id, xml_field))
+        instance = ecg.split('_')[2]
+        logging.info(f'Got ECG for sample:{sample_id} XML field:{xml_field} Instance:{instance}')
         root = et.parse(ecg).getroot()
         ecg_date = _str2date(_date_str_from_ecg(root))
         diagnosis_text = []
         for d in root.findall("./Interpretation/Diagnosis/DiagnosisText"):
             if 'QRS Complexes:' in d.text:
                 qrs = float(d.text.replace('QRS Complexes:', '').split(',')[0].strip())
-                create_tensor_in_hd5(hd5, rest_group, 'QRSComplexes', qrs, stats, date=ecg_date)
+                create_tensor_in_hd5(hd5, rest_group, 'QRSComplexes', qrs, stats, date=ecg_date, instance=instance)
             elif '---' in d.text or 'Arrhythmia results of the full-disclosure ECG' in d.text:
                 continue
             else:
                 diagnosis_text.append(d.text.replace(',', '').replace('*', '').replace('&', 'and').replace('  ', ' '))
 
         diagnosis_str = ' '.join(diagnosis_text)
-        create_tensor_in_hd5(hd5, rest_group, 'ecg_rest_text', diagnosis_str, stats, date=ecg_date, storage_type=StorageType.STRING)
+        create_tensor_in_hd5(hd5, rest_group, 'ecg_rest_text', diagnosis_str, stats, date=ecg_date, instance=instance, storage_type=StorageType.STRING)
 
         for c in root.findall("./StripData/WaveformData"):
             lead_data = list(map(float, c.text.strip().split(',')))
             dataset_name = 'strip_' + str(c.attrib['lead'])
-            create_tensor_in_hd5(hd5, rest_group, dataset_name, lead_data, stats, date=ecg_date)
+            create_tensor_in_hd5(hd5, rest_group, dataset_name, lead_data, stats, date=ecg_date, instance=instance)
             stats[dataset_name] += 1
 
         for c in root.findall("./RestingECGMeasurements"):
             for child in c:
                 if child.text is not None and child.tag in ECG_TAGS_TO_WRITE:
-                    create_tensor_in_hd5(hd5, rest_group, child.tag, float(child.text), stats, date=ecg_date)
+                    create_tensor_in_hd5(hd5, rest_group, child.tag, float(child.text), stats, date=ecg_date, instance=instance)
                     stats[child.tag] += 1
                     if write_pngs:
                         continuous_stats[child.tag].append(float(child.text))
@@ -688,13 +688,13 @@ def _write_ecg_rest_tensors(ecgs, xml_field, hd5, sample_id, write_pngs, stats, 
                         if median_c.tag == 'WaveformData':
                             median_wave = list(map(float, median_c.text.strip().split(',')))
                             dataset_name = 'median_' + str(median_c.attrib['lead'])
-                            create_tensor_in_hd5(hd5, 'ukb_ecg_rest', dataset_name, median_wave, stats, date=ecg_date)
+                            create_tensor_in_hd5(hd5, rest_group, dataset_name, median_wave, stats, date=ecg_date, instance=instance)
         for c in root.findall("./RestingECGMeasurements/MeasurementTable"):
             for child in c:
                 if child.tag not in ECG_TABLE_TAGS:
                     continue
                 values = list(map(_to_float_or_nan, child.text.strip().split(',')))
-                create_tensor_in_hd5(hd5, 'ukb_ecg_rest', child.tag.lower(), values, stats, date=ecg_date)
+                create_tensor_in_hd5(hd5, rest_group, child.tag.lower(), values, stats, date=ecg_date, instance=instance)
 
 
 def create_tensor_in_hd5(
