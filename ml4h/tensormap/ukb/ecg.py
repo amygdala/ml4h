@@ -421,76 +421,76 @@ ecg_bike_hr_achieved = TensorMap(
 )
 
 ecg_rest_raw = TensorMap(
-    'ecg_rest_raw', Interpretation.CONTINUOUS, shape=(5000, 12), path_prefix='ukb_ecg_rest/2', tensor_from_file=_make_ecg_rest(),
+    'ecg_rest_raw', Interpretation.CONTINUOUS, shape=(5000, 12), path_prefix='ukb_ecg_rest/instance_2', tensor_from_file=_make_ecg_rest(),
     channel_map=ECG_REST_LEADS, normalization=Standardize(mean=0, std=2000),
 )
 
 ecg_rest_raw_roll = TensorMap(
-    'ecg_rest_raw', Interpretation.CONTINUOUS, shape=(5000, 12), path_prefix='ukb_ecg_rest/2', tensor_from_file=_make_ecg_rest(random_roll=True),
+    'ecg_rest_raw', Interpretation.CONTINUOUS, shape=(5000, 12), path_prefix='ukb_ecg_rest/instance_2', tensor_from_file=_make_ecg_rest(random_roll=True),
     channel_map=ECG_REST_LEADS, cacheable=False, normalization=Standardize(mean=0, std=2000),
 )
 ecg_rest_raw_warp = TensorMap(
-    'ecg_rest_raw', Interpretation.CONTINUOUS, shape=(5000, 12), path_prefix='ukb_ecg_rest/2', tensor_from_file=_make_ecg_rest(warp=True),
+    'ecg_rest_raw', Interpretation.CONTINUOUS, shape=(5000, 12), path_prefix='ukb_ecg_rest/instance_2', tensor_from_file=_make_ecg_rest(warp=True),
     channel_map=ECG_REST_LEADS, cacheable=False, normalization=Standardize(mean=0, std=2000),
 )
 ecg_rest_raw_warp_n_roll = TensorMap(
-    'ecg_rest_raw', Interpretation.CONTINUOUS, shape=(5000, 12), path_prefix='ukb_ecg_rest/2', tensor_from_file=_make_ecg_rest(random_roll=True, warp=True),
+    'ecg_rest_raw', Interpretation.CONTINUOUS, shape=(5000, 12), path_prefix='ukb_ecg_rest/instance_2', tensor_from_file=_make_ecg_rest(random_roll=True, warp=True),
     channel_map=ECG_REST_LEADS, cacheable=False, normalization=Standardize(mean=0, std=2000),
 )
 ecg_rest_raw_100 = TensorMap(
-    'ecg_rest_raw_100', Interpretation.CONTINUOUS, shape=(5000, 12), path_prefix='ukb_ecg_rest/2', tensor_from_file=_make_ecg_rest(),
+    'ecg_rest_raw_100', Interpretation.CONTINUOUS, shape=(5000, 12), path_prefix='ukb_ecg_rest/instance_2', tensor_from_file=_make_ecg_rest(),
     channel_map=ECG_REST_LEADS, normalization=Standardize(mean=0, std=100),
 )
 ecg_rest_raw_10 = TensorMap(
-    'ecg_rest_raw_10', Interpretation.CONTINUOUS, shape=(5000, 12), path_prefix='ukb_ecg_rest/2', tensor_from_file=_make_ecg_rest(),
+    'ecg_rest_raw_10', Interpretation.CONTINUOUS, shape=(5000, 12), path_prefix='ukb_ecg_rest/instance_2', tensor_from_file=_make_ecg_rest(),
     channel_map=ECG_REST_LEADS, normalization=Standardize(mean=0, std=10),
 )
 ecg_rest = TensorMap(
-    'strip', Interpretation.CONTINUOUS, shape=(5000, 12), path_prefix='ukb_ecg_rest/2', tensor_from_file=_make_ecg_rest(),
+    'strip', Interpretation.CONTINUOUS, shape=(5000, 12), path_prefix='ukb_ecg_rest/instance_2', tensor_from_file=_make_ecg_rest(),
     channel_map=ECG_REST_LEADS, normalization=ZeroMeanStd1(),
 )
 ecg_rest_2500_ukb = TensorMap(
-    'ecg_rest_2500', Interpretation.CONTINUOUS, shape=(2500, 12), path_prefix='ukb_ecg_rest/2', channel_map=ECG_REST_LEADS,
+    'ecg_rest_2500', Interpretation.CONTINUOUS, shape=(2500, 12), path_prefix='ukb_ecg_rest/instance_2', channel_map=ECG_REST_LEADS,
     tensor_from_file=_make_ecg_rest(downsample_steps=2), normalization=ZeroMeanStd1(),
 )
 
 ecg_rest_stft = TensorMap(
-    'ecg_rest_stft', Interpretation.CONTINUOUS, shape=(33, 158, 12), path_prefix='ukb_ecg_rest/2', channel_map=ECG_REST_LEADS,
+    'ecg_rest_stft', Interpretation.CONTINUOUS, shape=(33, 158, 12), path_prefix='ukb_ecg_rest/instance_2', channel_map=ECG_REST_LEADS,
     tensor_from_file=_make_ecg_rest(short_time_nperseg=64, short_time_noverlap=32), normalization=ZeroMeanStd1()
 )
 ecg_rest_stft_512 = TensorMap(
-    'ecg_rest_stft_512', shape=(257, 314, 12), path_prefix='ukb_ecg_rest/2', channel_map=ECG_REST_LEADS,
+    'ecg_rest_stft_512', shape=(257, 314, 12), path_prefix='ukb_ecg_rest/instance_2', channel_map=ECG_REST_LEADS,
     tensor_from_file=_make_ecg_rest(short_time_nperseg=512, short_time_noverlap=496), normalization=ZeroMeanStd1(),
 )
 
 ecg_rest_stack = TensorMap(
-    'strip', Interpretation.CONTINUOUS, shape=(600, 12, 8), path_prefix='ukb_ecg_rest/2', tensor_from_file=_make_ecg_rest(),
+    'strip', Interpretation.CONTINUOUS, shape=(600, 12, 8), path_prefix='ukb_ecg_rest/instance_2', tensor_from_file=_make_ecg_rest(),
     channel_map=ECG_REST_LEADS, normalization=ZeroMeanStd1(),
 )
 
 ecg_rest_median_raw = TensorMap(
-    'median', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', shape=(600, 12), loss='logcosh', activation='linear', tensor_from_file=_make_ecg_rest(),
+    'median', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', shape=(600, 12), loss='logcosh', activation='linear', tensor_from_file=_make_ecg_rest(),
     metrics=['mse', 'mae', 'logcosh'], channel_map=ECG_REST_MEDIAN_LEADS, normalization=Standardize(mean=0, std=2000),
 )
 
 ecg_rest_median = TensorMap(
-    'median', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', shape=(600, 12), loss='logcosh', activation='linear', tensor_from_file=_make_ecg_rest(),
+    'median', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', shape=(600, 12), loss='logcosh', activation='linear', tensor_from_file=_make_ecg_rest(),
     metrics=['mse', 'mae', 'logcosh'], channel_map=ECG_REST_MEDIAN_LEADS, normalization=ZeroMeanStd1(),
 )
 
 ecg_rest_median_stack = TensorMap(
-    'median', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', shape=(600, 12, 1), activation='linear', tensor_from_file=_make_ecg_rest(),
+    'median', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', shape=(600, 12, 1), activation='linear', tensor_from_file=_make_ecg_rest(),
     metrics=['mse', 'mae', 'logcosh'], loss='logcosh', loss_weight=1.0,
     channel_map=ECG_REST_MEDIAN_LEADS, normalization=ZeroMeanStd1(),
 )
 
 ecg_median_1lead = TensorMap(
-    'median', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', shape=(600, 1), loss='logcosh', loss_weight=10.0, tensor_from_file=_make_ecg_rest(),
+    'median', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', shape=(600, 1), loss='logcosh', loss_weight=10.0, tensor_from_file=_make_ecg_rest(),
     activation='linear', metrics=['mse', 'mae', 'logcosh'], channel_map={'lead': 0}, normalization=ZeroMeanStd1(),
 )
 
 ecg_rest_1lead = TensorMap(
-    'strip', Interpretation.CONTINUOUS, shape=(600, 8), path_prefix='ukb_ecg_rest/2', channel_map={'lead': 0}, tensor_from_file=_make_ecg_rest(),
+    'strip', Interpretation.CONTINUOUS, shape=(600, 8), path_prefix='ukb_ecg_rest/instance_2', channel_map={'lead': 0}, tensor_from_file=_make_ecg_rest(),
     dependent_map=ecg_median_1lead, normalization=ZeroMeanStd1(),
 )
 
@@ -503,7 +503,7 @@ ecg_median_1lead_categorical = TensorMap(
 )
 
 ecg_rest_1lead_categorical = TensorMap(
-    'strip', shape=(600, 8), path_prefix='ukb_ecg_rest/2', tensor_from_file=_make_ecg_rest(),
+    'strip', shape=(600, 8), path_prefix='ukb_ecg_rest/instance_2', tensor_from_file=_make_ecg_rest(),
     normalization=ZeroMeanStd1(),
     channel_map={
         'window0': 0, 'window1': 1, 'window2': 2, 'window3': 3,
@@ -640,40 +640,40 @@ prolonged_qt = TensorMap(
 
 
 ecg_rest_ramplitude_raw = TensorMap(
-    'ramplitude', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', shape=(12,), tensor_from_file=_make_ukb_ecg_rest(1.0),
+    'ramplitude', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', shape=(12,), tensor_from_file=_make_ukb_ecg_rest(1.0),
     loss='logcosh', metrics=['mse', 'mape', 'mae'], loss_weight=1.0,
 )
 
 ecg_rest_samplitude_raw = TensorMap(
-    'samplitude', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', shape=(12,), tensor_from_file=_make_ukb_ecg_rest(1.0),
+    'samplitude', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', shape=(12,), tensor_from_file=_make_ukb_ecg_rest(1.0),
     loss='logcosh', metrics=['mse', 'mape', 'mae'], loss_weight=1.0,
 )
 
 ecg_rest_ramplitude = TensorMap(
-    'ramplitude', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', shape=(12,), tensor_from_file=_make_ukb_ecg_rest(),
+    'ramplitude', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', shape=(12,), tensor_from_file=_make_ukb_ecg_rest(),
     loss='logcosh', metrics=['mse', 'mape', 'mae'], loss_weight=1.0,
 )
 
 ecg_rest_samplitude = TensorMap(
-    'samplitude', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', shape=(12,), tensor_from_file=_make_ukb_ecg_rest(),
+    'samplitude', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', shape=(12,), tensor_from_file=_make_ukb_ecg_rest(),
     loss='logcosh', metrics=['mse', 'mape', 'mae'], loss_weight=1.0,
 )
 
 
 ecg_rest_lvh_avl = TensorMap(
-    'avl_lvh', Interpretation.CATEGORICAL, path_prefix='ukb_ecg_rest/2', tensor_from_file=_make_ukb_ecg_rest_lvh(),
+    'avl_lvh', Interpretation.CATEGORICAL, path_prefix='ukb_ecg_rest/instance_2', tensor_from_file=_make_ukb_ecg_rest_lvh(),
     channel_map={'no_avl_lvh': 0, 'aVL LVH': 1},
     loss=weighted_crossentropy([0.006, 1.0], 'avl_lvh'),
 )
 
 ecg_rest_lvh_sokolow_lyon = TensorMap(
-    'sokolow_lyon_lvh', Interpretation.CATEGORICAL, path_prefix='ukb_ecg_rest/2', tensor_from_file=_make_ukb_ecg_rest_lvh(),
+    'sokolow_lyon_lvh', Interpretation.CATEGORICAL, path_prefix='ukb_ecg_rest/instance_2', tensor_from_file=_make_ukb_ecg_rest_lvh(),
     channel_map={'no_sokolow_lyon_lvh': 0, 'Sokolow Lyon LVH': 1},
     loss=weighted_crossentropy([0.005, 1.0], 'sokolov_lyon_lvh'),
 )
 
 ecg_rest_lvh_cornell = TensorMap(
-    'cornell_lvh', Interpretation.CATEGORICAL, path_prefix='ukb_ecg_rest/2', tensor_from_file=_make_ukb_ecg_rest_lvh(),
+    'cornell_lvh', Interpretation.CATEGORICAL, path_prefix='ukb_ecg_rest/instance_2', tensor_from_file=_make_ukb_ecg_rest_lvh(),
     channel_map={'no_cornell_lvh': 0, 'Cornell LVH': 1},
     loss=weighted_crossentropy([0.003, 1.0], 'cornell_lvh'),
 )
@@ -742,154 +742,154 @@ ecg_block = TensorMap(
 )
 
 ecg_rest_next_char = TensorMap('ecg_rest_next_char', Interpretation.LANGUAGE, shape=(len(ECG_CHAR_2_IDX),), channel_map=ECG_CHAR_2_IDX, activation='softmax', loss='categorical_crossentropy', loss_weight=2.0)
-ecg_rest_text = TensorMap('ecg_rest_text', Interpretation.LANGUAGE, shape=(100, len(ECG_CHAR_2_IDX)), path_prefix='ukb_ecg_rest/2', channel_map={'context': 0, 'alphabet': 1}, dependent_map=ecg_rest_next_char)
+ecg_rest_text = TensorMap('ecg_rest_text', Interpretation.LANGUAGE, shape=(100, len(ECG_CHAR_2_IDX)), path_prefix='ukb_ecg_rest/instance_2', channel_map={'context': 0, 'alphabet': 1}, dependent_map=ecg_rest_next_char)
 
 p_axis = TensorMap(
-    'PAxis', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'PAxis': 0}, loss='logcosh', validator=make_range_validator(-50, 130),
+    'PAxis', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'PAxis': 0}, loss='logcosh', validator=make_range_validator(-50, 130),
     normalization={'mean': 48.7, 'std': 23.1},
 )
 p_duration = TensorMap(
-    'PDuration', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'PDuration': 0}, loss='logcosh', validator=make_range_validator(30, 140),
+    'PDuration', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'PDuration': 0}, loss='logcosh', validator=make_range_validator(30, 140),
     normalization={'mean': 96.1, 'std': 18.85},
 )
 p_offset = TensorMap(
-    'POffset', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'POffset': 0}, loss='logcosh', validator=make_range_validator(200, 500),
+    'POffset', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'POffset': 0}, loss='logcosh', validator=make_range_validator(200, 500),
     normalization={'mean': 369.1, 'std': 28.42},
 )
 p_onset = TensorMap(
-    'POnset', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'POnset': 0}, loss='logcosh', validator=make_range_validator(120, 400),
+    'POnset', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'POnset': 0}, loss='logcosh', validator=make_range_validator(120, 400),
     normalization={'mean': 275.1, 'std': 26.420},
 )
 pp_interval = TensorMap(
-    'PPInterval', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'PPInterval': 0}, loss='logcosh', validator=make_range_validator(300, 1800),
+    'PPInterval', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'PPInterval': 0}, loss='logcosh', validator=make_range_validator(300, 1800),
     normalization={'mean': 1036.1, 'std': 185.0},
 )
 pq_interval = TensorMap(
-    'PQInterval', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'PQInterval': 0}, loss='logcosh', validator=make_range_validator(70, 400),
+    'PQInterval', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'PQInterval': 0}, loss='logcosh', validator=make_range_validator(70, 400),
     normalization={'mean': 165.9, 'std': 26.3},
 )
 q_offset = TensorMap(
-    'QOffset', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'QOffset': 0}, loss='logcosh', validator=make_range_validator(300, 600),
+    'QOffset', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'QOffset': 0}, loss='logcosh', validator=make_range_validator(300, 600),
     normalization={'mean': 525.1, 'std': 13.52},
 )
 q_onset = TensorMap(
-    'QOnset', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'QOnset': 0}, loss='logcosh', validator=make_range_validator(370, 600),
+    'QOnset', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'QOnset': 0}, loss='logcosh', validator=make_range_validator(370, 600),
     normalization={'mean': 435.1, 'std': 11.420},
 )
 qrs_complexes = TensorMap(
-    'QRSComplexes', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'QRSComplexes': 0}, loss='logcosh', validator=make_range_validator(0, 60),
+    'QRSComplexes', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'QRSComplexes': 0}, loss='logcosh', validator=make_range_validator(0, 60),
     normalization={'mean': 8.0, 'std': 20.0},
 )
 qrs_duration = TensorMap(
-    'QRSDuration', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'QRSDuration': 0}, loss='logcosh', validator=make_range_validator(45, 175),
+    'QRSDuration', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'QRSDuration': 0}, loss='logcosh', validator=make_range_validator(45, 175),
     normalization={'mean': 89.53, 'std': 12.21},
 )
 qrs_num = TensorMap(
-    'QRSNum', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'QRSNum': 0}, loss='logcosh', validator=make_range_validator(2, 30),
+    'QRSNum', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'QRSNum': 0}, loss='logcosh', validator=make_range_validator(2, 30),
     normalization={'mean': 9.61, 'std': 1.64},
 )
 qt_interval = TensorMap(
-    'QTInterval', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'QTInterval': 0}, loss='logcosh', validator=make_range_validator(300, 600),
+    'QTInterval', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'QTInterval': 0}, loss='logcosh', validator=make_range_validator(300, 600),
     normalization={'mean': 426.1, 'std': 32.24},
 )
 qt_interval_quintiles = TensorMap(
-    'QTInterval', Interpretation.DISCRETIZED, path_prefix='ukb_ecg_rest/2',
+    'QTInterval', Interpretation.DISCRETIZED, path_prefix='ukb_ecg_rest/instance_2',
     channel_map={'QTInterval': 0}, normalization={'mean': 426.1, 'std': 32.24},
     discretization_bounds=[-0.842, -0.253, 0.253, 0.842],
 )
 qtc_interval = TensorMap(
-    'QTCInterval', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'QTCInterval': 0}, loss='logcosh', validator=make_range_validator(300, 600),
+    'QTCInterval', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'QTCInterval': 0}, loss='logcosh', validator=make_range_validator(300, 600),
     normalization={'mean': 419.1, 'std': 20.7},
 )
 r_axis = TensorMap(
-    'RAxis', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'RAxis': 0}, loss='logcosh', validator=make_range_validator(-100, 200),
+    'RAxis', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'RAxis': 0}, loss='logcosh', validator=make_range_validator(-100, 200),
     normalization={'mean': 25.7, 'std': 36.6},
 )
 rr_interval = TensorMap(
-    'RRInterval', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'RRInterval': 0}, loss='logcosh', validator=make_range_validator(400, 2000),
+    'RRInterval', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'RRInterval': 0}, loss='logcosh', validator=make_range_validator(400, 2000),
     normalization={'mean': 1040.61, 'std': 175.5},
 )
 ventricular_rate = TensorMap(
-    'VentricularRate', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'VentricularRate': 0}, validator=make_range_validator(30, 150),
+    'VentricularRate', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'VentricularRate': 0}, validator=make_range_validator(30, 150),
     loss='logcosh', normalization={'mean': 59.3, 'std': 10.6},
 )
 t_offset = TensorMap(
-    'TOffset', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'TOffset': 0}, loss='logcosh', validator=make_range_validator(700, 1000),
+    'TOffset', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'TOffset': 0}, loss='logcosh', validator=make_range_validator(700, 1000),
     normalization={'mean': 860.7, 'std': 32.52},
 )
 t_axis = TensorMap(
-    'TAxis', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'TAxis': 0}, loss='logcosh', validator=make_range_validator(-100, 200),
+    'TAxis', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'TAxis': 0}, loss='logcosh', validator=make_range_validator(-100, 200),
     normalization={'mean': 40.8, 'std': 32.6},
 )
 
-af_prs = TensorMap('AF_PRS_LDscore', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'AF_PRS_LDscore': 0}, normalization={'mean': -1.0, 'std': 0.4})
+af_prs = TensorMap('AF_PRS_LDscore', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'AF_PRS_LDscore': 0}, normalization={'mean': -1.0, 'std': 0.4})
 charge = TensorMap(
-    'charge', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'charge': 0}, normalization={'mean': 12.0, 'std': 2.0},
+    'charge', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'charge': 0}, normalization={'mean': 12.0, 'std': 2.0},
     validator=make_range_validator(0, 20),
 )
 
 qtc_intervalp = TensorMap(
-    'QTCInterval', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'QTCInterval': 0}, loss='logcosh', validator=make_range_validator(100, 900),
+    'QTCInterval', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'QTCInterval': 0}, loss='logcosh', validator=make_range_validator(100, 900),
     parents=[qt_interval, rr_interval], normalization={'mean': 419.1, 'std': 20.7},
 )
 qrs_durationpp = TensorMap(
-    'QRSDuration', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'QRSDuration': 0}, loss='logcosh', validator=make_range_validator(45, 175),
+    'QRSDuration', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'QRSDuration': 0}, loss='logcosh', validator=make_range_validator(45, 175),
     normalization={'mean': 89.53, 'std': 12.21},
     parents=[qtc_intervalp],
 )
 
 p_axis_sentinel = TensorMap(
-    'PAxis', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'PAxis': 0}, sentinel=0, metrics=['logcosh'],
+    'PAxis', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'PAxis': 0}, sentinel=0, metrics=['logcosh'],
     normalization={'mean': 48.7, 'std': 23.1},
 )
 p_duration_sentinel = TensorMap(
-    'PDuration', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'PDuration': 0}, sentinel=0, metrics=['logcosh'],
+    'PDuration', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'PDuration': 0}, sentinel=0, metrics=['logcosh'],
     normalization={'mean': 96.1, 'std': 18.85},
 )
 p_offset_sentinel = TensorMap(
-    'POffset', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'POffset': 0}, sentinel=0, metrics=['logcosh'],
+    'POffset', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'POffset': 0}, sentinel=0, metrics=['logcosh'],
     normalization={'mean': 369.1, 'std': 28.42},
 )
 p_onset_sentinel = TensorMap(
-    'POnset', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'POnset': 0}, sentinel=0, metrics=['logcosh'],
+    'POnset', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'POnset': 0}, sentinel=0, metrics=['logcosh'],
     normalization={'mean': 275.1, 'std': 26.420},
 )
 pp_interval_sentinel = TensorMap(
-    'PPInterval', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'PPInterval': 0}, sentinel=0, metrics=['logcosh'],
+    'PPInterval', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'PPInterval': 0}, sentinel=0, metrics=['logcosh'],
     normalization={'mean': 1036.1, 'std': 185.0},
 )
 pq_interval_sentinel = TensorMap(
-    'PQInterval', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'PQInterval': 0}, sentinel=0, metrics=['logcosh'],
+    'PQInterval', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'PQInterval': 0}, sentinel=0, metrics=['logcosh'],
     normalization={'mean': 165.9, 'std': 26.3},
 )
 qrs_duration_sentinel = TensorMap(
-    'QRSDuration', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'QRSDuration': 0}, sentinel=0,
+    'QRSDuration', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'QRSDuration': 0}, sentinel=0,
     normalization={'mean': 89.53, 'std': 12.21},
 )
 qt_interval_sentinel = TensorMap(
-    'QTInterval', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'QTInterval': 0}, sentinel=0,
+    'QTInterval', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'QTInterval': 0}, sentinel=0,
     normalization={'mean': 426.1, 'std': 32.24},
 )
 qtc_interval_sentinel = TensorMap(
-    'QTCInterval', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'QTCInterval': 0}, sentinel=0,
+    'QTCInterval', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'QTCInterval': 0}, sentinel=0,
     normalization={'mean': 419.1, 'std': 20.7},
 )
 qtc_intervalp_sentinel = TensorMap(
-    'QTCInterval', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'QTCInterval': 0}, sentinel=0,
+    'QTCInterval', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'QTCInterval': 0}, sentinel=0,
     normalization={'mean': 419.1, 'std': 20.7},
     parents=[qt_interval, rr_interval],
 )
 qtc_intervalp_sentinel = TensorMap(
-    'QTCInterval', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'QTCInterval': 0}, sentinel=0,
+    'QTCInterval', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'QTCInterval': 0}, sentinel=0,
     normalization={'mean': 419.1, 'std': 20.7},
     parents=[qt_interval, rr_interval],
 )
-r_axis_sentinel = TensorMap('RAxis', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'RAxis': 0}, sentinel=0, normalization={'mean': 25.7, 'std': 36.6})
+r_axis_sentinel = TensorMap('RAxis', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'RAxis': 0}, sentinel=0, normalization={'mean': 25.7, 'std': 36.6})
 rr_interval_sentinel = TensorMap(
-    'RRInterval', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'RRInterval': 0}, sentinel=0,
+    'RRInterval', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'RRInterval': 0}, sentinel=0,
     normalization={'mean': 1040.61, 'std': 175.5},
 )
-t_axis_sentinel = TensorMap('TAxis', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/2', channel_map={'TAxis': 0}, sentinel=0, normalization={'mean': 40.8, 'std': 32.6})
+t_axis_sentinel = TensorMap('TAxis', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest/instance_2', channel_map={'TAxis': 0}, sentinel=0, normalization={'mean': 40.8, 'std': 32.6})
 
 
 bb_baseline = TensorMap(
