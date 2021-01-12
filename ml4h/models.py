@@ -1712,6 +1712,7 @@ BLOCK_CLASSES = {
     'conv_encode': ConvEncoderBlock,
     'conv_decode': ConvDecoderBlock,
     'concat': FlatConcatDenseBlock,
+    'average': AverageBlock,
     'flat': FlatDenseBlock,
     'pair': PairLossBlock,
     'gap': GlobalAveragePoolBlock,
