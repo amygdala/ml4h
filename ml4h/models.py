@@ -1576,12 +1576,16 @@ def _transfer_layers_by_name(model_layers: str, freeze_model_layers: str, custom
 def _load_model_encoders_and_decoders(tensor_maps_in: List[TensorMap], tensor_maps_out: List[TensorMap], custom_dict: Dict[str, Any],
                                       optimizer, model_file: str):
     encoders = {}
-    for tm in tensor_maps_in:
-        encoders[tm] = load_model(f"{os.path.dirname(model_file)}/encoder_{tm.name}.h5", custom_objects=custom_dict, compile=False)
     decoders = {}
-    for tm in tensor_maps_out:
-        decoders[tm] = load_model(f"{os.path.dirname(model_file)}/decoder_{tm.name}.h5", custom_objects=custom_dict, compile=False)
-    merger = load_model(f"{os.path.dirname(model_file)}/merger.h5", custom_objects=custom_dict, compile=False)
+    merger = None
+    try:
+        for tm in tensor_maps_in:
+            encoders[tm] = load_model(f"{os.path.dirname(model_file)}/encoder_{tm.name}.h5", custom_objects=custom_dict, compile=False)
+        for tm in tensor_maps_out:
+            decoders[tm] = load_model(f"{os.path.dirname(model_file)}/decoder_{tm.name}.h5", custom_objects=custom_dict, compile=False)
+        merger = load_model(f"{os.path.dirname(model_file)}/merger.h5", custom_objects=custom_dict, compile=False)
+    except OSError as e:
+        logging.warning(f'Could not load some model modules, error: {e}')
     logging.info(f"Attempting to load model file from: {model_file}")
     m = load_model(model_file, custom_objects=custom_dict, compile=False)
     m.compile(optimizer=optimizer, loss=[tm.loss for tm in tensor_maps_out],
@@ -1749,6 +1753,7 @@ def block_make_multimodal_multitask_model(
     This model factory can be used to make networks for classification, regression, and segmentation
     The tasks attempted are given by the output TensorMaps.
     The modalities and the first layers in the architecture are determined by the input TensorMaps.
+    Model architectures are specified by Blocks which can encode, merge or decode TensorMaps.
 
     Hyperparameters are exposed to the command line and passed through to Block constructors via **kwargs.
     Model summary printed to output
@@ -1811,6 +1816,10 @@ def block_make_multimodal_multitask_model(
         metrics={tm.output_name(): tm.metrics for tm in tensor_maps_out},
     )
     full_model.summary()
+    if kwargs.get('model_layers', False):
+        full_model.load_weights(kwargs['model_layers'], by_name=True)
+        logging.info(f"Loaded model weights from:{kwargs['model_layers']}")
+        
     return full_model, encoders, decoders, merger
 
 
