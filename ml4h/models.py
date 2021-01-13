@@ -1819,7 +1819,7 @@ def block_make_multimodal_multitask_model(
     if kwargs.get('model_layers', False):
         full_model.load_weights(kwargs['model_layers'], by_name=True)
         logging.info(f"Loaded model weights from:{kwargs['model_layers']}")
-        
+
     return full_model, encoders, decoders, merger
 
 

@@ -164,7 +164,8 @@ def train_block(args):
         encoders[tm].save(f'{args.output_folder}{args.id}/encoder_{tm.name}.h5')
     for tm in decoders:
         decoders[tm].save(f'{args.output_folder}{args.id}/decoder_{tm.name}.h5')
-    merger.save(f'{args.output_folder}{args.id}/merger.h5')
+    if merger:
+        merger.save(f'{args.output_folder}{args.id}/merger.h5')
     out_path = os.path.join(args.output_folder, args.id + '/')
     test_data, test_labels, test_paths = big_batch_from_minibatch_generator(generate_test, args.test_steps)
     _ = _predict_and_evaluate(
