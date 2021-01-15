@@ -166,27 +166,21 @@ def train_block(args):
         decoders[tm].save(f'{args.output_folder}{args.id}/decoder_{tm.name}.h5')
     if merger:
         merger.save(f'{args.output_folder}{args.id}/merger.h5')
-    out_path = os.path.join(args.output_folder, args.id + '/')
+
     test_data, test_labels, test_paths = big_batch_from_minibatch_generator(generate_test, args.test_steps)
-    _ = _predict_and_evaluate(
+    performance_metrics = _predict_and_evaluate(
         model, test_data, test_labels, args.tensor_maps_in, args.tensor_maps_out, args.tensor_maps_protected,
-        args.batch_size, args.hidden_layer, out_path, test_paths, args.embed_visualization, args.alpha,
+        args.batch_size, args.hidden_layer, os.path.join(args.output_folder, args.id + '/'), test_paths, args.embed_visualization, args.alpha,
     )
-    out_path = os.path.join(args.output_folder, args.id, 'reconstructions/')
-    test_data, test_labels, test_paths = big_batch_from_minibatch_generator(generate_test, args.test_steps)
-    samples = min(args.test_steps * args.batch_size, 12)
+
     predictions_list = model.predict(test_data)
+    samples = min(args.test_steps * args.batch_size, 12)
+    out_path = os.path.join(args.output_folder, args.id, 'reconstructions/')
     if len(args.tensor_maps_out) == 1:
         predictions_list = [predictions_list]
     predictions_dict = {name: pred for name, pred in zip(model.output_names, predictions_list)}
     logging.info(f'Predictions and shapes are: {[(p, predictions_dict[p].shape) for p in predictions_dict]}')
-    performance_metrics = {}
-    for tm in args.tensor_maps_out:
-        if tm.axes() == 1:
-            y = predictions_dict[tm.output_name()]
-            y_truth = np.array(test_labels[tm.output_name()])
-            metrics = evaluate_predictions(tm, y, y_truth, {}, tm.name, os.path.join(args.output_folder, args.id), test_paths)
-            performance_metrics.update(metrics)
+
     for i, etm in enumerate(encoders):
         embed = encoders[etm].predict(test_data[etm.input_name()])
         plot_reconstruction(etm, test_data[etm.input_name()], predictions_dict[etm.output_name()], out_path, test_paths, samples)
