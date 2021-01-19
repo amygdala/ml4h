@@ -9,19 +9,28 @@ rs3829740 = TensorMap('rs3829740', Interpretation.CATEGORICAL, channel_map=diplo
 rs2234962 = TensorMap('rs2234962', Interpretation.CATEGORICAL, channel_map=diploid_cm)
 rs2042995 = TensorMap('rs2042995', Interpretation.CATEGORICAL, channel_map=diploid_cm)
 
-KCNJ5 = TensorMap('KCNJ5', Interpretation.CONTIG, channel_map={'position': 0, 'genotype': 1})
-KCNH2 = TensorMap('KCNH2', Interpretation.CONTIG, channel_map={'position': 0, 'genotype': 1})
-SCN5A = TensorMap('SCN5A', Interpretation.CONTIG, channel_map={'position': 0, 'genotype': 1})
-TTN = TensorMap('TTN', Interpretation.CONTIG, channel_map={'position': 0, 'genotype': 1})
+rs3829740_weighted = TensorMap('rs3829740', Interpretation.CATEGORICAL, channel_map=diploid_cm, loss=weighted_crossentropy([1, 1, 1.5], 'rs3829740'))
+rs2234962_weighted = TensorMap('rs2234962', Interpretation.CATEGORICAL, channel_map=diploid_cm, loss=weighted_crossentropy([.8, 1, 1.5], 'rs2234962'))
+rs2042995_weighted = TensorMap('rs2042995', Interpretation.CATEGORICAL, channel_map=diploid_cm, loss=weighted_crossentropy([.6, 1.5, 2], 'rs2042995'))
+
+# KCNJ5 = TensorMap('KCNJ5', Interpretation.CONTIG, channel_map={'position': 0, 'genotype': 1})
+# KCNH2 = TensorMap('KCNH2', Interpretation.CONTIG, channel_map={'position': 0, 'genotype': 1})
+# SCN5A = TensorMap('SCN5A', Interpretation.CONTIG, channel_map={'position': 0, 'genotype': 1})
+# TTN = TensorMap('TTN', Interpretation.CONTIG, channel_map={'position': 0, 'genotype': 1})
 
 akap9_lof = TensorMap('AKAP9', Interpretation.CATEGORICAL, channel_map={'no_akap9_lof': 0, 'akap9_lof': 1})
 dsc2_lof = TensorMap('DSC2', Interpretation.CATEGORICAL, channel_map={'no_dsc2_lof': 0, 'dsc2_lof': 1})
 ryr2_lof = TensorMap('RYR2', Interpretation.CATEGORICAL, channel_map={'no_ryr2_lof': 0, 'ryr2_lof': 1})
 ttn_lof = TensorMap('ttn_lof', Interpretation.CATEGORICAL, channel_map={'no_ttn_lof': 0, 'ttn_lof': 1})
 
-rs3829740_weighted = TensorMap('rs3829740', Interpretation.CATEGORICAL, channel_map=diploid_cm, loss=weighted_crossentropy([1, 1, 1.5], 'rs3829740'))
-rs2234962_weighted = TensorMap('rs2234962', Interpretation.CATEGORICAL, channel_map=diploid_cm, loss=weighted_crossentropy([.8, 1, 1.5], 'rs2234962'))
-rs2042995_weighted = TensorMap('rs2042995', Interpretation.CATEGORICAL, channel_map=diploid_cm, loss=weighted_crossentropy([.6, 1.5, 2], 'rs2042995'))
+TTN_LOF = TensorMap('TTN', Interpretation.CATEGORICAL, path_prefix='categorical', storage_type=StorageType.CATEGORICAL_INDEX, channel_map={'no_TTN_LOF': 0, 'TTN_LOF': 1})
+LMNA_LOF = TensorMap('LMNA', Interpretation.CATEGORICAL, path_prefix='categorical', storage_type=StorageType.CATEGORICAL_INDEX, channel_map={'no_LMNA_LOF': 0, 'LMNA_LOF': 1})
+PKP2_LOF = TensorMap('PKP2', Interpretation.CATEGORICAL, path_prefix='categorical', storage_type=StorageType.CATEGORICAL_INDEX, channel_map={'no_PKP2_LOF': 0, 'PKP2_LOF': 1})
+SCN5A_LOF = TensorMap('SCN5A', Interpretation.CATEGORICAL, path_prefix='categorical', storage_type=StorageType.CATEGORICAL_INDEX, channel_map={'no_SCN5A_LOF': 0, 'SCN5A_LOF': 1})
+KCNQ1_LOF = TensorMap('KCNQ1', Interpretation.CATEGORICAL, path_prefix='categorical', storage_type=StorageType.CATEGORICAL_INDEX, channel_map={'no_KCNQ1_LOF': 0, 'KCNQ1_LOF': 1})
+KCNH2_LOF = TensorMap('KCNH2', Interpretation.CATEGORICAL, path_prefix='categorical', storage_type=StorageType.CATEGORICAL_INDEX, channel_map={'no_KCNH2_LOF': 0, 'KCNH2_LOF': 1})
+KCNJ5_LOF = TensorMap('KCNJ5', Interpretation.CATEGORICAL, path_prefix='categorical', storage_type=StorageType.CATEGORICAL_INDEX, channel_map={'no_KCNJ5_LOF': 0, 'KCNJ5_LOF': 1})
+MYBPC3_LOF = TensorMap('MYBPC3', Interpretation.CATEGORICAL, path_prefix='categorical', storage_type=StorageType.CATEGORICAL_INDEX, channel_map={'no_MYBPC3_LOF': 0, 'MYBPC3_LOF': 1})
 
 
 ttntv = TensorMap(
@@ -31,7 +40,6 @@ ttntv = TensorMap(
 
 bsa_mosteller = TensorMap('bsa_mosteller',  Interpretation.CONTINUOUS, normalization={'mean': 1.8894831981880114, 'std': 0.22169301057810176}, loss='logcosh', channel_map={'bsa_mosteller': 0})
 bsa_dubois = TensorMap('bsa_dubois',  Interpretation.CONTINUOUS, normalization={'mean': 1.8671809970639703, 'std': 0.20913930961120797}, loss='logcosh', channel_map={'bsa_dubois': 0})
-
 
 
 
