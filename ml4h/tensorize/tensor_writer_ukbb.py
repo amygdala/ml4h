@@ -1017,9 +1017,9 @@ def append_fields_from_csv(tensors, csv_file, group, delimiter):
                             if is_channel_mapped:
                                 continue
 
-                            if value.lower() in ['false', 'f', '0']:
+                            if value.lower() in ['false', 'f', '0', '0.0']:
                                 value = 0
-                            elif value.lower() in ['true', 't', '1']:
+                            elif value.lower() in ['true', 't', '1', '1.0']:
                                 value = 1
                             else:
                                 stats[f'Could not parse categorical field: {field} with value: {value}'] += 1
