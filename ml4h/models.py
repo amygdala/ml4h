@@ -1233,7 +1233,7 @@ class AverageBlock:
         pass
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
-        return Average()([Flatten()(x[-1]) for _, x in intermediates.items()])
+        return Average()([Flatten()(x[-1]) for tm, x in intermediates.items() if not tm.is_embedding()])
 
 
 class EncodeIdentityBlock:
