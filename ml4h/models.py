@@ -899,7 +899,7 @@ class FullyConnectedBlockBlock:
         self.norms = [_normalization_layer(dense_normalize) for _ in dense_layers]
 
     def can_apply(self):
-        return self.tensor_map.axes() == 1
+        return self.tensor_map.axes() == 1 and not self.tensor_map.is_embedding()
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
         if not self.can_apply():
@@ -1234,6 +1234,19 @@ class AverageBlock:
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
         return Average()([Flatten()(x[-1]) for _, x in intermediates.items()])
+
+
+class EncodeIdentityBlock:
+    """
+    Adds the input tensor to the intermediates dictionary, useful for TensorMaps with pretrained embeddings
+    """
+    def __init__(self, tensor_map, **kwargs):
+        self.tensor_map = tensor_map
+
+    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
+        if self.tensor_map.is_embedding():
+            intermediates[self.tensor_map].append(x)
+        return x
 
 
 class PairLossBlock:
@@ -1724,6 +1737,7 @@ BLOCK_CLASSES = {
     'language_decode': LanguageDecoderBlock,
     'fc': FullyConnectedBlockBlock,
     'fc_decode': DenseDecoderBlock,
+    'identity': EncodeIdentityBlock,
 }
 
 
@@ -1789,7 +1803,7 @@ def block_make_multimodal_multitask_model(
             elif encode_block.endswith(f'encoder_{tm.name}.h5'):
                 serialized_encoder = load_model(encode_block, custom_objects=custom_dict, compile=False)
                 encoder_block_functions[tm] = compose(encoder_block_functions[tm], ModelAsBlock(tensor_map=tm, model=serialized_encoder))
-                break  # Don't also reconstruct from scratch if model is serialized, hd5 models must preceed BLOCK_CLASS keys
+                break  # Don't also reconstruct from scratch if model is serialized, hd5 models must precede BLOCK_CLASS keys
 
     merge = identity
     for merge_block in merge_blocks:

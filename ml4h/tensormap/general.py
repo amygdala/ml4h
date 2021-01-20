@@ -5,6 +5,7 @@ import h5py
 import numpy as np
 from typing import List, Tuple
 from ml4h.TensorMap import TensorMap, Interpretation
+from ml4h.defines import TENSOR_EXT
 
 
 def tensor_path(path_prefix: str, name: str) -> str:
@@ -138,3 +139,39 @@ def build_tensor_from_file(
             raise KeyError(f'User id not in file {file_name}.')
 
     return tensor_from_file
+
+
+def build_vector_tensor_from_file(
+    file_name: str,
+    normalization: bool = False,
+    delimiter: str = '\t',
+):
+    """
+    Build a tensor_from_file function from a column in a file.
+    Only works for continuous values.
+    When normalization is True values will be normalized according to the mean and std of all of the values in the column.
+    """
+    with open(file_name, 'r') as f:
+        reader = csv.reader(f, delimiter=delimiter)
+        header = next(reader)
+        table = {row[0]: np.array([float(row_value) for row_value in row[1:]]) for row in reader}
+        if normalization:
+            value_array = np.array([sub_array for sub_array in table.values()])
+            mean = value_array.mean()
+            std = value_array.std()
+            logging.info(
+                f'Normalizing TensorMap from file {file_name}, with mean: '
+                f'{mean:.2f}, std: {std:.2f}', )
+
+
+    def tensor_from_file(tm: TensorMap, hd5: h5py.File, dependents=None):
+        if normalization:
+            tm.normalization = {'mean': mean, 'std': std}
+        try:
+            return table[os.path.basename(hd5.filename).replace(TENSOR_EXT, '')]
+        except KeyError:
+            raise KeyError(f'User id not in file {file_name}.')
+
+    return tensor_from_file
+
+

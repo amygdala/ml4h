@@ -7,7 +7,7 @@ from typing.io import TextIO
 from typing import List, Tuple
 
 from ml4h.TensorMap import TensorMap, Interpretation
-from ml4h.tensormap.general import build_tensor_from_file
+from ml4h.tensormap.general import build_tensor_from_file, build_vector_tensor_from_file
 from ml4h.DatabaseClient import BigQueryDatabaseClient, DatabaseClient
 from ml4h.defines import TENSOR_MAPS_FILE_NAME, dataset_name_from_meaning
 from ml4h.defines import DICTIONARY_TABLE, CODING_TABLE, PHENOTYPE_TABLE, JOIN_CHAR
@@ -258,3 +258,5 @@ def generate_random_text_tensor_maps(text_file: str, window_size: int, one_hot: 
         cacheable=False,
     )
     return input_map, burn_in, output_map
+
+
