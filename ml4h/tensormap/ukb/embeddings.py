@@ -6,6 +6,7 @@ import h5py
 import numpy as np
 
 from ml4h import TensorMap
+from ml4h.defines import TENSOR_EXT
 
 
 def build_vector_tensor_from_file(
@@ -42,6 +43,7 @@ def build_vector_tensor_from_file(
 
 
 latent_file = '/home/sam/trained_models/cine_segmented_lax_4ch_diastole_autoencoder_64d/hidden_inference_cine_segmented_lax_4ch_diastole_autoencoder_64d.tsv'
+tff = build_vector_tensor_from_file(latent_file)
 embed_cine_segmented_lax_4ch_diastole = TensorMap('embed_cine_segmented_lax_4ch_diastole', shape=(64,), channel_map={f'latent_{i}': i for i in range(64)},
-                                                  tensor_from_file=build_vector_tensor_from_file(latent_file),
+                                                  tensor_from_file=tff,
                                                   )
