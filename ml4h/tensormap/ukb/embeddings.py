@@ -2,6 +2,7 @@ import os
 import csv
 import logging
 
+import h5py
 import numpy as np
 
 from ml4h import TensorMap
@@ -28,7 +29,6 @@ def build_vector_tensor_from_file(
             logging.info(
                 f'Normalizing TensorMap from file {file_name}, with mean: '
                 f'{mean:.2f}, std: {std:.2f}', )
-
 
     def tensor_from_file(tm: TensorMap, hd5: h5py.File, dependents=None):
         if normalization:
