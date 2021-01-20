@@ -5,7 +5,7 @@ import logging
 import h5py
 import numpy as np
 
-from ml4h import TensorMap
+from ml4h.TensorMap import TensorMap
 from ml4h.defines import TENSOR_EXT
 
 
