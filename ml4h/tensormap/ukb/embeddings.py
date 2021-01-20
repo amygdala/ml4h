@@ -19,19 +19,25 @@ def _build_vector_tensor_from_file(
     Only works for continuous values.
     When normalization is True values will be normalized according to the mean and std of all of the values in the column.
     """
-    with open(file_name, 'r') as f:
-        reader = csv.reader(f, delimiter=delimiter)
-        header = next(reader)
-        table = {row[0]: np.array([float(row_value) for row_value in row[1:]]) for row in reader}
-        if normalization:
-            value_array = np.array([sub_array for sub_array in table.values()])
-            mean = value_array.mean()
-            std = value_array.std()
-            logging.info(
-                f'Normalizing TensorMap from file {file_name}, with mean: '
-                f'{mean:.2f}, std: {std:.2f}', )
+    error = None
+    try:
+        with open(file_name, 'r') as f:
+            reader = csv.reader(f, delimiter=delimiter)
+            header = next(reader)
+            table = {row[0]: np.array([float(row_value) for row_value in row[1:]]) for row in reader}
+            if normalization:
+                value_array = np.array([sub_array for sub_array in table.values()])
+                mean = value_array.mean()
+                std = value_array.std()
+                logging.info(
+                    f'Normalizing TensorMap from file {file_name}, with mean: '
+                    f'{mean:.2f}, std: {std:.2f}', )
+    except FileNotFoundError as e:
+        error = e
 
     def tensor_from_file(tm: TensorMap, hd5: h5py.File, dependents=None):
+        if error:
+            raise error
         if normalization:
             tm.normalization = {'mean': mean, 'std': std}
         try:
