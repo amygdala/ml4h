@@ -1142,6 +1142,19 @@ class DenseDecoderBlock:
         return x
 
 
+class FlatConcatBlock:
+    """
+    Flattens then concatenates all inputs
+    """
+    def __init__(self,  **kwargs):
+        pass
+
+    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
+        y = [Flatten()(x[-1]) for tm, x in intermediates.items() if not tm.is_embedding()]
+        y = concatenate(y) if len(y) > 1 else y[0]
+        return y
+
+
 class FlatConcatDenseBlock:
     """
     Flattens then concatenates all inputs, applies a dense layer
@@ -1705,6 +1718,7 @@ BLOCK_CLASSES = {
     'conv_encode': ConvEncoderBlock,
     'conv_decode': ConvDecoderBlock,
     'concat': FlatConcatDenseBlock,
+    'flat': FlatConcatBlock,
     'average': AverageBlock,
     'pair': PairLossBlock,
     'gap': GlobalAveragePoolBlock,
