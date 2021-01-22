@@ -1142,30 +1142,6 @@ class DenseDecoderBlock:
         return x
 
 
-class FlatDenseBlock:
-    """
-    Flattens or GAPs then concatenates all inputs, applies a dense layer, then restructures to provided shapes
-    """
-    def __init__(
-            self,
-            activation: str,
-            dense_layers: List[int],
-            **kwargs,
-    ):
-        self.activation = activation
-        self.dense_layers = dense_layers
-
-    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
-        for tm, x in intermediates.items():
-            if tm.axes() > 1:
-                y = Flatten()(x[-1])
-                for units in self.dense_layers:
-                    y = Dense(units=units)(y)
-                    y = _activation_layer(self.activation)(y)
-                x.append(y)
-        return y
-
-
 class FlatConcatDenseBlock:
     """
     Flattens then concatenates all inputs, applies a dense layer
@@ -1189,7 +1165,7 @@ class FlatConcatDenseBlock:
         ) if dense_layers else None
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
-        y = [Flatten()(x[-1]) for x in intermediates.values()]
+        y = [Flatten()(x[-1]) for tm, x in intermediates.items() if not tm.is_embedding()]
         y = concatenate(y) if len(y) > 1 else y[0]
         y = self.fully_connected(y) if self.fully_connected else y
         return y
@@ -1730,7 +1706,6 @@ BLOCK_CLASSES = {
     'conv_decode': ConvDecoderBlock,
     'concat': FlatConcatDenseBlock,
     'average': AverageBlock,
-    'flat': FlatDenseBlock,
     'pair': PairLossBlock,
     'gap': GlobalAveragePoolBlock,
     'lstm_encode': LSTMEncoderBlock,
