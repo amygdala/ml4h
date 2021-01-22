@@ -1260,7 +1260,7 @@ class PairLossBlock:
             x = self.loss_layer([intermediates[left][-1], intermediates[right][-1]])
             intermediates[left].extend(x)
             intermediates[right].extend(x)
-        return x
+        return intermediates[left][-1]
 
 
 def parent_sort(tms: List[TensorMap]) -> List[TensorMap]:
