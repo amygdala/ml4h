@@ -2103,6 +2103,10 @@ RVQC = TensorMap(
     'RVQC',  Interpretation.CONTINUOUS, normalization={'mean': 1.179699842022117, 'std': 0.4648958893626213}, loss='logcosh',
     validator=make_range_validator(0, 200), channel_map={'RVQC': 0}, path_prefix='continuous',
 )
+LVM_as_prediction = TensorMap(
+    'LVM_prediction',  Interpretation.CONTINUOUS, normalization={'mean': 89.70372484725051, 'std': 24.803669503436304}, loss='logcosh',
+    validator=make_range_validator(0, 400), channel_map={'LVM': 0}, path_prefix='continuous',
+)
 
 myocardial_mass = TensorMap(
     'myocardium_mass',  Interpretation.CONTINUOUS, validator=make_range_validator(0, 400), loss='logcosh', path_prefix='continuous',
