@@ -61,3 +61,11 @@ embed_lax_4ch_diastole = TensorMap('embed_lax_4ch_diastole', Interpretation.EMBE
                                    shape=(64,), channel_map={f'latent_{i}': i for i in range(64)},
                                    tensor_from_file=tff,
                                    )
+
+latent_file = '/home/sam/trained_models/ecg_rest_mri_lax_4ch_segmentation_pretrain_generative_dropout_to_lv_rv/hidden_inference_ecg_rest_mri_lax_4ch_segmentation_pretrain_generative_dropout_to_lv_rv.tsv'
+tff = _build_vector_tensor_from_file(latent_file)
+embed_ecg_mri_segmentation = TensorMap('embed_ecg_mri_segmentation', Interpretation.EMBEDDING,
+                                   shape=(64,), channel_map={f'latent_{i}': i for i in range(32)},
+                                   tensor_from_file=tff,
+                                       )
+
