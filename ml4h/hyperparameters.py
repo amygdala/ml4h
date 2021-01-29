@@ -5,7 +5,6 @@ import gc
 import os
 import logging
 import numpy as np
-from collections import Counter
 from timeit import default_timer as timer
 
 import hyperopt
@@ -18,10 +17,11 @@ import matplotlib.pyplot as plt # First import matplotlib, then use Agg, then im
 from skimage.filters import threshold_otsu
 
 
-from ml4h.arguments import parse_args, BOTTLENECK_STR_TO_ENUM
+from ml4h.arguments import parse_args
 from ml4h.plots import plot_metric_history
+from ml4h.tensor_maps_by_script import TMAPS
 from ml4h.defines import IMAGE_EXT, MODEL_EXT
-from ml4h.models import train_model_from_generators, make_multimodal_multitask_model
+from ml4h.models.legacy_models import train_model_from_generators, make_multimodal_multitask_model
 from ml4h.tensor_generators import test_train_valid_tensor_generators, big_batch_from_minibatch_generator
 
 MAX_LOSS = 9e9
@@ -96,8 +96,6 @@ def hyperparameter_optimizer(args, space, param_lists={}):
             plot_metric_history(history, args.training_steps, title, fig_path)
             model.load_weights(os.path.join(args.output_folder, args.id, args.id + MODEL_EXT))
             loss_and_metrics = model.evaluate(test_data, test_labels, batch_size=args.batch_size)
-            if isinstance(loss_and_metrics, np.float64):  # Models without metrics return scalar loss, otherwise they return loss followed by metric values
-                loss_and_metrics = [loss_and_metrics]
             logging.info(f'Current architecture:\n{string_from_arch_dict(x)}\nCurrent model size: {model.count_params()}.')
             logging.info(f"Iteration {i} out of maximum {args.max_models}\nTest Loss: {loss_and_metrics[0]}")
             generate_train.kill_workers()
@@ -225,30 +223,36 @@ def optimize_ecg_rest_unet_architecture(args):
 
 
 def optimize_mri_sax_architecture(args):
-    activation = ['leaky', 'swish', 'gelu', 'lisht', 'mish', 'relu', 'selu']
-    bottleneck_type = ['no_bottleneck', 'flatten_restructure', 'global_average_pool']
-    conv_layers_sets = [[], [32], [64], [32, 32], [64, 64], [32, 32, 32], [64, 64, 64]]
-    conv_type = ['conv', 'separable']
-    dense_blocks_sets = [[32, 32], [64, 64], [128, 128], [32, 32, 32], [64, 64, 64], [32, 32, 32, 32], [64, 64, 64, 64], [32, 32, 32, 32, 32], [64, 64, 64, 64, 64]]
-    dense_layers_sets = [[32], [64], [128], [32, 32], [64, 64], [128, 128]]
+    dense_blocks_sets = [[], [16], [32], [48], [32, 16], [32, 32], [32, 24, 16], [48, 32, 24], [48, 48, 48]]
+    conv_layers_sets = [[], [16], [32], [48], [32, 32], [48, 32], [48, 32, 24]]
+    dense_layers_sets = [[16], [24], [32], [48], [16, 64], [8, 128], [16, 64, 128]]
+    activation = ['leaky', 'prelu', 'relu', 'elu']
+    conv_dilate = [True, False]
+    conv_normalize = ['', 'batch_norm']
+    conv_type = ['conv', 'separable', 'depth']
     pool_type = ['max', 'average']
     space = {
-        'activation': hp.choice('activation', activation),
-        'block_size': hp.quniform('block_size', 1, 9, 1),
-        'bottleneck_type': hp.choice('bottleneck_type', bottleneck_type),
+        'pool_x': hp.quniform('pool_x', 2, 8, 2),
+        'pool_y': hp.quniform('pool_y', 2, 8, 2),
+        'pool_z': hp.quniform('pool_z', 1, 2, 1),
         'conv_layers': hp.choice('conv_layers', conv_layers_sets),
-        'conv_type': hp.choice('conv_type', conv_type),
         'dense_blocks': hp.choice('dense_blocks', dense_blocks_sets),
         'dense_layers': hp.choice('dense_layers', dense_layers_sets),
+        'conv_dilate': hp.choice('conv_dilate', conv_dilate),
+        'conv_normalize': hp.choice('conv_normalize', conv_normalize),
+        'conv_type': hp.choice('conv_type', conv_type),
+        'activation': hp.choice('activation', activation),
         'pool_type': hp.choice('pool_type', pool_type),
+        'block_size': hp.quniform('block_size', 1, 6, 1),
     }
     param_lists = {
-        'activation': activation,
-        'bottleneck_type': bottleneck_type,
         'conv_layers': conv_layers_sets,
-        'conv_type': conv_type,
         'dense_blocks': dense_blocks_sets,
         'dense_layers': dense_layers_sets,
+        'conv_dilate': conv_dilate,
+        'conv_normalize': conv_normalize,
+        'conv_type': conv_type,
+        'activation': activation,
         'pool_type': pool_type,
     }
     hyperparameter_optimizer(args, space, param_lists)
@@ -308,12 +312,8 @@ def optimize_optimizer(args):
 def set_args_from_x(args, x):
     for k in args.__dict__:
         if k in x:
-            logging.info(f"k is {k} and x[k] is {x[k]} args dict is:{args.__dict__[k]}")
-            if k in ['conv_x', 'conv_y', 'conv_z']:
-                args.__dict__[k] = [int(x[k])]
-            elif k == 'bottleneck_type':
-                args.bottleneck_type = BOTTLENECK_STR_TO_ENUM[x[k]]
-            elif isinstance(args.__dict__[k], int):
+            print(k, x[k], args.__dict__[k])
+            if isinstance(args.__dict__[k], int):
                 args.__dict__[k] = int(x[k])
             elif isinstance(args.__dict__[k], float):
                 v = float(x[k])
@@ -323,8 +323,8 @@ def set_args_from_x(args, x):
             else:
                 args.__dict__[k] = x[k]
     logging.info(f"Set arguments to: {args}")
-    #args.tensor_maps_in = [TMAPS[it] for it in args.input_tensors]
-    #args.tensor_maps_out = [TMAPS[ot] for ot in args.output_tensors]
+    args.tensor_maps_in = [TMAPS[it] for it in args.input_tensors]
+    args.tensor_maps_out = [TMAPS[ot] for ot in args.output_tensors]
 
 
 def string_from_arch_dict(x):
