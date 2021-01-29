@@ -93,7 +93,7 @@ def block_make_multimodal_multitask_model(
 
     full_model, encoders, decoders, merger = multimodal_multitask_model(tensor_maps_in, tensor_maps_out,
                                                                         encoder_blocks, decoder_blocks, merge_blocks,
-                                                                        custom_dict, u_connect, kwargs)
+                                                                        custom_dict, u_connect, **kwargs)
     full_model.compile(
         optimizer=opt, loss=[tm.loss for tm in tensor_maps_out],
         metrics={tm.output_name(): tm.metrics for tm in tensor_maps_out},
