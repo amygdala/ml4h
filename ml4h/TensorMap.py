@@ -210,9 +210,6 @@ class TensorMap(object):
             self.shape = self.input_shape[:-1] + (len(self.discretization_bounds)+1,)
             self.channel_map = {f'channel_{k}': k for k in range(len(self.discretization_bounds) + 1)}
 
-        if self.augmentations is not None:
-            self.cacheable = False
-
         self.infer_metrics()
 
         if self.tensor_from_file is None:
@@ -244,6 +241,9 @@ class TensorMap(object):
 
     def input_name(self):
         return JOIN_CHAR.join(['input', self.name, str(self.interpretation)])
+
+    def embed_name(self):
+        return JOIN_CHAR.join(['embed', self.name, str(self.interpretation)])
 
     def is_categorical(self):
         """For most cases categorical and discretized TensorMaps should be handled in the same way.
