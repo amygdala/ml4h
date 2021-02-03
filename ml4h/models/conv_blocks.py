@@ -160,6 +160,86 @@ class ConvDecoderBlock(Block):
         return self.conv_label(x)
 
 
+class ResidualBlock(Block):
+    def __init__(
+            self,
+            *,
+            tensor_map: TensorMap,
+            dimension: int,
+            filters_per_conv: List[int],
+            conv_layer_type: str,
+            conv_x: List[int],
+            conv_y: List[int],
+            conv_z: List[int],
+            activation: str,
+            normalization: str,
+            regularization: str,
+            regularization_rate: float,
+            dilate: bool,
+    ):
+        self.tensor_map = tensor_map
+        if not self.can_apply():
+            return
+        block_size = len(filters_per_conv)
+        assert len(conv_x) == len(conv_y) == len(conv_z) == block_size
+        conv_layer, kernels = _conv_layer_from_kind_and_dimension(dimension, conv_layer_type, conv_x, conv_y, conv_z)
+        self.conv_layers = []
+        for i, (num_filters, kernel) in enumerate(zip(filters_per_conv, kernels)):
+            if isinstance(conv_layer, DepthwiseConv2D):
+                self.conv_layers.append(conv_layer(kernel_size=kernel, padding='same', dilation_rate=2 ** i if dilate else 1))
+            else:
+                self.conv_layers.append(conv_layer(filters=num_filters, kernel_size=kernel, padding='same', dilation_rate=2**i if dilate else 1))
+
+        self.activations = [_activation_layer(activation) for _ in range(block_size)]
+        self.normalizations = [_normalization_layer(normalization) for _ in range(block_size)]
+        self.regularizations = [_regularization_layer(dimension, regularization, regularization_rate) for _ in range(block_size)]
+        residual_conv_layer, _ = _conv_layer_from_kind_and_dimension(dimension, 'conv', conv_x, conv_y, conv_z)
+        self.residual_convs = [residual_conv_layer(filters=filters_per_conv[0], kernel_size=_one_by_n_kernel(dimension)) for _ in range(block_size - 1)]
+        logging.info(f'Residual Block Convolutional Layers (num_filters, kernel_size): {list(zip(filters_per_conv, kernels))}')
+
+    def can_apply(self):
+        return self.tensor_map.axes() > 1
+
+    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
+        if not self.can_apply():
+            return x
+        previous = x
+        for convolve, activate, normalize, regularize, one_by_n_convolve in zip(
+                self.conv_layers, self.activations, self.normalizations, self.regularizations, [None] + self.residual_convs,
+        ):
+            x = regularize(normalize(activate(convolve(x))))
+            if one_by_n_convolve is not None:  # Do not residual add the input
+                x = Add()([one_by_n_convolve(x), previous])
+            intermediates[self.tensor_map].append(x)
+            previous = x
+        return x
+
+
+class PoolBlock(Block):
+    def __init__(
+            self,
+            *,
+            tensor_map: TensorMap,
+            pool_type: str,
+            pool_x: int,
+            pool_y: int,
+            pool_z: int,
+            **kwargs,
+    ):
+        self.tensor_map = tensor_map
+        if not self.can_apply():
+            return
+        dimension = self.tensor_map.axes()
+        self.pool = _pool_layers_from_kind_and_dimension(dimension, pool_type, 1, pool_x, pool_y, pool_z)[0]
+
+    def can_apply(self):
+        return self.tensor_map.axes() > 1
+
+    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
+        x = self.pool(x)
+        return x
+
+
 class Residual:
     def __init__(
             self,
