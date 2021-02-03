@@ -29,6 +29,7 @@ class TransformerEncoder(Block):
         self.tensor_map = tensor_map
         self.embed_block = EmbeddingBlock(tensor_map=tensor_map, dense_layers=dense_layers, **kwargs)
         self.dropout = tf.keras.layers.Dropout(rate=dense_regularize_rate)
+        self.padding_mask = tf.keras.Input(shape=(1, 1, None), name='padding_mask')
         self.padding_mask_layer = tf.keras.layers.Lambda(
             create_padding_mask, output_shape=(1, 1, None),
             name='encoder_padding_mask')
@@ -43,13 +44,13 @@ class TransformerEncoder(Block):
         ) for i, d_model in enumerate(dense_layers)]
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
-        intermediates[self.tensor_map.dependent_map[-1]].append(x)
+        intermediates[self.tensor_map.dependent_map[-1]]
         x = self.padding_mask_layer(x)
         x = self.embed_block(x, intermediates)
         x = self.dropout(x)
         previous = x
         for encode in self.encoder_layers:
-            x = encode([previous, self.padding_mask_layer])
+            x = encode([previous, self.padding_mask])
             previous = x
         intermediates[self.tensor_map.dependent_map[-1]].append(x)
         return x
@@ -59,14 +60,14 @@ class TransformerDecoder(Block):
     def __init__(self, *, tensor_map: TensorMap, dense_layers: List[int], dense_regularize_rate, **kwargs):
         self.tensor_map = tensor_map
         # mask the future tokens for decoder inputs at the 1st attention block
-        self.look_ahead_mask = tf.keras.layers.Lambda(
+        self.look_ahead_mask_layer = tf.keras.layers.Lambda(
             create_look_ahead_mask,
             output_shape=(1, None, None),
             name='look_ahead_mask')
         # mask the encoder outputs for the 2nd attention block
-        self.padding_mask = tf.keras.layers.Lambda(
+        self.padding_mask_layer = tf.keras.layers.Lambda(
             create_padding_mask, output_shape=(1, 1, None),
-            name='dec_padding_mask')
+            name='decoder_padding_mask')
         self.embed_block = EmbeddingBlock(tensor_map=tensor_map, dense_layers=dense_layers, **kwargs)
         self.look_ahead_mask = tf.keras.Input(shape=(1, None, None), name='look_ahead_mask')
         self.padding_mask = tf.keras.Input(shape=(1, 1, None), name='decoder_padding_mask')
@@ -82,9 +83,9 @@ class TransformerDecoder(Block):
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
         encoder_outputs = intermediates[self.tensor_map][-1]
-        encoder_outputs = self.look_ahead_mask(encoder_outputs)
+        encoder_outputs = self.look_ahead_mask_layer(encoder_outputs)
         encoder_input = intermediates[self.tensor_map][0]
-        y = self.padding_mask(encoder_input)
+        y = self.padding_mask_layer(encoder_input)
         y = self.embed_block(y, intermediates)
         y = self.dropout(y)
         previous = x
