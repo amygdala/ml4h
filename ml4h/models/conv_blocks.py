@@ -236,7 +236,10 @@ class PoolBlock(Block):
         return self.tensor_map.axes() > 1
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
+        if not self.can_apply():
+            return x
         x = self.pool(x)
+        intermediates[self.tensor_map].append(x)
         return x
 
 
