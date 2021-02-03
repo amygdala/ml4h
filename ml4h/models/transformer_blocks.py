@@ -64,7 +64,6 @@ class TransformerDecoder(Block):
             num_heads=4,
             dropout=dense_regularize_rate,
             name=f'decoder_layer_{i}',
-            input_name=self.tensor_map.input_name()
         ) for i, d_model in enumerate(dense_layers)]
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
