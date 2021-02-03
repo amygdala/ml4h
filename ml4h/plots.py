@@ -2265,6 +2265,7 @@ def plot_hit_to_miss_transforms(latent_df, decoders, feature='Sex_Female_0_0', p
     male_to_female = embeddings + (scalar * sex_vectors)
     female_to_male = embeddings - (scalar * sex_vectors)
     for dtm in decoders:
+        logging.info(f'Decoder {dtm.name} transform')
         predictions = decoders[dtm].predict(embeddings)
         m2f = decoders[dtm].predict(male_to_female)
         f2m = decoders[dtm].predict(female_to_male)
