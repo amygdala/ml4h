@@ -210,8 +210,8 @@ class ResidualBlock(Block):
             x = regularize(normalize(activate(convolve(x))))
             if one_by_n_convolve is not None:  # Do not residual add the input
                 x = Add()([one_by_n_convolve(x), previous])
-            intermediates[self.tensor_map].append(x)
             previous = x
+        intermediates[self.tensor_map].append(x)
         return x
 
 
