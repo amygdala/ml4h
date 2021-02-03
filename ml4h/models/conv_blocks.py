@@ -181,7 +181,6 @@ class ResidualBlock(Block):
         if not self.can_apply():
             return
         block_size = len(conv_layers)
-        assert len(conv_x) == len(conv_y) == len(conv_z) == block_size
         conv_layer, kernels = _conv_layer_from_kind_and_dimension(self.tensor_map.axes(), conv_type, conv_x, conv_y, conv_z)
         self.conv_layers = []
         for i, (num_filters, kernel) in enumerate(zip(conv_layers, kernels)):
