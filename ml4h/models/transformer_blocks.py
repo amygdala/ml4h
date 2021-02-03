@@ -18,9 +18,9 @@ class EmbeddingBlock(Block):
         self.units = dense_layers[0]
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
-        embeddings = tf.keras.layers.Embedding(len(self.tensor_maps.channel_map), self.units)(x)
+        embeddings = tf.keras.layers.Embedding(len(self.tensor_map.channel_map), self.units)(x)
         embeddings *= tf.math.sqrt(tf.cast(self.units, tf.float32))
-        embeddings = PositionalEncoding(len(self.tensor_maps.channel_map), self.units)(embeddings)
+        embeddings = PositionalEncoding(len(self.tensor_map.channel_map), self.units)(embeddings)
         return embeddings
 
 
