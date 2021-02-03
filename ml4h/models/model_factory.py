@@ -24,7 +24,7 @@ from ml4h.models.merge_blocks import GlobalAveragePoolBlock, EncodeIdentityBlock
 BLOCK_CLASSES = {
     'conv_encode': ConvEncoderBlock,
     'conv_decode': ConvDecoderBlock,
-    'resnet': ResidualBlock,
+    'residual': ResidualBlock,
     'pool': PoolBlock,
     'concat': FlatConcatDenseBlock,
     'flat': FlatConcatBlock,
