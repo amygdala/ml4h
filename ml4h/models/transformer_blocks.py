@@ -25,16 +25,16 @@ class EmbeddingBlock(Block):
 
 
 class TransformerEncoder(Block):
-    def __init__(self, *, tensor_map: TensorMap, dense_layers: List[int], dropout, **kwargs):
+    def __init__(self, *, tensor_map: TensorMap, dense_layers: List[int], dropout_rate, **kwargs):
         self.tensor_map = tensor_map
         self.embed_block = EmbeddingBlock(tensor_map=tensor_map, dense_layers=dense_layers, **kwargs)
-        self.dropout = tf.keras.layers.Dropout(rate=dropout)
+        self.dropout = tf.keras.layers.Dropout(rate=dropout_rate)
         self.padding_mask = tf.keras.Input(shape=(1, 1, None), name="encoder_padding_mask")
         self.encoder_layers = [encoder_layer(
             units=512,
             d_model=d_model,
             num_heads=4,
-            dropout=dropout,
+            dropout=dropout_rate,
             name=f'encoder_layer_{i}',
             input_name=self.tensor_map.input_name()
         ) for i, d_model in enumerate(dense_layers)]
@@ -51,21 +51,21 @@ class TransformerEncoder(Block):
 
 
 class TransformerDecoder(Block):
-    def __init__(self, *, tensor_map: TensorMap, dense_layers: List[int], dropout, **kwargs):
+    def __init__(self, *, tensor_map: TensorMap, dense_layers: List[int], dropout_rate, **kwargs):
         self.tensor_map = tensor_map
         self.embed_block = EmbeddingBlock(tensor_map=tensor_map, dense_layers=dense_layers, **kwargs)
         self.look_ahead_mask = tf.keras.Input(shape=(1, None, None), name='look_ahead_mask')
         self.padding_mask = tf.keras.Input(shape=(1, 1, None), name='decoder_padding_mask')
-        self.dropout = tf.keras.layers.Dropout(rate=dropout)
+        self.dropout = tf.keras.layers.Dropout(rate=dropout_rate)
         self.final_layer = tf.keras.layers.Dense(units=len(self.tensor_maps.channel_map), name=self.tensor_map.output_name())
         self.decoder_layers = [decoder_layer(
             units=512,
             d_model=d_model,
             num_heads=4,
-            dropout=dropout,
+            dropout=dropout_rate,
             name=f'decoder_layer_{i}',
             input_name=self.tensor_map.input_name()
-        ) for d_model in dense_layers]
+        ) for i, d_model in enumerate(dense_layers)]
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
         encoder_outputs = intermediates[self.tensor_map][-1]
