@@ -176,6 +176,7 @@ class ResidualBlock(Block):
             regularization: str,
             regularization_rate: float,
             dilate: bool,
+            **kwargs,
     ):
         self.tensor_map = tensor_map
         if not self.can_apply():
