@@ -13,6 +13,7 @@ from tensorflow.keras.layers import Input, Layer
 from ml4h.models.Block import Block
 from ml4h.TensorMap import TensorMap
 from ml4h.metrics import get_metric_dict
+from ml4h.models.transformer_blocks import TransformerDecoder, TransformerEncoder
 from ml4h.optimizers import NON_KERAS_OPTIMIZERS, get_optimizer
 from ml4h.models.conv_blocks import ConvEncoderBlock, ConvDecoderBlock, ResidualBlock, PoolBlock
 from ml4h.models.layer_wrappers import ACTIVATION_FUNCTIONS, NORMALIZATION_CLASSES
@@ -36,6 +37,8 @@ BLOCK_CLASSES = {
     'fc_encode': DenseEncoder,
     'fc_decode': DenseDecoder,
     'identity': EncodeIdentityBlock,
+    'transformer_encoder': TransformerEncoder,
+    'transformer_decoder': TransformerDecoder,
 }
 
 
