@@ -165,38 +165,37 @@ class ResidualBlock(Block):
             self,
             *,
             tensor_map: TensorMap,
-            dimension: int,
-            filters_per_conv: List[int],
-            conv_layer_type: str,
+            conv_layers: List[int],
+            conv_type: str,
             conv_x: List[int],
             conv_y: List[int],
             conv_z: List[int],
             activation: str,
-            normalization: str,
-            regularization: str,
-            regularization_rate: float,
-            dilate: bool,
+            conv_normalize: str,
+            conv_regularize: str,
+            conv_regularize_rate: float,
+            conv_dilate: bool,
             **kwargs,
     ):
         self.tensor_map = tensor_map
         if not self.can_apply():
             return
-        block_size = len(filters_per_conv)
+        block_size = len(conv_layers)
         assert len(conv_x) == len(conv_y) == len(conv_z) == block_size
-        conv_layer, kernels = _conv_layer_from_kind_and_dimension(dimension, conv_layer_type, conv_x, conv_y, conv_z)
+        conv_layer, kernels = _conv_layer_from_kind_and_dimension(self.tensor_map.axes(), conv_type, conv_x, conv_y, conv_z)
         self.conv_layers = []
-        for i, (num_filters, kernel) in enumerate(zip(filters_per_conv, kernels)):
+        for i, (num_filters, kernel) in enumerate(zip(conv_layers, kernels)):
             if isinstance(conv_layer, DepthwiseConv2D):
-                self.conv_layers.append(conv_layer(kernel_size=kernel, padding='same', dilation_rate=2 ** i if dilate else 1))
+                self.conv_layers.append(conv_layer(kernel_size=kernel, padding='same', dilation_rate=2 ** i if conv_dilate else 1))
             else:
-                self.conv_layers.append(conv_layer(filters=num_filters, kernel_size=kernel, padding='same', dilation_rate=2**i if dilate else 1))
+                self.conv_layers.append(conv_layer(filters=num_filters, kernel_size=kernel, padding='same', dilation_rate=2**i if conv_dilate else 1))
 
         self.activations = [_activation_layer(activation) for _ in range(block_size)]
-        self.normalizations = [_normalization_layer(normalization) for _ in range(block_size)]
-        self.regularizations = [_regularization_layer(dimension, regularization, regularization_rate) for _ in range(block_size)]
-        residual_conv_layer, _ = _conv_layer_from_kind_and_dimension(dimension, 'conv', conv_x, conv_y, conv_z)
-        self.residual_convs = [residual_conv_layer(filters=filters_per_conv[0], kernel_size=_one_by_n_kernel(dimension)) for _ in range(block_size - 1)]
-        logging.info(f'Residual Block Convolutional Layers (num_filters, kernel_size): {list(zip(filters_per_conv, kernels))}')
+        self.normalizations = [_normalization_layer(conv_normalize) for _ in range(block_size)]
+        self.regularizations = [_regularization_layer(self.tensor_map.axes(), conv_regularize, conv_regularize_rate) for _ in range(block_size)]
+        residual_conv_layer, _ = _conv_layer_from_kind_and_dimension(self.tensor_map.axes(), 'conv', conv_x, conv_y, conv_z)
+        self.residual_convs = [residual_conv_layer(filters=conv_layers[0], kernel_size=_one_by_n_kernel(self.tensor_map.axes())) for _ in range(block_size - 1)]
+        logging.info(f'Residual Block Convolutional Layers (num_filters, kernel_size): {list(zip(conv_layers, kernels))}')
 
     def can_apply(self):
         return self.tensor_map.axes() > 1
