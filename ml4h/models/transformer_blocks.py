@@ -44,7 +44,7 @@ class TransformerEncoder(Block):
         x = self.dropout(x)
         previous = x
         for encode in self.encoder_layers:
-            x = encode(previous, self.padding_mask)
+            x = encode([previous, self.padding_mask])
             previous = x
         intermediates[self.tensor_map.dependent_map[-1]].append(x)
         return x
@@ -72,7 +72,7 @@ class TransformerDecoder(Block):
         x = self.dropout(x)
         previous = x
         for decode in self.decoder_layers:
-            x = decode(previous, encoder_outputs, self.look_ahead_mask, self.padding_mask)
+            x = decode([previous, encoder_outputs, self.look_ahead_mask, self.padding_mask])
             previous = x
         decoded = self.final_layer(x)
         intermediates[self.tensor_map].append(decoded)
