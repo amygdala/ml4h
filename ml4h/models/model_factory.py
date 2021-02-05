@@ -183,10 +183,10 @@ def multimodal_multitask_model(
             else:
                 logging.warning(f'No method to handle decoding block {decode_block}, ignoring.')
 
-    return _make_multimodal_multitask_model_block(encoder_block_functions, merge, decoder_block_functions, u_connect)
+    return make_multimodal_multitask_model_block(encoder_block_functions, merge, decoder_block_functions, u_connect)
 
 
-def _make_multimodal_multitask_model_block(
+def make_multimodal_multitask_model_block(
         encoder_block_functions: Dict[TensorMap, Block],
         merge: Block,
         decoder_block_functions: Dict[TensorMap, Block],  # Assumed to be topologically sorted according to parents hierarchy
