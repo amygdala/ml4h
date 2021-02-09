@@ -193,7 +193,7 @@ def train_block(args):
             my_out_path = os.path.join(out_path, f'decoding_{dtm.name}_from_{etm.name}/')
             os.makedirs(os.path.dirname(my_out_path), exist_ok=True)
             if dtm.axes() > 1:
-                plot_reconstruction(dtm, test_data[dtm.output_name()], reconstruction, my_out_path, test_paths, samples)
+                plot_reconstruction(dtm, test_labels[dtm.output_name()], reconstruction, my_out_path, test_paths, samples)
             else:
                 evaluate_predictions(dtm, reconstruction, test_labels[dtm.output_name()], {}, dtm.name, my_out_path, test_paths)
     return performance_metrics
