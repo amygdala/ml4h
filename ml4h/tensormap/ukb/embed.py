@@ -65,7 +65,34 @@ embed_lax_4ch_diastole = TensorMap('embed_lax_4ch_diastole', Interpretation.EMBE
 latent_file = '/home/sam/trained_models/ecg_rest_mri_lax_4ch_segmentation_pretrain_generative_dropout_to_lv_rv/hidden_inference_ecg_rest_mri_lax_4ch_segmentation_pretrain_generative_dropout_to_lv_rv.tsv'
 tff = _build_vector_tensor_from_file(latent_file)
 embed_ecg_mri_segmentation = TensorMap('embed_ecg_mri_segmentation', Interpretation.EMBEDDING,
-                                   shape=(32,), channel_map={f'latent_{i}': i for i in range(32)},
-                                   tensor_from_file=tff,
+                                       shape=(32,), channel_map={f'latent_{i}': i for i in range(32)},
+                                       tensor_from_file=tff,
                                        )
 
+latent_file = '/home/sam/trained_models/mri_lax_4ch_autoencoder_256d/hidden_inference_mri_lax_4ch_autoencoder_256d.tsv'
+tff = _build_vector_tensor_from_file(latent_file)
+embed_mri_autoencoder_256d = TensorMap('embed_ecg_mri_segmentation', Interpretation.EMBEDDING,
+                                       shape=(256,), channel_map={f'latent_{i}': i for i in range(256)},
+                                       tensor_from_file=tff,
+                                       )
+
+latent_file = '/home/sam/trained_models/mri_lax_4ch_autoencoder_256d/hidden_inference_mri_lax_4ch_autoencoder_256d.tsv'
+tff = _build_vector_tensor_from_file(latent_file)
+mri_autoencoder_256d = TensorMap('embed_mri_autoencoder_256d', Interpretation.EMBEDDING,
+                                 shape=(256,), channel_map={f'latent_{i}': i for i in range(256)},
+                                 tensor_from_file=tff,
+                                 )
+
+latent_file = '/home/sam/trained_models/ecg_rest_autoencoder_256d/hidden_inference_ecg_rest_autoencoder_256d.tsv'
+tff = _build_vector_tensor_from_file(latent_file)
+ecg_autoencoder_256d = TensorMap('embed_ecg_autoencoder_256d', Interpretation.EMBEDDING,
+                                 shape=(256,), channel_map={f'latent_{i}': i for i in range(256)},
+                                 tensor_from_file=tff,
+                                 )
+
+latent_file = '/home/sam/trained_models/cine_segmented_lax_4ch_diastole_autoencoder_256d/hidden_inference_cine_segmented_lax_4ch_diastole_autoencoder_256d.tsv'
+tff = _build_vector_tensor_from_file(latent_file)
+seg_autoencoder_256d = TensorMap('embed_seg_autoencoder_256d', Interpretation.EMBEDDING,
+                                 shape=(256,), channel_map={f'latent_{i}': i for i in range(256)},
+                                 tensor_from_file=tff,
+                                 )
