@@ -1792,7 +1792,7 @@ lvh_from_indexed_lvm_weighted = TensorMap(
 )
 big_rvedv = TensorMap(
     'big_rvedv', Interpretation.CATEGORICAL, channel_map={'no_big_rvedv': 0, 'big_rvedv': 1},
-    tensor_from_file=_make_sex_indexed_tensor_from_file('RVEDV', male_threshold=128, female_threshold=110)
+    tensor_from_file=_make_sex_indexed_tensor_from_file('RVEDV', male_threshold=125, female_threshold=94)
 )
 
 
