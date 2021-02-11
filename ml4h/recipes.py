@@ -123,7 +123,7 @@ def run(args):
 
     end_time = timer()
     elapsed_time = end_time - start_time
-    logging.info(f"Executed the '{args.mode}' operation in {args.mode/60.0:.1f} minutes".format(args.mode, elapsed_time))
+    logging.info(f"Recipe complete, executed the {args.mode} operation in {elapsed_time/60.0:.1f} minutes.")
 
 
 def _find_learning_rate(args) -> float:

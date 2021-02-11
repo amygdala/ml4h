@@ -164,8 +164,10 @@ def evaluate_predictions(
             y_truth = y_truth[y_truth != tm.sentinel]
         prediction_flat = tm.rescale(y_predictions).flatten()[:max_melt]
         truth_flat = tm.rescale(y_truth).flatten()[:max_melt]
-        if prediction_flat.shape[0] == truth_flat.shape[0]:
+        if len(protected) > 0 and prediction_flat.shape[0] == truth_flat.shape[0]:
             performance_metrics.update(subplot_pearson_per_class(prediction_flat, truth_flat, tm.channel_map, protected, title, prefix=folder))
+        else:
+            performance_metrics.update(plot_scatter(prediction_flat, truth_flat, title, folder, test_paths))
     elif tm.is_continuous():
         if tm.sentinel is not None:
             y_predictions = y_predictions[y_truth != tm.sentinel, np.newaxis]
@@ -2265,24 +2267,23 @@ def plot_hit_to_miss_transforms(latent_df, decoders, feature='Sex_Female_0_0', p
     male_to_female = embeddings + (scalar * sex_vectors)
     female_to_male = embeddings - (scalar * sex_vectors)
 
-    for i, etm in enumerate(encoders):
-        embed = encoders[etm].predict(test_data[etm.input_name()])
-        if etm.output_name() in predictions_dict:
-            plot_reconstruction(etm, test_data[etm.input_name()], predictions_dict[etm.output_name()], out_path, test_paths, samples)
-        for dtm in decoders:
-            reconstruction = decoders[dtm].predict(embed)
-            logging.info(f'{dtm.name} has prediction shape: {reconstruction.shape} from embed shape: {embed.shape}')
-            my_out_path = os.path.join(out_path, f'decoding_{dtm.name}_from_{etm.name}/')
-            os.makedirs(os.path.dirname(my_out_path), exist_ok=True)
-            if dtm.axes() > 1:
-                plot_reconstruction(dtm, test_data[dtm.input_name()], reconstruction, my_out_path, test_paths, samples)
-            else:
-                evaluate_predictions(dtm, reconstruction, test_labels[dtm.output_name()], {}, dtm.name, my_out_path, test_paths)
-
+    # for i, etm in enumerate(encoders):
+    #     embed = encoders[etm].predict(test_data[etm.input_name()])
+    #     if etm.output_name() in predictions_dict:
+    #         plot_reconstruction(etm, test_data[etm.input_name()], predictions_dict[etm.output_name()], out_path, test_paths, samples)
+    #     for dtm in decoders:
+    #         reconstruction = decoders[dtm].predict(embed)
+    #         logging.info(f'{dtm.name} has prediction shape: {reconstruction.shape} from embed shape: {embed.shape}')
+    #         my_out_path = os.path.join(out_path, f'decoding_{dtm.name}_from_{etm.name}/')
+    #         os.makedirs(os.path.dirname(my_out_path), exist_ok=True)
+    #         if dtm.axes() > 1:
+    #             plot_reconstruction(dtm, test_data[dtm.input_name()], reconstruction, my_out_path, test_paths, samples)
+    #         else:
+    #             evaluate_predictions(dtm, reconstruction, test_labels[dtm.output_name()], {}, dtm.name, my_out_path, test_paths)
 
     for dtm in decoders:
         logging.info(f'Decoder {dtm.name} transform')
-        predictions = decoders[dtm].predict(encode)
+        predictions = decoders[dtm].predict(embeddings)
         m2f = decoders[dtm].predict(male_to_female)
         f2m = decoders[dtm].predict(female_to_male)
         if dtm.axes() == 3:
@@ -2298,26 +2299,26 @@ def plot_hit_to_miss_transforms(latent_df, decoders, feature='Sex_Female_0_0', p
                     axes[i, 0].imshow(np.argmax(predictions[i, ...], axis=-1), cmap=cmap)
                     if sexes[i] >= thresh:
                         axes[i, 1].imshow(np.argmax(f2m[i, ...], axis=-1), cmap=cmap)
-                        axes[i, 1].set_title(f'{feature} to less than {thresh}')
+                        axes[i, 1].set_title(f'Transform {feature[:16]} to less than {thresh}')
                     else:
                         axes[i, 1].imshow(np.argmax(m2f[i, ...], axis=-1), cmap=cmap)
-                        axes[i, 1].set_title(f'{feature} to more than or equal to {thresh}')
+                        axes[i, 1].set_title(f'Transform {feature[:16]} to more than or equal to {thresh}')
                 else:
                     axes[i, 0].imshow(predictions[i, ..., 0], cmap='gray')
                     if sexes[i] >= thresh:
                         axes[i, 1].imshow(f2m[i, ..., 0], cmap='gray')
-                        axes[i, 1].set_title(f'{feature} to less than {thresh}')
+                        axes[i, 1].set_title(f'Transform {feature[:16]} to less than {thresh}')
                     else:
                         axes[i, 1].imshow(m2f[i, ..., 0], cmap='gray')
-                        axes[i, 1].set_title(f'{feature} to more than or equal to {thresh}')
+                        axes[i, 1].set_title(f'Transform {feature[:16]} to more than or equal to {thresh}')
             elif dtm.axes() == 2:
                 index2channel = {v: k for k, v in dtm.channel_map.items()}
                 for j in range(dtm.shape[1]):
-                    axes[j, i].plot(predictions[i, ..., j], c='g', label='reconstruction')
+                    axes[j, i].plot(predictions[i, ..., j], c='g', label='Reconstruct')
                     if sexes[i] >= thresh:
-                        axes[j, i].plot(f2m[i, ..., j], c='b', label=f'{feature[:16]} to < {thresh}')
+                        axes[j, i].plot(f2m[i, ..., j], c='b', label=f'Transform {feature[:16]} to < {thresh}')
                     else:
-                        axes[j, i].plot(m2f[i, ..., j], c='r', label=f'{feature[:16]} to {thresh}++')
+                        axes[j, i].plot(m2f[i, ..., j], c='r', label=f'Transform {feature[:16]} to >= {thresh}')
                     axes[j, i].set_title(f'Lead: {index2channel[j]}')
                     axes[j, i].legend()
         plt.tight_layout()
