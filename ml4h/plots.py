@@ -2316,9 +2316,9 @@ def plot_hit_to_miss_transforms(latent_df, decoders, feature='Sex_Female_0_0', p
                 for j in range(dtm.shape[1]):
                     axes[j, i].plot(predictions[i, ..., j], c='g', label='Reconstruct')
                     if sexes[i] >= thresh:
-                        axes[j, i].plot(f2m[i, ..., j], c='b', label=f'Transform {feature[:16]} to < {thresh}')
+                        axes[j, i].plot(f2m[i, ..., j], c='b', label=f'Transform {feature[:16]} to < {thresh:.2f}')
                     else:
-                        axes[j, i].plot(m2f[i, ..., j], c='r', label=f'Transform {feature[:16]} to >= {thresh}')
+                        axes[j, i].plot(m2f[i, ..., j], c='r', label=f'Transform {feature[:16]} to >= {thresh:.2f}')
                     axes[j, i].set_title(f'Lead: {index2channel[j]}')
                     axes[j, i].legend()
         plt.tight_layout()
