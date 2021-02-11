@@ -50,7 +50,7 @@ class FlatConcatDenseBlock(Block):
         ) if dense_layers else None
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
-        y = [Flatten()(x[-1]) for tm, x in intermediates.items() if not tm.is_embedding()]
+        y = [Flatten()(x[-1]) for tm, x in intermediates.items()]
         y = concatenate(y) if len(y) > 1 else y[0]
         y = self.fully_connected(y, intermediates) if self.fully_connected else y
         return y
