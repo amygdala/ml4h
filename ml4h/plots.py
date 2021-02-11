@@ -2292,25 +2292,25 @@ def plot_hit_to_miss_transforms(latent_df, decoders, feature='Sex_Female_0_0', p
             fig, axes = plt.subplots(dtm.shape[1], samples, figsize=(samples * 6, 28))
         for i in range(samples):
             if dtm.axes() == 3:
-                axes[i, 0].set_title(f"{feature}: {sexes[i]} ?>=<? {thresh}")
+                axes[i, 0].set_title(f"{feature}: {sexes[i]:.2f} ?>=<? {thresh:.2f}")
                 axes[i, 0].axis('off')
                 axes[i, 1].axis('off')
                 if dtm.is_categorical():
                     axes[i, 0].imshow(np.argmax(predictions[i, ...], axis=-1), cmap=cmap)
                     if sexes[i] >= thresh:
                         axes[i, 1].imshow(np.argmax(f2m[i, ...], axis=-1), cmap=cmap)
-                        axes[i, 1].set_title(f'Transform {feature[:16]} to less than {thresh}')
+                        axes[i, 1].set_title(f'Transform {feature[:16]} to less than {thresh:.2f}')
                     else:
                         axes[i, 1].imshow(np.argmax(m2f[i, ...], axis=-1), cmap=cmap)
-                        axes[i, 1].set_title(f'Transform {feature[:16]} to more than or equal to {thresh}')
+                        axes[i, 1].set_title(f'Transform {feature[:16]} to more than or equal to {thresh:.2f}')
                 else:
                     axes[i, 0].imshow(predictions[i, ..., 0], cmap='gray')
                     if sexes[i] >= thresh:
                         axes[i, 1].imshow(f2m[i, ..., 0], cmap='gray')
-                        axes[i, 1].set_title(f'Transform {feature[:16]} to less than {thresh}')
+                        axes[i, 1].set_title(f'Transform {feature[:16]} to less than {thresh:.2f}')
                     else:
                         axes[i, 1].imshow(m2f[i, ..., 0], cmap='gray')
-                        axes[i, 1].set_title(f'Transform {feature[:16]} to more than or equal to {thresh}')
+                        axes[i, 1].set_title(f'Transform {feature[:16]} to more than or equal to {thresh:.2f}')
             elif dtm.axes() == 2:
                 index2channel = {v: k for k, v in dtm.channel_map.items()}
                 for j in range(dtm.shape[1]):
