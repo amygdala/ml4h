@@ -166,7 +166,7 @@ def evaluate_predictions(
         truth_flat = tm.rescale(y_truth).flatten()[:max_melt]
         if len(protected) > 0 and prediction_flat.shape[0] == truth_flat.shape[0]:
             performance_metrics.update(subplot_pearson_per_class(prediction_flat, truth_flat, tm.channel_map, protected, title, prefix=folder))
-        else:
+        elif prediction_flat.shape[0] == truth_flat.shape[0]:
             performance_metrics.update(plot_scatter(prediction_flat, truth_flat, title, folder, test_paths))
     elif tm.is_continuous():
         if tm.sentinel is not None:
