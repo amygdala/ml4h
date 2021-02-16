@@ -169,7 +169,7 @@ class CosineLossLayer(Layer):
         # We use `add_loss` to create a regularization loss
         # that depends on the inputs.
         self.add_loss(self.weight * pairwise_cosine_difference(inputs[0], inputs[1]))
-        return [inputs[0]]  # only return left of pair
+        return inputs
 
 
 class L2LossLayer(Layer):
@@ -186,7 +186,7 @@ class L2LossLayer(Layer):
 
     def call(self, inputs):
         self.add_loss(self.weight * tf.reduce_sum(tf.square(inputs[0] - inputs[1])))
-        return [inputs[0]]  # only return left of pair
+        return inputs
 
 
 class VariationalDiagNormal(Layer):
