@@ -82,7 +82,11 @@ mri_autoencoder_256d = TensorMap('embed_mri_autoencoder_256d', Interpretation.EM
                                  shape=(256,), channel_map={f'latent_{i}': i for i in range(256)},
                                  tensor_from_file=tff,
                                  )
-
+latent_file = '/home/sam/trained_models/ecg_rest_raw_100_autoencoder_256d_converge/hidden_activation_13_ecg_rest_raw_100_autoencoder_256d_converge.tsv'
+tff = _build_vector_tensor_from_file(latent_file)
+ecg_rest_raw_autoencoder_256d = TensorMap('embed_ecg_rest_raw_autoencoder_256d', Interpretation.EMBEDDING,
+                                          shape=(256,), channel_map={f'latent_{i}': i for i in range(256)}, tensor_from_file=tff,
+                                          )
 latent_file = '/home/sam/trained_models/ecg_rest_autoencoder_256d/hidden_inference_ecg_rest_autoencoder_256d.tsv'
 tff = _build_vector_tensor_from_file(latent_file)
 ecg_autoencoder_256d = TensorMap('embed_ecg_autoencoder_256d', Interpretation.EMBEDDING,

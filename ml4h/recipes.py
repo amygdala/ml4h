@@ -338,7 +338,7 @@ def infer_multimodal_multitask(args):
 
 
 def _hidden_file_name(output_folder: str, layer: str, id_: str, extension_: str) -> str:
-    return os.path.join(output_folder, id_, f'hidden_{layer}{id_}{extension_}')
+    return os.path.join(output_folder, id_, f'hidden_{layer}_{id_}{extension_}')
 
 
 def infer_hidden_layer_multimodal_multitask(args):
