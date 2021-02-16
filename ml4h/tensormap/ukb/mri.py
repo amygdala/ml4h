@@ -1601,13 +1601,13 @@ def _heart_mask_random_time(mri_key, segmentation_key):
     def _heart_mask_tensor_from_file(tm, hd5, dependents={}):
         cycle_index = np.random.randint(1, 50)
         categorical_slice = get_tensor_at_first_date(hd5, tm.path_prefix, f'{segmentation_key}{cycle_index}')
-        heart_mask = pad_or_crop_array_to_shape(tm.shape, np.isin(categorical_slice, HEART_LABELS.values()))
+        heart_mask = np.isin(categorical_slice, HEART_LABELS.values())
         mri = get_tensor_at_first_date(hd5, tm.path_prefix, f'{mri_key}')[..., cycle_index]
-        logging.info(f'Mri shape {mri.shape} heart_mask: {np.unique(heart_mask)} ')
+        logging.info(f'Mri shape {mri.shape}  heart_mask: {heart_mask.shape} unique: {np.unique(heart_mask)} ')
         mri = pad_or_crop_array_to_shape(tm.shape, mri)
-        logging.info(f'New Mri shape {mri.shape}')
+        heart_mask = pad_or_crop_array_to_shape(tm.shape, heart_mask)
         mri_masked = mri * heart_mask
-        logging.info(f'Mri shape {mri.shape} heart_mask: {len(np.unique(mri_masked))} ')
+        logging.info(f'Mri shape {mri.shape} mri_mask: {len(np.unique(mri_masked))} ')
         return mri_masked
     return _heart_mask_tensor_from_file
 
