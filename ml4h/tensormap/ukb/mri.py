@@ -1601,15 +1601,15 @@ def _heart_mask_random_time(mri_key, segmentation_key):
     def _heart_mask_tensor_from_file(tm, hd5, dependents={}):
         cycle_index = np.random.randint(1, 50)
         categorical_slice = get_tensor_at_first_date(hd5, tm.path_prefix, f'{segmentation_key}{cycle_index}')
-        heart_mask = np.where(categorical_slice in HEART_LABELS.values())
+        heart_mask = np.isin(categorical_slice, HEART_LABELS.values())
         mri = get_tensor_at_first_date(hd5, tm.path_prefix, f'{mri_key}{cycle_index}')
         mri_masked = mri * heart_mask
-        return pad_or_crop_array_to_shape(tm.shape, mri_masked.shape)
+        return pad_or_crop_array_to_shape(tm.shape, mri_masked)
     return _heart_mask_tensor_from_file
 
 
-heart_mask_lax_4ch_random_cycle = TensorMap(
-    'heart_mask_lax_4ch_random_cycle', Interpretation.CONTINUOUS, shape=(160, 224, 1), path_prefix='ukb_cardiac_mri',
+heart_mask_lax_4ch_random_time = TensorMap(
+    'heart_mask_lax_4ch_random_time', Interpretation.CONTINUOUS, shape=(160, 224, 1), path_prefix='ukb_cardiac_mri',
     tensor_from_file=_heart_mask_random_time('cine_segmented_lax_4ch/2/', 'cine_segmented_lax_4ch_annotated_'),
     normalization=ZeroMeanStd1(),
 )
