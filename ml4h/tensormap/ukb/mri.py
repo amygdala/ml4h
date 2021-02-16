@@ -13,7 +13,7 @@ from ml4h.normalizer import ZeroMeanStd1, Standardize
 from ml4h.TensorMap import TensorMap, Interpretation, make_range_validator
 from ml4h.tensormap.ukb.demographics import is_genetic_man, is_genetic_woman
 from ml4h.defines import MRI_TO_SEGMENT, MRI_SEGMENTED, MRI_SEGMENTED_CHANNEL_MAP, MRI_FRAMES, MRI_LVOT_SEGMENTED_CHANNEL_MAP, \
-    MRI_LAX_2CH_SEGMENTED_CHANNEL_MAP, MRI_SAX_SEGMENTED_CHANNEL_MAP, HEART_LABELS
+    MRI_LAX_2CH_SEGMENTED_CHANNEL_MAP, MRI_SAX_SEGMENTED_CHANNEL_MAP, LAX_4CH_HEART_LABELS, LAX_4CH_MYOCARDIUM_LABELS
 from ml4h.tensormap.general import get_tensor_at_first_date, normalized_first_date, pad_or_crop_array_to_shape
 from ml4h.defines import MRI_LAX_3CH_SEGMENTED_CHANNEL_MAP, MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP, MRI_SAX_PAP_SEGMENTED_CHANNEL_MAP, MRI_AO_SEGMENTED_CHANNEL_MAP, MRI_LIVER_SEGMENTED_CHANNEL_MAP
 
@@ -1597,11 +1597,11 @@ cine_segmented_sax_slice_jamesp = TensorMap(
 )
 
 
-def _heart_mask_random_time(mri_key, segmentation_key):
+def _heart_mask_random_time(mri_key, segmentation_key, labels):
     def _heart_mask_tensor_from_file(tm, hd5, dependents={}):
         cycle_index = np.random.randint(1, 50)
         categorical_slice = get_tensor_at_first_date(hd5, tm.path_prefix, f'{segmentation_key}{cycle_index}')
-        heart_mask = np.isin(categorical_slice, list(HEART_LABELS.values()))
+        heart_mask = np.isin(categorical_slice, list(labels.values()))
         mri = get_tensor_at_first_date(hd5, tm.path_prefix, f'{mri_key}')[..., cycle_index]
         mri = pad_or_crop_array_to_shape(tm.shape, mri)
         heart_mask = pad_or_crop_array_to_shape(tm.shape, heart_mask)
@@ -1612,7 +1612,12 @@ def _heart_mask_random_time(mri_key, segmentation_key):
 
 heart_mask_lax_4ch_random_time = TensorMap(
     'heart_mask_lax_4ch_random_time', Interpretation.CONTINUOUS, shape=(160, 224, 1), path_prefix='ukb_cardiac_mri',
-    tensor_from_file=_heart_mask_random_time('cine_segmented_lax_4ch/2/', 'cine_segmented_lax_4ch_annotated_'),
+    tensor_from_file=_heart_mask_random_time('cine_segmented_lax_4ch/2/', 'cine_segmented_lax_4ch_annotated_', LAX_4CH_HEART_LABELS),
+    normalization=ZeroMeanStd1(), cacheable=False,
+)
+myocardium_mask_lax_4ch_random_time = TensorMap(
+    'myocardium_mask_lax_4ch_random_time', Interpretation.CONTINUOUS, shape=(120, 180, 1), path_prefix='ukb_cardiac_mri',
+    tensor_from_file=_heart_mask_random_time('cine_segmented_lax_4ch/2/', 'cine_segmented_lax_4ch_annotated_', LAX_4CH_MYOCARDIUM_LABELS),
     normalization=ZeroMeanStd1(), cacheable=False,
 )
 

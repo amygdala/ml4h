@@ -85,9 +85,11 @@ MRI_LVOT_SEGMENTED_CHANNEL_MAP = {
     'background': 0, 'body': 1, 'lungs': 2, 'RV_wall': 3, 'RV_cavity': 4, 'LV_wall': 5, 'LV_cavity': 6,
     'aortic_root': 7, 'ascending_aorta': 8, 'pulmonary_artery': 9, 'ascending_aortic_wall': 10, 'LVOT': 11,
 }
-HEART_LABELS = {'RV_free_wall': 1, 'RA_free_wall': 2, 'LA_free_wall': 3, 'LV_anterolateral_wall': 4,
+LAX_4CH_HEART_LABELS = {'RV_free_wall': 1, 'RA_free_wall': 2, 'LA_free_wall': 3, 'LV_anterolateral_wall': 4,
     'interventricular_septum': 5, 'interatrial_septum': 6, 'crista_terminalis': 7, 'RA_cavity': 8, 'RV_cavity': 9,
     'LA_cavity': 10, 'LV_cavity': 11, 'descending_aorta': 12, 'ascending_aorta': 14}
+LAX_4CH_MYOCARDIUM_LABELS = {'RV_free_wall': 1, 'RA_free_wall': 2, 'LA_free_wall': 3, 'LV_anterolateral_wall': 4,
+    'interventricular_septum': 5, 'interatrial_septum': 6, 'crista_terminalis': 7}
 MRI_LIVER_SEGMENTED_CHANNEL_MAP = {'background': 0, 'liver': 1, 'inferior_vena_cava': 2, 'abdominal_aorta': 3, 'body': 4}
 
 
