@@ -32,7 +32,7 @@ KCNH2_LOF = TensorMap('KCNH2', Interpretation.CATEGORICAL, path_prefix='categori
 KCNJ5_LOF = TensorMap('KCNJ5', Interpretation.CATEGORICAL, path_prefix='categorical', storage_type=StorageType.CATEGORICAL_INDEX, channel_map={'no_KCNJ5_LOF': 0, 'KCNJ5_LOF': 1})
 MYBPC3_LOF = TensorMap('MYBPC3', Interpretation.CATEGORICAL, path_prefix='categorical', storage_type=StorageType.CATEGORICAL_INDEX, channel_map={'no_MYBPC3_LOF': 0, 'MYBPC3_LOF': 1})
 
-TTN_LOF_weighted = TensorMap('TTN', Interpretation.CATEGORICAL, path_prefix='categorical', loss=weighted_crossentropy([0.1, 10.0]),
+TTN_LOF_weighted = TensorMap('TTN', Interpretation.CATEGORICAL, path_prefix='categorical', loss=weighted_crossentropy([0.2, 2.0]),
                              storage_type=StorageType.CATEGORICAL_INDEX, channel_map={'no_TTN_LOF': 0, 'TTN_LOF': 1})
 
 ttntv = TensorMap(
