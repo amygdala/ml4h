@@ -1599,11 +1599,15 @@ cine_segmented_sax_slice_jamesp = TensorMap(
 
 def _heart_mask_random_time(mri_key, segmentation_key):
     def _heart_mask_tensor_from_file(tm, hd5, dependents={}):
-        cycle_index = 1 #np.random.randint(1, 50)
+        cycle_index = np.random.randint(1, 50)
         categorical_slice = get_tensor_at_first_date(hd5, tm.path_prefix, f'{segmentation_key}{cycle_index}')
         heart_mask = pad_or_crop_array_to_shape(tm.shape, np.isin(categorical_slice, HEART_LABELS.values()))
-        mri = pad_or_crop_array_to_shape(tm.shape, get_tensor_at_first_date(hd5, tm.path_prefix, f'{mri_key}')[..., cycle_index])
+        mri = get_tensor_at_first_date(hd5, tm.path_prefix, f'{mri_key}')[..., cycle_index]
+        logging.info(f'Mri shape {mri.shape} heart_mask: {np.unique(heart_mask)} ')
+        mri = pad_or_crop_array_to_shape(tm.shape, mri)
+        logging.info(f'New Mri shape {mri.shape}')
         mri_masked = mri * heart_mask
+        logging.info(f'Mri shape {mri.shape} heart_mask: {len(np.unique(mri_masked))} ')
         return mri_masked
     return _heart_mask_tensor_from_file
 
@@ -1611,7 +1615,7 @@ def _heart_mask_random_time(mri_key, segmentation_key):
 heart_mask_lax_4ch_random_time = TensorMap(
     'heart_mask_lax_4ch_random_time', Interpretation.CONTINUOUS, shape=(160, 224, 1), path_prefix='ukb_cardiac_mri',
     tensor_from_file=_heart_mask_random_time('cine_segmented_lax_4ch/2/', 'cine_segmented_lax_4ch_annotated_'),
-    normalization=ZeroMeanStd1(),
+    normalization=ZeroMeanStd1(), cacheable=False,
 )
 
 
