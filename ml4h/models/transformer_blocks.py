@@ -224,7 +224,7 @@ def encoder_layer(units, d_model, num_heads, dropout, name="encoder_layer", inpu
             'value': inputs,
             'mask': padding_mask
         })
-    attention = tf.keras.layers.Dropout(rate=dropout)(attention)
+    #attention = tf.keras.layers.Dropout(rate=dropout)(attention)
     attention = tf.keras.layers.LayerNormalization(
         epsilon=1e-6)(inputs + attention)
 
