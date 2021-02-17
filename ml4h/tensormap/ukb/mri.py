@@ -1714,12 +1714,15 @@ def _select_tensor_from_file(selection_predicate: Callable):
     return selected_tensor_from_file
 
 
-def _make_sex_indexed_tensor_from_file(value_key, group_key='continuous', index_key='bsa_mosteller', male_threshold=72, female_threshold=55):
+def _make_sex_index_tensor_from_file(value_key, group_key='continuous', index_key='bsa_mosteller', male_threshold=72, female_threshold=55):
     def _indexed_tensor_from_file(tm, hd5, dependents={}):
         tensor = np.zeros(tm.shape, dtype=np.float32)
         value = float(hd5[group_key][value_key][0])
-        bsa = float(hd5[group_key][index_key][0])
-        value_indexed = value / bsa
+        if index_key:
+            bsa = float(hd5[group_key][index_key][0])
+            value_indexed = value / bsa
+        else:
+            value_indexed = value
         index = 0
         if is_genetic_man(hd5) and value_indexed > male_threshold:
             index = 1
@@ -1804,22 +1807,25 @@ myocardial_mass_noheritable_women_only = TensorMap(
 
 lvh_from_indexed_lvm = TensorMap(
     'lvh_from_indexed_lvm', Interpretation.CATEGORICAL, channel_map={'no_lvh': 0, 'left_ventricular_hypertrophy': 1},
-    tensor_from_file=_make_sex_indexed_tensor_from_file(
+    tensor_from_file=_make_sex_index_tensor_from_file(
         'adjusted_myocardium_mass',
     ),
 )
 lvh_from_indexed_lvm_weighted = TensorMap(
     'lvh_from_indexed_lvm', Interpretation.CATEGORICAL, channel_map={'no_lvh': 0, 'left_ventricular_hypertrophy': 1},
-    tensor_from_file=_make_sex_indexed_tensor_from_file(
+    tensor_from_file=_make_sex_index_tensor_from_file(
         'adjusted_myocardium_mass',
     ),
     loss=weighted_crossentropy([1.0, 25.0], 'lvh_from_indexed_lvm'),
 )
+big_rvedv_indexed = TensorMap(
+    'big_rvedv_indexed', Interpretation.CATEGORICAL, channel_map={'no_big_rvedv_indexed': 0, 'big_rvedv_indexed': 1},
+    tensor_from_file=_make_sex_index_tensor_from_file('RVEDV', male_threshold=125, female_threshold=94)
+)
 big_rvedv = TensorMap(
     'big_rvedv', Interpretation.CATEGORICAL, channel_map={'no_big_rvedv': 0, 'big_rvedv': 1},
-    tensor_from_file=_make_sex_indexed_tensor_from_file('RVEDV', male_threshold=125, female_threshold=94)
+    tensor_from_file=_make_sex_index_tensor_from_file('RVEDV', index_key=None, male_threshold=248, female_threshold=168)
 )
-
 
 adjusted_myocardium_mass = TensorMap(
     'adjusted_myocardium_mass', Interpretation.CONTINUOUS, validator=make_range_validator(0, 400), path_prefix='continuous',
@@ -1832,7 +1838,7 @@ adjusted_myocardium_mass_indexed = TensorMap(
 )
 lvh_from_indexed_lvm_parented = TensorMap(
     'lvh_from_indexed_lvm', Interpretation.CATEGORICAL, channel_map={'no_lvh': 0, 'left_ventricular_hypertrophy': 1},
-    tensor_from_file=_make_sex_indexed_tensor_from_file(
+    tensor_from_file=_make_sex_index_tensor_from_file(
         'adjusted_myocardium_mass_indexed',
     ),
     loss=weighted_crossentropy([1.0, 25.0], 'lvh_from_indexed_lvm_parented'),
