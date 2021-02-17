@@ -105,8 +105,7 @@ class EncodeIdentityBlock(Block):
         self.tensor_map = tensor_map
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
-        if self.tensor_map.is_embedding():
-            intermediates[self.tensor_map].append(x)
+        intermediates[self.tensor_map].append(x)
         return x
 
 
