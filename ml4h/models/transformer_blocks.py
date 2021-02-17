@@ -45,7 +45,7 @@ class TransformerEncoder(Block):
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
         intermediates[self.tensor_map.dependent_map[-1]]
-        x = self.padding_mask_layer(x)
+        #x = self.padding_mask_layer(x)
         x = self.embed_block(x, intermediates)
         x = self.dropout(x)
         previous = x
@@ -83,10 +83,10 @@ class TransformerDecoder(Block):
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
         encoder_outputs = intermediates[self.tensor_map][-1]
-        encoder_outputs = self.look_ahead_mask_layer(encoder_outputs)
+        #encoder_outputs = self.look_ahead_mask_layer(encoder_outputs)
         encoder_input = intermediates[self.tensor_map][0]
-        y = self.padding_mask_layer(encoder_input)
-        y = self.embed_block(y, intermediates)
+        #y = self.padding_mask_layer(encoder_input)
+        y = self.embed_block(encoder_input, intermediates)
         y = self.dropout(y)
         previous = x
         for decode in self.decoder_layers:
