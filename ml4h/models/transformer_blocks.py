@@ -131,6 +131,11 @@ class MultiHeadAttention(tf.keras.layers.Layer):
 
         self.dense = tf.keras.layers.Dense(units=d_model)
 
+    def get_config(self):
+        config = super().get_config().copy()
+        config.update({'d_model': self.d_model, 'num_heads': self.num_heads})
+        return config
+
     def split_heads(self, inputs, batch_size):
         inputs = tf.reshape(
             inputs, shape=(batch_size, -1, self.num_heads, self.depth))
@@ -183,7 +188,14 @@ class PositionalEncoding(tf.keras.layers.Layer):
 
     def __init__(self, position, d_model):
         super(PositionalEncoding, self).__init__()
+        self.d_model = d_model
+        self.position = position
         self.pos_encoding = self.positional_encoding(position, d_model)
+
+    def get_config(self):
+        config = super().get_config().copy()
+        config.update({'d_model': self.d_model, 'position': self.position})
+        return config
 
     def get_angles(self, position, i, d_model):
         angles = 1 / tf.pow(10000, (2 * (i // 2)) /
@@ -302,7 +314,6 @@ def decoder_layer(units, d_model, num_heads, dropout, name="decoder_layer", inpu
         inputs=[inputs, enc_outputs, look_ahead_mask, padding_mask],
         outputs=outputs,
         name=name)
-
 
 
 def decoder(vocab_size,
