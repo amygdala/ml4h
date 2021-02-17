@@ -29,7 +29,7 @@ class TransformerEncoder(Block):
         self.tensor_map = tensor_map
         self.embed_block = EmbeddingBlock(tensor_map=tensor_map, dense_layers=dense_layers, **kwargs)
         self.dropout = tf.keras.layers.Dropout(rate=dense_regularize_rate)
-        self.padding_mask = None # tf.keras.Input(shape=(1, 1, None), name='padding_mask')
+        self.padding_mask = tf.keras.Input(shape=(1, 1, None), name='padding_mask')
         self.padding_mask_layer = tf.keras.layers.Lambda(
             create_padding_mask, output_shape=(1, 1, None),
             name='encoder_padding_mask')
