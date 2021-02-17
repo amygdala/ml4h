@@ -32,7 +32,7 @@ class TransformerEncoder(Block):
         self.padding_mask = tf.keras.Input(shape=(1, 1, None), name='padding_mask')
         self.padding_mask_layer = tf.keras.layers.Lambda(
             create_padding_mask, output_shape=(1, 1, None),
-            name='encoder_padding_mask')
+            name='padding_mask')
 
         self.encoder_layers = [encoder_layer(
             units=512,
@@ -45,7 +45,7 @@ class TransformerEncoder(Block):
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
         intermediates[self.tensor_map.dependent_map[-1]]
-        #x = self.padding_mask_layer(x)
+        x = self.padding_mask_layer(x)
         x = self.embed_block(x, intermediates)
         x = self.dropout(x)
         previous = x
