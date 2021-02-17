@@ -50,7 +50,7 @@ class TransformerEncoder(Block):
         x = self.dropout(x)
         previous = x
         for encode in self.encoder_layers:
-            x = encode([previous, self.padding_mask])
+            x = encode([previous, self.padding_mask_layer])
             previous = x
         intermediates[self.tensor_map.dependent_map[-1]].append(x)
         return x
