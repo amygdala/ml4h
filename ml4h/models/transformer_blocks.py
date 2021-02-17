@@ -106,8 +106,8 @@ def scaled_dot_product_attention(query, key, value, mask):
     logits = matmul_qk / tf.math.sqrt(depth)
 
     # add the mask to zero out padding tokens
-    if mask is not None:
-        logits += (mask * -1e9)
+    # if mask is not None:
+    #     logits += (mask * -1e9)
 
     # softmax is normalized on the last axis (seq_len_k)
     attention_weights = tf.nn.softmax(logits, axis=-1)
@@ -140,8 +140,7 @@ class MultiHeadAttention(tf.keras.layers.Layer):
         return tf.transpose(inputs, perm=[0, 2, 1, 3])
 
     def call(self, inputs):
-        query, key, value, mask = inputs['query'], inputs['key'], inputs[
-            'value'], inputs['mask']
+        query, key, value, mask = inputs['query'], inputs['key'], inputs['value'], inputs['mask']
         batch_size = tf.shape(query)[0]
 
         # linear layers
@@ -155,8 +154,7 @@ class MultiHeadAttention(tf.keras.layers.Layer):
         value = self.split_heads(value, batch_size)
 
         # scaled dot-product attention
-        scaled_attention = scaled_dot_product_attention(
-            query, key, value, mask)
+        scaled_attention = scaled_dot_product_attention(query, key, value, mask)
 
         scaled_attention = tf.transpose(scaled_attention, perm=[0, 2, 1, 3])
 
@@ -215,7 +213,7 @@ class PositionalEncoding(tf.keras.layers.Layer):
 
 def encoder_layer(units, d_model, num_heads, dropout, name="encoder_layer", input_name="inputs"):
     inputs = tf.keras.Input(shape=(None, d_model), name=input_name)
-    padding_mask = None  # tf.keras.Input(shape=(1, 1, None), name="padding_mask")
+    padding_mask = tf.keras.Input(shape=(1, 1, None), name="padding_mask")
 
     attention = MultiHeadAttention(
         d_model, num_heads, name="attention")({
@@ -224,7 +222,7 @@ def encoder_layer(units, d_model, num_heads, dropout, name="encoder_layer", inpu
             'value': inputs,
             'mask': padding_mask
         })
-    #attention = tf.keras.layers.Dropout(rate=dropout)(attention)
+    attention = tf.keras.layers.Dropout(rate=dropout)(attention)
     attention = tf.keras.layers.LayerNormalization(
         epsilon=1e-6)(inputs + attention)
 
@@ -269,8 +267,8 @@ def encoder(vocab_size,
         inputs=[inputs, padding_mask], outputs=outputs, name=name)
 
 
-def decoder_layer(units, d_model, num_heads, dropout, name="decoder_layer"):
-    inputs = tf.keras.Input(shape=(None, d_model), name="inputs")
+def decoder_layer(units, d_model, num_heads, dropout, name="decoder_layer", input_name="inputs"):
+    inputs = tf.keras.Input(shape=(None, d_model), name=input_name)
     enc_outputs = tf.keras.Input(shape=(None, d_model), name="encoder_outputs")
     look_ahead_mask = tf.keras.Input(
         shape=(1, None, None), name="look_ahead_mask")
