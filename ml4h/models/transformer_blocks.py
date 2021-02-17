@@ -215,7 +215,7 @@ class PositionalEncoding(tf.keras.layers.Layer):
 
 def encoder_layer(units, d_model, num_heads, dropout, name="encoder_layer", input_name="inputs"):
     inputs = tf.keras.Input(shape=(None, d_model), name=input_name)
-    padding_mask = tf.keras.Input(shape=(1, 1, None), name="padding_mask")
+    padding_mask = None  # tf.keras.Input(shape=(1, 1, None), name="padding_mask")
 
     attention = MultiHeadAttention(
         d_model, num_heads, name="attention")({
