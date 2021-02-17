@@ -317,7 +317,7 @@ def _softmax(x):
 def sample_from_language_model(language_input, next_input, model, test_data, max_samples):
     cur_test = {}
     index_2_token = {v: k for k, v in language_input.channel_map.items()}
-    for i in range(min(10, test_data[language_input.input_name()].shape[0])):  # iterate over the batch
+    for i in range(test_data[language_input.input_name()].shape[0]):  # iterate over the batch
         for k in test_data:
             cur_test[k] = np.expand_dims(test_data[k][i], axis=0)
         sentence = ''.join([index_2_token[index] for index in cur_test[language_input.input_name()][0]])
