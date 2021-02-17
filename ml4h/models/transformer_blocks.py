@@ -68,7 +68,7 @@ class TransformerDecoder(Block):
         self.decoder_padding_mask = tf.keras.layers.Lambda(
             create_padding_mask, output_shape=(1, 1, None),
             name='decoder_padding_mask')
-        self.final_layer = tf.keras.layers.Dense(units=self.tensor_map.shape[0], name=self.tensor_map.output_name())
+        self.final_layer = tf.keras.layers.Dense(units=len(tensor_map.channel_map), name=self.tensor_map.output_name())
         self.decoder_layers = decoder(
             vocab_size=len(tensor_map.channel_map),
             num_layers=len(dense_layers),

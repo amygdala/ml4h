@@ -572,3 +572,18 @@ def concordance_index(prediction, truth, tied_tol=1e-8):
 
     cindex = numerator / denominator
     return cindex, concordant, discordant, tied_risk, tied_time
+
+
+def sparse_cross_entropy(window_size: int):
+    def _sparse_cross_entropy(y_true, y_pred):
+        y_true = tf.reshape(y_true, shape=(-1, window_size))
+
+        loss = tf.keras.losses.SparseCategoricalCrossentropy(
+            from_logits=True, reduction='none')(y_true, y_pred)
+
+        #mask = tf.cast(tf.not_equal(y_true, 0), tf.float32)
+        #loss = tf.multiply(loss, mask)
+
+        return tf.reduce_mean(loss)
+    return _sparse_cross_entropy
+
