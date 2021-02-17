@@ -84,7 +84,7 @@ class TransformerDecoder(Block):
             if self.tensor_map == tm:
                 encoder_input = intermediates[self.tensor_map][0]
                 encoder_outputs = intermediates[self.tensor_map][-1]
-            else:
+            elif 'next' in tm.name:
                 decoder_inputs = intermediates[tm][-1]
         look_ahead = self.look_ahead_mask(decoder_inputs)
         pad = self.decoder_padding_mask(encoder_input)
