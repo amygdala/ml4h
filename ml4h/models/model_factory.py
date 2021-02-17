@@ -228,7 +228,7 @@ def make_multimodal_multitask_model_block(
     decoder_outputs = []
     for tm, decoder_block in decoder_block_functions.items():  # TODO this needs to be a topological sorted according to parents hierarchy
         # Do not save isolated decoders for UNETs because they require skip connection inputs as well as latent space
-        if len([tm_in for tm_in, _ in encoder_block_functions.items() if tm in u_connect[tm_in]]) > 0:
+        if len([tm_in for tm_in, _ in encoder_block_functions.items() if ((tm in u_connect[tm_in]) or tm.is_language())]) > 0:
             reconstruction = decoder_block(multimodal_activation, intermediates)
             decoder_outputs.append(reconstruction)
         else:
