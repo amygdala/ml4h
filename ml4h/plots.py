@@ -154,9 +154,10 @@ def evaluate_predictions(
         plot_prediction_calibration(y_predictions, y_truth[:, 0, np.newaxis], {tm.name: 0}, calibration_title, folder)
         plot_survivorship(y_truth[:, 0], y_truth[:, 1], y_predictions[:, 0], tm.name, folder, tm.days_window)
     elif tm.is_language():
-        performance_metrics.update(subplot_roc_per_class(y_predictions, y_truth, tm.channel_map, protected, title, folder))
-        performance_metrics.update(plot_precision_recall_per_class(y_predictions, y_truth, tm.channel_map, title, folder))
-        rocs.append((y_predictions, y_truth, tm.channel_map))
+        pass
+        #performance_metrics.update(subplot_roc_per_class(y_predictions, y_truth, tm.channel_map, protected, title, folder))
+        #performance_metrics.update(plot_precision_recall_per_class(y_predictions, y_truth, tm.channel_map, title, folder))
+        #rocs.append((y_predictions, y_truth, tm.channel_map))
     elif tm.axes() > 1 or tm.is_mesh():
         plot_reconstruction(tm, tm.rescale(y_truth), tm.rescale(y_predictions), folder, test_paths)
         if tm.sentinel is not None:

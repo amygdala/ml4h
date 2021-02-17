@@ -418,7 +418,6 @@ def train_char_model(args):
     )
     batch = next(generate_test)
     input_data, tensor_paths = batch[BATCH_INPUT_INDEX], batch[BATCH_PATHS_INDEX]
-    sample_from_char_embed_model(args.tensor_maps_in, char_model, input_data, tensor_paths)
 
     out_path = os.path.join(args.output_folder, args.id + '/')
     data, labels, paths = big_batch_from_minibatch_generator(generate_test, args.test_steps)
@@ -574,7 +573,7 @@ def _predict_and_evaluate(
         y_truth = np.array(test_labels[tm.output_name()])
         performance_metrics.update(evaluate_predictions(tm, y, y_truth, protected_data, tm.name, plot_path, test_paths, rocs=rocs, scatters=scatters))
         if tm.is_language():
-            sample_from_language_model(tensor_maps_in[0], tm, model, test_data, max_samples=16)
+            sample_from_language_model(tm, tensor_maps_in[1], model, test_data, max_samples=16)
 
     if len(rocs) > 1:
         subplot_rocs(rocs, plot_path)
