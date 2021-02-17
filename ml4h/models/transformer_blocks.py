@@ -27,72 +27,69 @@ class EmbeddingBlock(Block):
 class TransformerEncoder(Block):
     def __init__(self, *, tensor_map: TensorMap, dense_layers: List[int], dense_regularize_rate, **kwargs):
         self.tensor_map = tensor_map
+        if not self.can_apply():
+            return
         self.embed_block = EmbeddingBlock(tensor_map=tensor_map, dense_layers=dense_layers, **kwargs)
         self.dropout = tf.keras.layers.Dropout(rate=dense_regularize_rate)
-        self.padding_mask = tf.keras.Input(shape=(1, 1, None), name='padding_mask')
-        self.padding_mask_layer = tf.keras.layers.Lambda(
-            create_padding_mask, output_shape=(1, 1, None),
-            name='padding_mask')
+        self.padding_mask_layer = tf.keras.layers.Lambda(create_padding_mask, output_shape=(1, 1, None),
+                                                         name='encoder_padding_mask')
 
-        self.encoder_layers = [encoder_layer(
+        self.encoder_layers = encoder(
+            vocab_size=len(tensor_map.channel_map),
+            num_layers=len(dense_layers),
             units=512,
-            d_model=d_model,
+            d_model=256,
             num_heads=4,
             dropout=dense_regularize_rate,
-            name=f'encoder_layer_{i}',
-            input_name=self.tensor_map.input_name()
-        ) for i, d_model in enumerate(dense_layers)]
+            input_name=tensor_map.input_name(),
+        )
+
+    def can_apply(self):
+        return self.tensor_map.is_language()
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
-        intermediates[self.tensor_map.dependent_map[-1]]
-        x = self.padding_mask_layer(x)
-        x = self.embed_block(x, intermediates)
-        x = self.dropout(x)
-        previous = x
-        for encode in self.encoder_layers:
-            x = encode([previous, self.padding_mask])
-            previous = x
-        intermediates[self.tensor_map.dependent_map[-1]].append(x)
-        return x
+        if not self.can_apply():
+            return x
+        padded = self.padding_mask_layer(x)
+        y = self.encoder_layers(inputs=[x, padded])
+        intermediates[self.tensor_map.dependent_map[-1]].extend([x, y])
+        return y
 
 
 class TransformerDecoder(Block):
     def __init__(self, *, tensor_map: TensorMap, dense_layers: List[int], dense_regularize_rate, **kwargs):
         self.tensor_map = tensor_map
-        # mask the future tokens for decoder inputs at the 1st attention block
-        self.look_ahead_mask_layer = tf.keras.layers.Lambda(
+
+        self.look_ahead_mask = tf.keras.layers.Lambda(
             create_look_ahead_mask,
             output_shape=(1, None, None),
             name='look_ahead_mask')
         # mask the encoder outputs for the 2nd attention block
-        self.padding_mask_layer = tf.keras.layers.Lambda(
+        self.decoder_padding_mask = tf.keras.layers.Lambda(
             create_padding_mask, output_shape=(1, 1, None),
             name='decoder_padding_mask')
-        self.embed_block = EmbeddingBlock(tensor_map=tensor_map, dense_layers=dense_layers, **kwargs)
-        self.look_ahead_mask = None # tf.keras.Input(shape=(1, None, None), name='look_ahead_mask')
-        self.padding_mask = None # tf.keras.Input(shape=(1, 1, None), name='decoder_padding_mask')
-        self.dropout = tf.keras.layers.Dropout(rate=dense_regularize_rate)
         self.final_layer = tf.keras.layers.Dense(units=len(self.tensor_map.channel_map), name=self.tensor_map.output_name())
-        self.decoder_layers = [decoder_layer(
+        self.decoder_layers = decoder(
+            vocab_size=len(tensor_map.channel_map),
+            num_layers=len(dense_layers),
             units=512,
-            d_model=d_model,
+            d_model=256,
             num_heads=4,
             dropout=dense_regularize_rate,
-            name=f'decoder_layer_{i}',
-        ) for i, d_model in enumerate(dense_layers)]
+            input_name="input_lsd_small_language",
+        )
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
-        encoder_outputs = intermediates[self.tensor_map][-1]
-        #encoder_outputs = self.look_ahead_mask_layer(encoder_outputs)
-        encoder_input = intermediates[self.tensor_map][0]
-        #y = self.padding_mask_layer(encoder_input)
-        y = self.embed_block(encoder_input, intermediates)
-        y = self.dropout(y)
-        previous = x
-        for decode in self.decoder_layers:
-            x = decode([previous, encoder_outputs, self.look_ahead_mask, self.padding_mask])
-            previous = x
-        decoded = self.final_layer(x)
+        for tm in intermediates:
+            if self.tensor_map == tm:
+                encoder_input = intermediates[self.tensor_map][0]
+                encoder_outputs = intermediates[self.tensor_map][-1]
+            else:
+                decoder_inputs = intermediates[tm][-1]
+        look_ahead = self.look_ahead_mask(decoder_inputs)
+        pad = self.decoder_padding_mask(encoder_input)
+        decoder_outputs = self.decoder_layers(inputs=[decoder_inputs, encoder_outputs, look_ahead, pad])
+        decoded = self.final_layer(decoder_outputs)
         intermediates[self.tensor_map].append(decoded)
         return decoded
 

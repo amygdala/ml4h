@@ -247,7 +247,7 @@ def generate_random_text_tensor_maps(text_file: str, window_size: int, one_hot: 
     text, token_dictionary = token_dictionary_and_text_from_file(text_file)
     shape = (window_size, len(token_dictionary)) if one_hot else (window_size,)
     burn_in = TensorMap(
-        f'next_{name}', Interpretation.LANGUAGE, shape=shape,
+        f'next_{name}', Interpretation.CONTINUOUS, shape=shape,
         channel_map=token_dictionary,
         cacheable=False,
     )
