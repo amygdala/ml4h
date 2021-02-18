@@ -512,6 +512,10 @@ def inspect_paired_model(args):
 
 
 def pca_on_hidden_inference(args):
+    if len(args.dense_layers) != 2:
+        raise ValueError(f'{args.mode} expects --dense_layers to have the number of columns of hidden inference'
+                         f' then the number of PCA dimensions to keep '
+                         f'(eg --dense_layers 256 16 will keep 16 top PCA components found in 256d latent space')
     latent_cols = [f'latent_{i}' for i in range(args.dense_layers[0])]
     pca_on_tsv(args.app_csv, latent_cols, 'sample_id', args.dense_layers[1])
 
