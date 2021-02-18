@@ -1392,19 +1392,35 @@ def latent_space_dataframe(infer_hidden_tsv, explore_csv):
     return latent_df
 
 
-def pca_on_matrix(matrix, pca_components):
+def plot_scree(pca_components, percent_explained, figure_path):
+    _ = plt.figure(figsize=(6, 4))
+    plt.plot(range(len(percent_explained)), percent_explained, 'g.-', linewidth=1)
+    plt.axvline(x=pca_components, c='r', linewidth=3)
+    label = f'{np.sum(percent_explained[:pca_components]):0.1f}% of variance explained by top {pca_components} of {len(percent_explained)} components'
+    plt.text(pca_components+0.02*len(percent_explained), percent_explained[1], label)
+    plt.title('Scree Plot')
+    plt.xlabel('Principal Components')
+    plt.ylabel('% of Variance Explained by Each Component')
+    if not os.path.exists(os.path.dirname(figure_path)):
+        os.makedirs(os.path.dirname(figure_path))
+    plt.savefig(figure_path)
+
+
+def pca_on_matrix(matrix, pca_components, scree_path=None):
     pca = PCA()
     pca.fit(matrix)
     print(f'PCA explains {100 * np.sum(pca.explained_variance_ratio_[:pca_components]):0.1f}% of variance with {pca_components} top PCA components.')
     matrix_reduced = pca.transform(matrix)[:, :pca_components]
     print(f'PCA reduces matrix shape:{matrix_reduced.shape} from matrix shape: {matrix.shape}')
+    if scree_path:
+        plot_scree(pca_components, 100*pca.explained_variance_ratio_, scree_path)
     return pca, matrix_reduced
 
 
 def pca_on_tsv(tsv_file, columns, index_column, pca_components):
     df = pd.read_csv(tsv_file, sep='\t')
     matrix = df[columns].to_numpy()
-    pca, reduced = pca_on_matrix(matrix, pca_components)
+    pca, reduced = pca_on_matrix(matrix, pca_components, tsv_file.replace('.tsv', f'_scree_{pca_components}.png'))
     reduced_df = pd.DataFrame(reduced)
     reduced_df.index = df[index_column]
     new_tsv = tsv_file.replace('.tsv', f'_pca_{pca_components}.tsv')
