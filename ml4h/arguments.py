@@ -187,7 +187,7 @@ def parse_args():
     parser.add_argument('--language_prefix', default='ukb_ecg_rest', help='Path prefix for a TensorMap to learn language models (eg train_char_model)')
     parser.add_argument('--attention_heads', default=4, type=int, help='Number of attention heads in Multi-headed attention layers')
     parser.add_argument(
-        '--transformer_dimension', default=256, type=int,
+        '--transformer_size', default=256, type=int,
         help='Number of output neurons in Transformer encoders and decoders, '
              'the number of internal neurons and the number of layers are set by the --dense_layers')
 
