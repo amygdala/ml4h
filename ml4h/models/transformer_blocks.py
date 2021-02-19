@@ -63,7 +63,7 @@ class TransformerDecoder(Block):
             d_model=transformer_size,
             num_heads=attention_heads,
             dropout=dense_regularize_rate,
-            input_name=tensor_map.dependent_map[0].input_name(),
+            input_name=tensor_map.dependent_map.input_name(),
         )
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:

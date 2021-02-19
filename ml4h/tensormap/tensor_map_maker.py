@@ -267,6 +267,6 @@ def generate_random_text_tensor_maps(text_file: str, window_size: int, one_hot: 
         annotation_units=128,
         cacheable=False,
     )
-    output_map.dependent_map = [input_map]
+    output_map.dependent_map = input_map
     return input_map, burn_in, output_map
 
