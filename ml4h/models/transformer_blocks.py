@@ -11,7 +11,7 @@ Tensor = tf.Tensor
 
 class TransformerEncoder(Block):
     def __init__(self, *, tensor_map: TensorMap, dense_layers: List[int],
-                 dense_regularize_rate: float, attention_heads: int, transformer_dimension: int, **kwargs):
+                 dense_regularize_rate: float, attention_heads: int, transformer_size: int, **kwargs):
         self.tensor_map = tensor_map
         if not self.can_apply():
             return
@@ -24,7 +24,7 @@ class TransformerEncoder(Block):
             vocab_size=len(tensor_map.channel_map),
             num_layers=len(dense_layers),
             units=dense_layers[0],
-            d_model=transformer_dimension,
+            d_model=transformer_size,
             num_heads=attention_heads,
             dropout=dense_regularize_rate,
             input_name=tensor_map.input_name(),
@@ -44,7 +44,7 @@ class TransformerEncoder(Block):
 
 class TransformerDecoder(Block):
     def __init__(self, *, tensor_map: TensorMap, dense_layers: List[int],
-                 dense_regularize_rate: float, attention_heads: int, transformer_dimension: int, **kwargs):
+                 dense_regularize_rate: float, attention_heads: int, transformer_size: int, **kwargs):
         self.tensor_map = tensor_map
 
         self.look_ahead_mask = tf.keras.layers.Lambda(
@@ -60,7 +60,7 @@ class TransformerDecoder(Block):
             vocab_size=len(tensor_map.channel_map),
             num_layers=len(dense_layers),
             units=dense_layers[0],
-            d_model=transformer_dimension,
+            d_model=transformer_size,
             num_heads=attention_heads,
             dropout=dense_regularize_rate,
             input_name=tensor_map.dependent_map[0].input_name(),
