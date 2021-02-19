@@ -264,9 +264,7 @@ def generate_random_text_tensor_maps(text_file: str, window_size: int, one_hot: 
         tensor_from_file=random_text_window_tensor(text, window_size, one_hot=one_hot),
         dependent_map=[burn_in, output_map],
         channel_map=token_dictionary,
-        annotation_units=128,
         cacheable=False,
     )
-    output_map.dependent_map = input_map
     return input_map, burn_in, output_map
 
