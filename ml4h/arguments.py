@@ -177,7 +177,6 @@ def parse_args():
     )
     parser.add_argument('--pair_loss', default='cosine', help='Distance metric between paired embeddings', choices=['euclid', 'cosine'])
     parser.add_argument('--pair_loss_weight', type=float, default=1.0, help='Weight on the pair loss term relative to other losses')
-    parser.add_argument('--multimodal_merge', default='average', choices=['average', 'concatenate'], help='How to merge modality specific encodings.')
     parser.add_argument(
         '--max_parameters', default=50000000, type=int,
         help='Maximum number of trainable parameters in a model during hyperparameter optimization.',
@@ -186,6 +185,11 @@ def parse_args():
     parser.add_argument('--hidden_layer', default='embed', help='Name of a hidden layer for inspections.')
     parser.add_argument('--language_layer', default='ecg_rest_text', help='Name of TensorMap for learning language models (eg train_char_model).')
     parser.add_argument('--language_prefix', default='ukb_ecg_rest', help='Path prefix for a TensorMap to learn language models (eg train_char_model)')
+    parser.add_argument('--attention_heads', default=4, type=int, help='Number of attention heads in Multi-headed attention layers')
+    parser.add_argument(
+        '--transformer_dimension', default=256, type=int,
+        help='Number of output neurons in Transformer encoders and decoders, '
+             'the number of internal neurons and the number of layers are set by the --dense_layers')
 
     # Training and Hyper-Parameter Optimization Parameters
     parser.add_argument('--epochs', default=12, type=int, help='Number of training epochs.')

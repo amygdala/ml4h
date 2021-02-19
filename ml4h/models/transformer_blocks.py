@@ -9,27 +9,13 @@ tf.random.set_seed(1234)
 Tensor = tf.Tensor
 
 
-class EmbeddingBlock(Block):
-    """
-    Embeds tokens and encodes position with sinusoids.
-    """
-    def __init__(self, *, tensor_map: TensorMap, dense_layers: List[int], **kwargs):
-        self.tensor_map = tensor_map
-        self.units = dense_layers[0]
-
-    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
-        embeddings = tf.keras.layers.Embedding(len(self.tensor_map.channel_map), self.units)(x)
-        embeddings *= tf.math.sqrt(tf.cast(self.units, tf.float32))
-        embeddings = PositionalEncoding(len(self.tensor_map.channel_map), self.units)(embeddings)
-        return embeddings
-
-
 class TransformerEncoder(Block):
-    def __init__(self, *, tensor_map: TensorMap, dense_layers: List[int], dense_regularize_rate, **kwargs):
+    def __init__(self, *, tensor_map: TensorMap, dense_layers: List[int],
+                 dense_regularize_rate: float, attention_heads: int, transformer_dimension: int, **kwargs):
         self.tensor_map = tensor_map
         if not self.can_apply():
             return
-        self.embed_block = EmbeddingBlock(tensor_map=tensor_map, dense_layers=dense_layers, **kwargs)
+
         self.dropout = tf.keras.layers.Dropout(rate=dense_regularize_rate)
         self.padding_mask_layer = tf.keras.layers.Lambda(create_padding_mask, output_shape=(1, 1, None),
                                                          name='encoder_padding_mask')
@@ -37,9 +23,9 @@ class TransformerEncoder(Block):
         self.encoder_layers = encoder(
             vocab_size=len(tensor_map.channel_map),
             num_layers=len(dense_layers),
-            units=512,
-            d_model=256,
-            num_heads=4,
+            units=dense_layers[0],
+            d_model=transformer_dimension,
+            num_heads=attention_heads,
             dropout=dense_regularize_rate,
             input_name=tensor_map.input_name(),
         )
@@ -57,7 +43,8 @@ class TransformerEncoder(Block):
 
 
 class TransformerDecoder(Block):
-    def __init__(self, *, tensor_map: TensorMap, dense_layers: List[int], dense_regularize_rate, **kwargs):
+    def __init__(self, *, tensor_map: TensorMap, dense_layers: List[int],
+                 dense_regularize_rate: float, attention_heads: int, transformer_dimension: int, **kwargs):
         self.tensor_map = tensor_map
 
         self.look_ahead_mask = tf.keras.layers.Lambda(
@@ -72,11 +59,11 @@ class TransformerDecoder(Block):
         self.decoder_layers = decoder(
             vocab_size=len(tensor_map.channel_map),
             num_layers=len(dense_layers),
-            units=512,
-            d_model=256,
-            num_heads=4,
+            units=dense_layers[0],
+            d_model=transformer_dimension,
+            num_heads=attention_heads,
             dropout=dense_regularize_rate,
-            input_name="input_lsd_small_language",
+            input_name=tensor_map.parents[0].input_name(),
         )
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
@@ -84,7 +71,7 @@ class TransformerDecoder(Block):
             if self.tensor_map == tm:
                 encoder_input = intermediates[self.tensor_map][0]
                 encoder_outputs = intermediates[self.tensor_map][-1]
-            elif 'next' in tm.name:
+            elif 'next' in tm.name:  # TODO: this should depend on magic strings
                 decoder_inputs = intermediates[tm][-1]
         look_ahead = self.look_ahead_mask(decoder_inputs)
         pad = self.decoder_padding_mask(encoder_input)
@@ -103,8 +90,8 @@ def scaled_dot_product_attention(query, key, value, mask):
     logits = matmul_qk / tf.math.sqrt(depth)
 
     # add the mask to zero out padding tokens
-    # if mask is not None:
-    #     logits += (mask * -1e9)
+    if mask is not None:
+        logits += (mask * -1e9)
 
     # softmax is normalized on the last axis (seq_len_k)
     attention_weights = tf.nn.softmax(logits, axis=-1)
