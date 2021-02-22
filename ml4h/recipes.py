@@ -549,13 +549,15 @@ def saliency_maps(args):
     _, _, generate_test = test_train_valid_tensor_generators(**args.__dict__)
     model = make_multimodal_multitask_model(**args.__dict__)
     data, labels, paths = big_batch_from_minibatch_generator(generate_test, args.test_steps)
-    in_tensor = data[args.tensor_maps_in[0].input_name()]
+    input_map = args.tensor_maps_in[0]
+    in_tensor = data[input_map.input_name()]
     for tm in args.tensor_maps_out:
         if len(tm.shape) > 1:
             continue
         for channel in tm.channel_map:
             gradients = saliency_map(in_tensor, model, tm.output_name(), tm.channel_map[channel])
-            plot_saliency_maps(in_tensor, gradients, paths, os.path.join(args.output_folder, f'{args.id}/saliency_maps/{tm.name}_{channel}'))
+            image_path = os.path.join(args.output_folder, f'{args.id}/saliency_maps/{tm.name}_{channel}')
+            plot_saliency_maps(in_tensor, input_map, gradients, paths, image_path)
 
 
 def _predict_and_evaluate(
