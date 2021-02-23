@@ -168,7 +168,7 @@ def evaluate_predictions(
         if len(protected) > 0 and prediction_flat.shape[0] == truth_flat.shape[0]:
             performance_metrics.update(subplot_pearson_per_class(prediction_flat, truth_flat, tm.channel_map, protected, title, prefix=folder))
         elif prediction_flat.shape[0] == truth_flat.shape[0]:
-            performance_metrics.update(plot_scatter(prediction_flat, truth_flat, title, folder, test_paths))
+            performance_metrics.update(plot_scatter(y_predictions, y_truth, title, folder, test_paths))
     elif tm.is_continuous():
         if tm.sentinel is not None:
             y_predictions = y_predictions[y_truth != tm.sentinel, np.newaxis]
@@ -1988,9 +1988,6 @@ def plot_saliency_maps(data: np.ndarray, input_map: TensorMap, gradients: np.nda
     :param paths: A List of paths corresponding to each input tensor
     :param prefix: file path prefix where saliency maps will be saved
     """
-    # if data.shape[-1] == 1:
-    #     data = data[..., 0]
-    #     gradients = gradients[..., 0]
     mean_saliency = np.zeros(data.shape[1:4] + (3,))
     for batch_i, path in enumerate(paths):
         sample_id = os.path.basename(path).replace(TENSOR_EXT, '')
@@ -2023,7 +2020,7 @@ def plot_saliency_maps(data: np.ndarray, input_map: TensorMap, gradients: np.nda
         else:
             logging.warning(f'No method to plot saliency for data shape: {data.shape}')
 
-    if len(data.shape) == 4:
+    if input_map.axes() in [3, 4]:
         _plot_3d_tensor_slices_as_rgb(_scale_tensor_inplace(mean_saliency), f'{prefix}_batch_mean_saliency{IMAGE_EXT}', cols, rows)
         _, axes = plt.subplots(1, 1, figsize=(cols * 4, rows * 4))
         mean_batch_slice = np.mean(data, axis=(0, -1))
