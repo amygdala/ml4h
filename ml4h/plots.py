@@ -168,7 +168,7 @@ def evaluate_predictions(
         if len(protected) > 0 and prediction_flat.shape[0] == truth_flat.shape[0]:
             performance_metrics.update(subplot_pearson_per_class(prediction_flat, truth_flat, tm.channel_map, protected, title, prefix=folder))
         elif prediction_flat.shape[0] == truth_flat.shape[0]:
-            performance_metrics.update(plot_scatter(y_predictions, y_truth, title, folder, test_paths))
+            performance_metrics.update(plot_scatter(y_predictions, y_truth, title, folder))
     elif tm.is_continuous():
         if tm.sentinel is not None:
             y_predictions = y_predictions[y_truth != tm.sentinel, np.newaxis]
