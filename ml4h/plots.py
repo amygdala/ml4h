@@ -1998,7 +1998,7 @@ def plot_saliency_maps(data: np.ndarray, input_map: TensorMap, gradients: np.nda
             cols = max(2, int(math.ceil(math.sqrt(data.shape[-1]))))
             rows = max(2, int(math.ceil(data.shape[-1] / cols)))
             title = f'{prefix}_{sample_id}_saliency_{batch_i}{IMAGE_EXT}'
-            _plot_3d_tensor_slices_as_rgb(_saliency_map_rgb(data[batch_i], gradients[batch_i]), title, cols, rows)
+            _plot_3d_tensor_slices_as_rgb(_saliency_map_rgb(data[batch_i], gradients[batch_i], blur_radius=blur_radius), title, cols, rows)
             saliency = _saliency_blurred_and_scaled(gradients[batch_i], blur_radius=blur_radius, max_value=1.0/data.shape[0])
             if absolute_saliency:
                 mean_saliency[..., 1] += abs(saliency)
@@ -2010,7 +2010,7 @@ def plot_saliency_maps(data: np.ndarray, input_map: TensorMap, gradients: np.nda
                 cols = max(2, int(math.ceil(math.sqrt(data.shape[-2]))))
                 rows = max(2, int(math.ceil(data.shape[-2] / cols)))
                 name = f'{prefix}_saliency_{batch_i}_channel_{j}{IMAGE_EXT}'
-                _plot_3d_tensor_slices_as_rgb(_saliency_map_rgb(data[batch_i, ..., j], gradients[batch_i, ..., j]), name, cols, rows)
+                _plot_3d_tensor_slices_as_rgb(_saliency_map_rgb(data[batch_i, ..., j], gradients[batch_i, ..., j], blur_radius=blur_radius), name, cols, rows)
                 saliency = _saliency_blurred_and_scaled(gradients[batch_i, ..., j], blur_radius=blur_radius, max_value=1.0 / data.shape[0])
                 if absolute_saliency:
                     mean_saliency[..., 1] += abs(saliency)
