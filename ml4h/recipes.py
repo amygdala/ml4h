@@ -557,7 +557,7 @@ def saliency_maps(args):
         for channel in tm.channel_map:
             gradients = saliency_map(in_tensor, model, tm.output_name(), tm.channel_map[channel])
             image_path = os.path.join(args.output_folder, f'{args.id}/saliency_maps/{tm.name}_{channel}')
-            plot_saliency_maps(in_tensor, input_map, gradients, paths, image_path)
+            plot_saliency_maps(in_tensor, input_map, gradients, paths, image_path, blur_radius=min(1.0, args.alpha))
 
 
 def _predict_and_evaluate(
