@@ -83,7 +83,7 @@ def hyperparameter_optimizer(args, space, param_lists={}, block_model: bool = Fa
         try:
             set_args_from_x(args, x)
             if block_model:
-                model = block_make_multimodal_multitask_model(**args.__dict__)
+                model, _, _, _ = block_make_multimodal_multitask_model(**args.__dict__)
             else:
                 model = make_multimodal_multitask_model(**args.__dict__)
 
