@@ -266,7 +266,7 @@ def optimize_mri_sax_architecture(args):
 
 def optimize_mri_lax_architecture(args):
     dense_blocks_sets = [[32, 32], [64, 64], [128, 128], [32, 24, 16], [32, 32, 32], [64, 64, 64],
-                         [32, 32, 32, 32], [64, 64, 64, 64], [32, 32, 32, 32, 32], [64, 64, 64, 64, 64]]
+                         [32, 32, 32, 32], [64, 64, 64, 64]]
     conv_layers_sets = [[], [32], [64], [128], [32, 32], [64, 64], [128, 128], [32, 32, 32], [64, 64, 64], [128, 128, 128]]
     dense_layers_sets = [[32], [64], [128], [256], [32, 32], [64, 64], [128, 128]]
     activation = ['leaky', 'swish', 'gelu', 'lisht', 'mish', 'relu', 'selu']
