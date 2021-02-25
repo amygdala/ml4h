@@ -349,10 +349,13 @@ def optimize_optimizer(args):
 
 
 def set_args_from_x(args, x):
+    logging.info(f"\n\n\n\nx is {x}")
     for k in args.__dict__:
         if k in x:
-            print(k, x[k], args.__dict__[k])
-            if isinstance(args.__dict__[k], int):
+            logging.info(f"k is {k} and x[k] is {x[k]} args dict is:{args.__dict__[k]}")
+            if k in ['conv_x', 'conv_y', 'conv_z', 'conv_width']:
+                args.__dict__[k] = [int(x[k])]
+            elif isinstance(args.__dict__[k], int):
                 args.__dict__[k] = int(x[k])
             elif isinstance(args.__dict__[k], float):
                 v = float(x[k])
@@ -362,8 +365,8 @@ def set_args_from_x(args, x):
             else:
                 args.__dict__[k] = x[k]
     logging.info(f"Set arguments to: {args}")
-    args.tensor_maps_in = [TMAPS[it] for it in args.input_tensors]
-    args.tensor_maps_out = [TMAPS[ot] for ot in args.output_tensors]
+    #args.tensor_maps_in = [TMAPS[it] for it in args.input_tensors]
+    #args.tensor_maps_out = [TMAPS[ot] for ot in args.output_tensors]
 
 
 def string_from_arch_dict(x):
