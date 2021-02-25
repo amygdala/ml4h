@@ -19,9 +19,10 @@ from skimage.filters import threshold_otsu
 
 from ml4h.arguments import parse_args
 from ml4h.plots import plot_metric_history
-from ml4h.tensor_maps_by_script import TMAPS
 from ml4h.defines import IMAGE_EXT, MODEL_EXT
-from ml4h.models.legacy_models import train_model_from_generators, make_multimodal_multitask_model
+from ml4h.models.train import train_model_from_generators
+from ml4h.models.legacy_models import make_multimodal_multitask_model
+from ml4h.models.model_factory import block_make_multimodal_multitask_model
 from ml4h.tensor_generators import test_train_valid_tensor_generators, big_batch_from_minibatch_generator
 
 MAX_LOSS = 9e9
@@ -49,7 +50,7 @@ def run(args):
             optimize_ecg_rest_unet_architecture(args)
         elif 'mri_sax' == args.mode:
             optimize_mri_sax_architecture(args)
-        elif 'mri_lax' == args.mode:
+        elif 'mri_lax_block' == args.mode:
             optimize_mri_lax_architecture(args)
         elif 'conv_x' == args.mode:
             optimize_conv_x(args)
@@ -64,7 +65,7 @@ def run(args):
     logging.info("Executed the '{}' operation in {:.2f} seconds".format(args.mode, elapsed_time))
 
 
-def hyperparameter_optimizer(args, space, param_lists={}):
+def hyperparameter_optimizer(args, space, param_lists={}, block_model: bool = False):
     args.keep_paths = False
     args.keep_paths_test = False
     _, _, generate_test = test_train_valid_tensor_generators(**args.__dict__)
@@ -81,7 +82,10 @@ def hyperparameter_optimizer(args, space, param_lists={}):
         i += 1
         try:
             set_args_from_x(args, x)
-            model = make_multimodal_multitask_model(**args.__dict__)
+            if block_model:
+                model = block_make_multimodal_multitask_model(**args.__dict__)
+            else:
+                model = make_multimodal_multitask_model(**args.__dict__)
 
             if model.count_params() > args.max_parameters:
                 logging.info(f"Model too big, max parameters is:{args.max_parameters}, model has:{model.count_params()}. Return max loss.")
@@ -290,7 +294,7 @@ def optimize_mri_lax_architecture(args):
         'activation': activation,
         'pool_type': pool_type,
     }
-    hyperparameter_optimizer(args, space, param_lists)
+    hyperparameter_optimizer(args, space, param_lists, block_model=True)
 
 
 def optimize_conv_x(args):
