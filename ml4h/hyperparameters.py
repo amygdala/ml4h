@@ -49,6 +49,8 @@ def run(args):
             optimize_ecg_rest_unet_architecture(args)
         elif 'mri_sax' == args.mode:
             optimize_mri_sax_architecture(args)
+        elif 'mri_lax' == args.mode:
+            optimize_mri_lax_architecture(args)
         elif 'conv_x' == args.mode:
             optimize_conv_x(args)
         else:
