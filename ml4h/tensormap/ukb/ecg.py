@@ -9,7 +9,7 @@ from ml4h.tensormap.general import tensor_path
 from ml4h.TensorMap import TensorMap, Interpretation, no_nans, make_range_validator
 from ml4h.defines import ECG_REST_LEADS, ECG_REST_MEDIAN_LEADS, ECG_REST_AMP_LEADS, ECG_SEGMENTED_CHANNEL_MAP, ECG_CHAR_2_IDX
 from ml4h.tensormap.general import get_tensor_at_first_date, normalized_first_date, pass_nan, build_tensor_from_file
-from ml4h.metrics import weighted_crossentropy, ignore_zeros_logcosh
+from ml4h.metrics import weighted_crossentropy, ignore_zeros_logcosh, mse_10x
 from ml4h.tensormap.ukb.demographics import age_in_years_tensor
 
 _HRR_SENTINEL = -1000
@@ -411,6 +411,10 @@ ecg_rest_raw_10 = TensorMap(
 ecg_rest = TensorMap(
     'strip', Interpretation.CONTINUOUS, shape=(5000, 12), path_prefix='ukb_ecg_rest', tensor_from_file=_make_ecg_rest(),
     channel_map=ECG_REST_LEADS, normalization=ZeroMeanStd1(),
+)
+ecg_rest_mse10x = TensorMap(
+    'strip', Interpretation.CONTINUOUS, shape=(5000, 12), path_prefix='ukb_ecg_rest', tensor_from_file=_make_ecg_rest(),
+    channel_map=ECG_REST_LEADS, normalization=ZeroMeanStd1(), loss=mse_10x,
 )
 ecg_rest_2500_ukb = TensorMap(
     'ecg_rest_2500', Interpretation.CONTINUOUS, shape=(2500, 12), path_prefix='ukb_ecg_rest', channel_map=ECG_REST_LEADS,
