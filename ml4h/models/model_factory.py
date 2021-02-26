@@ -151,7 +151,7 @@ def multimodal_multitask_model(
                 encoder_block_functions[tm] = compose(encoder_block_functions[tm], ModelAsBlock(tensor_map=tm, model=serialized_encoder))
                 break  # Don't also reconstruct from scratch if model is serialized, hd5 models must precede BLOCK_CLASS keys
             else:
-                logging.warning(f'No method to handle Encoding block {encode_block}, ignoring.')
+                logging.warning(f'{tm} is ignoring encoding block {encode_block}.')
     merge = identity
     for merge_block in merge_blocks:
         if isinstance(merge_block, Block):
