@@ -2167,8 +2167,8 @@ def plot_reconstruction(
             plt.savefig(os.path.join(folder, title + IMAGE_EXT))
         elif tm.axes() == 3:
             if tm.is_categorical():
-                plt.imsave(f"{folder}{sample_id}_{tm.name}_truth_{i:02d}{IMAGE_EXT}", np.argmax(y, axis=-1), cmap='plasma')
-                plt.imsave(f"{folder}{sample_id}_{tm.name}_prediction_{i:02d}{IMAGE_EXT}", np.argmax(yp, axis=-1), cmap='plasma')
+                plt.imsave(f"{folder}{sample_id}_{tm.name}_truth_{i:02d}{IMAGE_EXT}", np.argmax(y, axis=-1), cmap='plasma', vmin=0, vmax=len(tm.channel_map))
+                plt.imsave(f"{folder}{sample_id}_{tm.name}_prediction_{i:02d}{IMAGE_EXT}", np.argmax(yp, axis=-1), cmap='plasma', vmin=0, vmax=len(tm.channel_map))
             elif tm.shape[-1] in [3, 4]:
                 plt.imsave(f'{folder}{sample_id}_{tm.name}_truth_{i:02d}{IMAGE_EXT}', (y[:, :, :]-y.min()) / (y.max() - y.min()))
                 plt.imsave(f'{folder}{sample_id}_{tm.name}_prediction_{i:02d}{IMAGE_EXT}', (yp[:, :, :]-yp.min()) / (yp.max() - yp.min()))
@@ -2181,8 +2181,8 @@ def plot_reconstruction(
                 if tm.is_categorical():
                     truth = np.argmax(yp[:, :, j, :], axis=-1)
                     prediction = np.argmax(y[:, :, j, :], axis=-1)
-                    plt.imsave(f'{image_path_base}_truth{IMAGE_EXT}', truth, cmap='plasma')
-                    plt.imsave(f'{image_path_base}_prediction{IMAGE_EXT}', prediction, cmap='plasma')
+                    plt.imsave(f'{image_path_base}_truth{IMAGE_EXT}', truth, cmap='plasma', vmin=0, vmax=len(tm.channel_map))
+                    plt.imsave(f'{image_path_base}_prediction{IMAGE_EXT}', prediction, cmap='plasma', vmin=0, vmax=len(tm.channel_map))
                 else:
                     plt.imsave(f'{image_path_base}_truth{IMAGE_EXT}', y[:, :, j, 0], cmap='gray')
                     plt.imsave(f'{image_path_base}_prediction{IMAGE_EXT}', yp[:, :, j, 0], cmap='gray')
