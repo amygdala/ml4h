@@ -94,7 +94,7 @@ class AverageBlock(Block):
         pass
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
-        return Average()([x[-1] for tm, x in intermediates.items()])
+        return Average()([t[-1] for tm, t in intermediates.items()])
 
 
 class ReduceMean(Block):
@@ -141,8 +141,8 @@ class PairLossBlock(Block):
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
         for left, right in self.pairs:
-            x = self.loss_layer([intermediates[left][-1], intermediates[right][-1]])
-        return x
+            y = self.loss_layer([intermediates[left][-1], intermediates[right][-1]])
+        return y
 
 
 def l2_norm(x, axis=None):
