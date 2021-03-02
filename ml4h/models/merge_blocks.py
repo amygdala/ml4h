@@ -142,7 +142,7 @@ class PairLossBlock(Block):
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
         for left, right in self.pairs:
             y = self.loss_layer([intermediates[left][-1], intermediates[right][-1]])
-        return y
+        return Average()(y)
 
 
 def l2_norm(x, axis=None):
