@@ -94,7 +94,7 @@ class AverageBlock(Block):
         pass
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
-        return Average()([Flatten()(x[-1]) for tm, x in intermediates.items()])
+        return Average()([x[-1] for tm, x in intermediates.items()])
 
 
 class EncodeIdentityBlock(Block):
