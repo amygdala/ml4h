@@ -144,7 +144,7 @@ class PairLossBlock(Block):
             x = self.loss_layer([intermediates[left][-1], intermediates[right][-1]])
             intermediates[left].extend(x)
             intermediates[right].extend(x)
-        return intermediates[left][-1]
+        return x
 
 
 def l2_norm(x, axis=None):
