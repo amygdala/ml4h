@@ -106,7 +106,7 @@ class ReduceMean(Block):
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
         y = [x[-1] for tm, x in intermediates.items()]
-        y = tf.math.reduce_mean(y, axis=-1)
+        y = tf.math.reduce_mean(y, axis=0)
         return y
 
 
