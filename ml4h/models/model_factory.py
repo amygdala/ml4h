@@ -17,7 +17,7 @@ from ml4h.models.transformer_blocks import TransformerDecoder, TransformerEncode
 from ml4h.optimizers import NON_KERAS_OPTIMIZERS, get_optimizer
 from ml4h.models.conv_blocks import ConvEncoderBlock, ConvDecoderBlock, ResidualBlock, PoolBlock
 from ml4h.models.layer_wrappers import ACTIVATION_FUNCTIONS, NORMALIZATION_CLASSES
-from ml4h.models.merge_blocks import FlatConcatDenseBlock, FlatConcatBlock, AverageBlock, PairLossBlock
+from ml4h.models.merge_blocks import FlatConcatDenseBlock, FlatConcatBlock, AverageBlock, PairLossBlock, ReduceMean
 from ml4h.models.basic_blocks import ModelAsBlock, LSTMEncoderBlock, LanguageDecoderBlock, DenseEncoder, DenseDecoder
 from ml4h.models.merge_blocks import GlobalAveragePoolBlock, EncodeIdentityBlock, L2LossLayer, CosineLossLayer, VariationalDiagNormal
 
@@ -30,6 +30,7 @@ BLOCK_CLASSES = {
     'concat': FlatConcatDenseBlock,
     'flat': FlatConcatBlock,
     'average': AverageBlock,
+    'mean': ReduceMean,
     'pair': PairLossBlock,
     'gap': GlobalAveragePoolBlock,
     'lstm_encode': LSTMEncoderBlock,

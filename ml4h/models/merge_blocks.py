@@ -97,6 +97,19 @@ class AverageBlock(Block):
         return Average()([x[-1] for tm, x in intermediates.items()])
 
 
+class ReduceMean(Block):
+    """
+    Average the last tensors in intermediates dictionary
+    """
+    def __init__(self, **kwargs):
+        pass
+
+    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
+        y = concatenate([x[-1] for tm, x in intermediates.items()])
+        y = tf.math.reduce_mean(y, axis=-1)
+        return y
+
+
 class EncodeIdentityBlock(Block):
     """
     Adds the input tensor to the intermediates dictionary, useful for TensorMaps with pretrained embeddings
