@@ -5,7 +5,7 @@ from typing import List, Tuple
 from tensorflow.keras.utils import to_categorical
 # from ml4h.tensor_writer_ukbb import tensor_path
 from ml4h.normalizer import ZeroMeanStd1, Standardize
-from ml4h.tensormap.general import tensor_path
+from ml4h.tensormap.general import tensor_path, pad_or_crop_array_to_shape
 from ml4h.TensorMap import TensorMap, Interpretation, no_nans, make_range_validator
 from ml4h.defines import ECG_REST_LEADS, ECG_REST_MEDIAN_LEADS, ECG_REST_AMP_LEADS, ECG_SEGMENTED_CHANNEL_MAP, ECG_CHAR_2_IDX
 from ml4h.tensormap.general import get_tensor_at_first_date, normalized_first_date, pass_nan, build_tensor_from_file
@@ -139,8 +139,8 @@ def _make_ecg_rest(
                     )
                     tensor[..., tm.channel_map[k]] = short_time_ft
                 elif downsample_steps > 1:
-                    tensor[:, tm.channel_map[k]] = np.array(data, dtype=np.float32)[ ::downsample_steps]
-                tensor[:, tm.channel_map[k]] = data
+                    tensor[:, tm.channel_map[k]] = np.array(data, dtype=np.float32)[::downsample_steps]
+                tensor[:, tm.channel_map[k]] = pad_or_crop_array_to_shape((tm.shape[0]), data)
         return tensor
     return ecg_rest_from_file
 
@@ -402,6 +402,10 @@ ecg_rest_raw = TensorMap(
 
 ecg_rest_raw_100 = TensorMap(
     'ecg_rest_raw_100', Interpretation.CONTINUOUS, shape=(5000, 12), path_prefix='ukb_ecg_rest', tensor_from_file=_make_ecg_rest(),
+    channel_map=ECG_REST_LEADS, normalization=Standardize(mean=0, std=100),
+)
+ecg_rest_raw_8s = TensorMap(
+    'ecg_rest_raw_8s', Interpretation.CONTINUOUS, shape=(4096, 12), path_prefix='ukb_ecg_rest', tensor_from_file=_make_ecg_rest(),
     channel_map=ECG_REST_LEADS, normalization=Standardize(mean=0, std=100),
 )
 ecg_rest_raw_10 = TensorMap(
