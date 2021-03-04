@@ -1635,6 +1635,7 @@ myocardium_mask_diastole = TensorMap(
                                           'cine_segmented_lax_4ch_annotated_',
                                           LAX_4CH_MYOCARDIUM_LABELS,
                                           0),
+)
 myocardium_mask_systole_guess = TensorMap(
     'myocardium_mask_systole_guess', Interpretation.CONTINUOUS, shape=(120, 180, 1), path_prefix='ukb_cardiac_mri',
     tensor_from_file=_heart_mask_instance('cine_segmented_lax_4ch/2/',
