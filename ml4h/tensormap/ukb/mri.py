@@ -1597,9 +1597,12 @@ cine_segmented_sax_slice_jamesp = TensorMap(
 )
 
 
-def _heart_mask_random_time(mri_key, segmentation_key, labels):
+def _heart_mask_instance(mri_key, segmentation_key, labels, instance_num: int = 50, random_instance: bool = False):
     def _heart_mask_tensor_from_file(tm, hd5, dependents={}):
-        cycle_index = np.random.randint(1, 50)
+        if random_instance:
+            cycle_index = np.random.randint(1, instance_num)
+        else:
+            cycle_index = instance_num
         categorical_slice = get_tensor_at_first_date(hd5, tm.path_prefix, f'{segmentation_key}{cycle_index}')
         heart_mask = np.isin(categorical_slice, list(labels.values()))
         mri = get_tensor_at_first_date(hd5, tm.path_prefix, f'{mri_key}')[..., cycle_index]
@@ -1612,15 +1615,34 @@ def _heart_mask_random_time(mri_key, segmentation_key, labels):
 
 heart_mask_lax_4ch_random_time = TensorMap(
     'heart_mask_lax_4ch_random_time', Interpretation.CONTINUOUS, shape=(160, 224, 1), path_prefix='ukb_cardiac_mri',
-    tensor_from_file=_heart_mask_random_time('cine_segmented_lax_4ch/2/', 'cine_segmented_lax_4ch_annotated_', LAX_4CH_HEART_LABELS),
+    tensor_from_file=_heart_mask_instance('cine_segmented_lax_4ch/2/',
+                                          'cine_segmented_lax_4ch_annotated_',
+                                          LAX_4CH_HEART_LABELS,
+                                          random_instance=True),
     normalization=ZeroMeanStd1(), cacheable=False,
 )
 myocardium_mask_lax_4ch_random_time = TensorMap(
     'myocardium_mask_lax_4ch_random_time', Interpretation.CONTINUOUS, shape=(120, 180, 1), path_prefix='ukb_cardiac_mri',
-    tensor_from_file=_heart_mask_random_time('cine_segmented_lax_4ch/2/', 'cine_segmented_lax_4ch_annotated_', LAX_4CH_MYOCARDIUM_LABELS),
+    tensor_from_file=_heart_mask_instance('cine_segmented_lax_4ch/2/',
+                                          'cine_segmented_lax_4ch_annotated_',
+                                          LAX_4CH_MYOCARDIUM_LABELS,
+                                          random_instance=True),
     normalization=ZeroMeanStd1(), cacheable=False,
 )
-
+myocardium_mask_diastole = TensorMap(
+    'myocardium_mask_diastole', Interpretation.CONTINUOUS, shape=(120, 180, 1), path_prefix='ukb_cardiac_mri',
+    tensor_from_file=_heart_mask_instance('cine_segmented_lax_4ch/2/',
+                                          'cine_segmented_lax_4ch_annotated_',
+                                          LAX_4CH_MYOCARDIUM_LABELS,
+                                          0),
+myocardium_mask_systole_guess = TensorMap(
+    'myocardium_mask_systole_guess', Interpretation.CONTINUOUS, shape=(120, 180, 1), path_prefix='ukb_cardiac_mri',
+    tensor_from_file=_heart_mask_instance('cine_segmented_lax_4ch/2/',
+                                          'cine_segmented_lax_4ch_annotated_',
+                                          LAX_4CH_MYOCARDIUM_LABELS,
+                                          15),
+    normalization=ZeroMeanStd1(), cacheable=False,
+)
 
 def _segmented_index_slices(key_prefix: str, shape: Tuple[int], path_prefix: str ='ukb_cardiac_mri') -> Callable:
     """Get semantic segmentation with label index as pixel values for an MRI slice"""
