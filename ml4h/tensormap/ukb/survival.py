@@ -10,13 +10,17 @@ def _survival_tensor(
     start_date_key: str,
     day_window: int,
     incidence_only: bool = False,
+    start_date_is_attribute: bool = False,
 ):
     def _survival_tensor_from_file(
         tm: TensorMap,
         hd5: h5py.File,
         dependents=None,
     ):
-        assess_date = str2date(str(hd5[start_date_key][0]))
+        if start_date_is_attribute:
+            assess_date = datetime.utcfromtimestamp(hd5[start_date_key].attrs['date'])
+        else:
+            assess_date = str2date(str(hd5[start_date_key][0]))
         has_disease = 0  # Assume no disease if the tensor does not have the dataset
         if tm.name in hd5['categorical']:
             has_disease = int(hd5['categorical'][tm.name][0])
@@ -49,9 +53,16 @@ def _survival_tensor(
     return _survival_tensor_from_file
 
 
-def cox_tensor_from_file(start_date_key: str, incidence_only: bool = False):
+def cox_tensor_from_file(
+        start_date_key: str,
+        incidence_only: bool = False,
+        start_date_is_attribute: bool = False,
+):
     def _cox_tensor_from_file(tm: TensorMap, hd5: h5py.File, dependents=None):
-        assess_date = str2date(str(hd5[start_date_key][0]))
+        if start_date_is_attribute:
+            assess_date = datetime.utcfromtimestamp(hd5[start_date_key].attrs['date'])
+        else:
+            assess_date = str2date(str(hd5[start_date_key][0]))
         has_disease = 0  # Assume no disease if the tensor does not have the dataset
         if tm.name in hd5['categorical']:
             has_disease = int(hd5['categorical'][tm.name][0])
@@ -95,6 +106,15 @@ enroll_afib_hazard = TensorMap(
     days_window=DAYS_IN_5_YEARS,
     tensor_from_file=_survival_tensor('dates/enroll_date', DAYS_IN_5_YEARS),
 )
+
+ecg_afib_hazard = TensorMap(
+    'atrial_fibrillation_or_flutter',
+    Interpretation.SURVIVAL_CURVE,
+    shape=(50,),
+    days_window=DAYS_IN_5_YEARS,
+    tensor_from_file=_survival_tensor('ukb_ecg_rest/ecg_rest_text/instance_2', DAYS_IN_5_YEARS, start_date_is_attribute=True),
+)
+
 enroll_chol_hazard = TensorMap(
     'hypercholesterolemia',
     Interpretation.SURVIVAL_CURVE,
@@ -219,5 +239,13 @@ cox_cad_incident = TensorMap(
     Interpretation.TIME_TO_EVENT,
     tensor_from_file=cox_tensor_from_file(
         'dates/enroll_date', incidence_only=True,
+    ),
+)
+
+cox_afib_wrt_ecg = TensorMap(
+    'atrial_fibrillation_or_flutter',
+    Interpretation.TIME_TO_EVENT,
+    tensor_from_file=cox_tensor_from_file(
+        'ukb_ecg_rest/ecg_rest_text/instance_2', start_date_is_attribute=True,
     ),
 )

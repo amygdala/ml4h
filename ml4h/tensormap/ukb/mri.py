@@ -1645,6 +1645,7 @@ myocardium_mask_systole_guess = TensorMap(
     normalization=ZeroMeanStd1(), cacheable=False,
 )
 
+
 def _segmented_index_slices(key_prefix: str, shape: Tuple[int], path_prefix: str ='ukb_cardiac_mri') -> Callable:
     """Get semantic segmentation with label index as pixel values for an MRI slice"""
     def _segmented_dicom_tensor_from_file(tm, hd5, dependents={}):
