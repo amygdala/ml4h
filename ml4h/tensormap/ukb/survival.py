@@ -246,6 +246,6 @@ cox_afib_wrt_ecg = TensorMap(
     'atrial_fibrillation_or_flutter',
     Interpretation.TIME_TO_EVENT,
     tensor_from_file=cox_tensor_from_file(
-        'ukb_ecg_rest/ecg_rest_text/instance_2/', start_date_is_attribute=True,
+        'ukb_cardiac_mri/cine_segmented_lax_2ch/instance_0/', start_date_is_attribute=True,
     ),
 )
