@@ -110,14 +110,6 @@ enroll_afib_hazard = TensorMap(
     tensor_from_file=_survival_tensor('dates/enroll_date', DAYS_IN_5_YEARS),
 )
 
-ecg_afib_hazard = TensorMap(
-    'atrial_fibrillation_or_flutter',
-    Interpretation.SURVIVAL_CURVE,
-    shape=(50,),
-    days_window=DAYS_IN_5_YEARS,
-    tensor_from_file=_survival_tensor('ukb_ecg_rest/ecg_rest_text/instance_2', DAYS_IN_5_YEARS, start_date_is_attribute=True),
-)
-
 enroll_chol_hazard = TensorMap(
     'hypercholesterolemia',
     Interpretation.SURVIVAL_CURVE,
@@ -251,6 +243,15 @@ cox_afib_wrt_instance2 = TensorMap(
     tensor_from_file=cox_tensor_from_file(
         'ukb_cardiac_mri/cine_segmented_lax_2ch/2/instance_0/', start_date_is_attribute=True,
     ),
+)
+
+survival_afib_wrt_instance2 = TensorMap(
+    'atrial_fibrillation_or_flutter',
+    Interpretation.SURVIVAL_CURVE,
+    shape=(50,),
+    days_window=DAYS_IN_5_YEARS,
+    tensor_from_file=_survival_tensor('ukb_cardiac_mri/cine_segmented_lax_2ch/2/instance_0/',
+                                      DAYS_IN_5_YEARS, start_date_is_attribute=True),
 )
 
 prevalent_hf_wrt_instance2 = TensorMap('heart_failure', Interpretation.CATEGORICAL, storage_type=StorageType.CATEGORICAL_FLAG,
