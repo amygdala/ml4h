@@ -1,5 +1,6 @@
 import h5py
 import numpy as np
+from datetime import datetime
 import logging
 from typing import List, Tuple
 from ml4h.tensormap.general import tensor_path
@@ -71,6 +72,43 @@ def prevalent_incident_tensor(start_date_key, event_date_key):
         return categorical_data
 
     return _prevalent_incident_tensor_from_file
+
+
+def prevalent_tensor(start_date_key: str, event_date_key: str, start_date_is_attribute: bool = False,):
+    def _prevalent_tensor_from_file(
+        tm: TensorMap,
+        hd5: h5py.File,
+        dependents=None,
+    ):
+        index = 0
+        categorical_data = np.zeros(tm.shape, dtype=np.float32)
+        if tm.hd5_key_guess() in hd5:
+            data = tm.hd5_first_dataset_in_group(hd5, tm.hd5_key_guess())
+            if tm.storage_type == StorageType.CATEGORICAL_INDEX or tm.storage_type == StorageType.CATEGORICAL_FLAG:
+                index = int(data[0])
+                categorical_data[index] = 1.0
+            else:
+                categorical_data = np.array(data)
+        elif tm.storage_type == StorageType.CATEGORICAL_FLAG:
+            categorical_data[index] = 1.0
+        else:
+            raise ValueError(
+                f"No HD5 Key at prefix {tm.path_prefix} found for tensor map: {tm.name}.",
+            )
+
+        if index != 0:
+            if event_date_key in hd5 and start_date_key in hd5:
+                disease_date = str2date(str(hd5[event_date_key][0]))
+                if start_date_is_attribute:
+                    assess_date = datetime.utcfromtimestamp(hd5[start_date_key].attrs['date']).date()
+                else:
+                    assess_date = str2date(str(hd5[start_date_key][0]))
+            else:
+                raise ValueError(f"No date found for tensor map: {tm.name}.")
+            index = 1 if disease_date < assess_date else 0
+        categorical_data[index] = 1.0
+        return categorical_data
+    return _prevalent_tensor_from_file
 
 
 def preprocess_with_function(fxn, hd5_key=None):

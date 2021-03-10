@@ -2,6 +2,9 @@ import h5py
 import numpy as np
 import datetime
 from ml4h.TensorMap import TensorMap, Interpretation, str2date
+from ml4h.defines import StorageType
+from ml4h.metrics import weighted_crossentropy
+from ml4h.tensormap.ukb.demographics import prevalent_tensor
 
 DAYS_IN_5_YEARS = 365 * 5
 
@@ -18,7 +21,7 @@ def _survival_tensor(
         dependents=None,
     ):
         if start_date_is_attribute:
-            assess_date = datetime.datetime.utcfromtimestamp(hd5[start_date_key].attrs['date'])
+            assess_date = datetime.datetime.utcfromtimestamp(hd5[start_date_key].attrs['date']).date()
         else:
             assess_date = str2date(str(hd5[start_date_key][0]))
         has_disease = 0  # Assume no disease if the tensor does not have the dataset
@@ -242,10 +245,19 @@ cox_cad_incident = TensorMap(
     ),
 )
 
-cox_afib_wrt_ecg = TensorMap(
+cox_afib_wrt_instance2 = TensorMap(
     'atrial_fibrillation_or_flutter',
     Interpretation.TIME_TO_EVENT,
     tensor_from_file=cox_tensor_from_file(
         'ukb_cardiac_mri/cine_segmented_lax_2ch/2/instance_0/', start_date_is_attribute=True,
     ),
 )
+
+prevalent_hf_wrt_instance2 = TensorMap('heart_failure', Interpretation.CATEGORICAL, storage_type=StorageType.CATEGORICAL_FLAG,
+                                       loss=weighted_crossentropy([1.0, 58], 'heart_failure'), path_prefix='categorical',
+                                       channel_map={'no_heart_failure': 0, 'prevalent_heart_failure': 1},
+                                       tensor_from_file=prevalent_tensor('ukb_cardiac_mri/cine_segmented_lax_2ch/2/instance_0/',
+                                                                         'dates/heart_failure_date',
+                                                                         start_date_is_attribute=True),
+
+                                       )
