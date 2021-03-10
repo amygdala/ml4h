@@ -60,7 +60,7 @@ def cox_tensor_from_file(
 ):
     def _cox_tensor_from_file(tm: TensorMap, hd5: h5py.File, dependents=None):
         if start_date_is_attribute:
-            assess_date = datetime.datetime.utcfromtimestamp(hd5[start_date_key].attrs['date'])
+            assess_date = datetime.datetime.utcfromtimestamp(hd5[start_date_key].attrs['date']).date()
         else:
             assess_date = str2date(str(hd5[start_date_key][0]))
         has_disease = 0  # Assume no disease if the tensor does not have the dataset
