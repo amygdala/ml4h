@@ -270,6 +270,15 @@ mgb_afib_wrt_instance2 = TensorMap(
                                       start_date_is_attribute=True, incidence_only=True),
 )
 
+mgb_afib_as_hf_wrt_instance2 = TensorMap(
+    'survival_curve_af',
+    Interpretation.SURVIVAL_CURVE,
+    shape=(50,),
+    days_window=DAYS_IN_5_YEARS,
+    tensor_from_file=_survival_tensor('ukb_ecg_rest/ecg_rest_text/instance_2', DAYS_IN_5_YEARS,
+                                      disease_name_override='heart_failure',
+                                      start_date_is_attribute=True, incidence_only=True),
+)
 
 prevalent_hf_wrt_instance2 = TensorMap('heart_failure', Interpretation.CATEGORICAL, storage_type=StorageType.CATEGORICAL_FLAG,
                                        loss=weighted_crossentropy([1.0, 58], 'heart_failure'), path_prefix='categorical',
