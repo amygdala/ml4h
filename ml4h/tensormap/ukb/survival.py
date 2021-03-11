@@ -12,6 +12,7 @@ DAYS_IN_5_YEARS = 365 * 5
 def _survival_tensor(
     start_date_key: str,
     day_window: int,
+    disease_name_override: str = None,
     incidence_only: bool = False,
     start_date_is_attribute: bool = False,
 ):
@@ -25,15 +26,20 @@ def _survival_tensor(
         else:
             assess_date = str2date(str(hd5[start_date_key][0]))
         has_disease = 0  # Assume no disease if the tensor does not have the dataset
-        if tm.name in hd5['categorical']:
-            has_disease = int(hd5['categorical'][tm.name][0])
 
-        if tm.name + '_date' in hd5['dates']:
-            censor_date = str2date(str(hd5['dates'][tm.name + '_date'][0]))
+        if disease_name_override is not None:
+            disease_name = disease_name_override
+        else:
+            disease_name = tm.name
+        if disease_name in hd5['categorical']:
+            has_disease = int(hd5['categorical'][disease_name][0])
+
+        if disease_name + '_date' in hd5['dates']:
+            censor_date = str2date(str(hd5['dates'][disease_name + '_date'][0]))
         elif 'phenotype_censor' in hd5['dates']:
             censor_date = str2date(str(hd5['dates/phenotype_censor'][0]))
         else:
-            raise ValueError(f'No date found for survival {tm.name}')
+            raise ValueError(f'No date found for survival {disease_name}')
 
         intervals = int(tm.shape[0] / 2)
         days_per_interval = day_window / intervals
@@ -253,6 +259,17 @@ survival_afib_wrt_instance2 = TensorMap(
     tensor_from_file=_survival_tensor('ukb_cardiac_mri/cine_segmented_lax_2ch/2/instance_0/',
                                       DAYS_IN_5_YEARS, start_date_is_attribute=True),
 )
+
+mgb_afib_wrt_instance2 = TensorMap(
+    'survival_curve_af',
+    Interpretation.SURVIVAL_CURVE,
+    shape=(50,),
+    days_window=DAYS_IN_5_YEARS,
+    tensor_from_file=_survival_tensor('ukb_cardiac_mri/cine_segmented_lax_2ch/2/instance_0/', DAYS_IN_5_YEARS,
+                                      disease_name_override='atrial_fibrillation_or_flutter',
+                                      start_date_is_attribute=True),
+)
+
 
 prevalent_hf_wrt_instance2 = TensorMap('heart_failure', Interpretation.CATEGORICAL, storage_type=StorageType.CATEGORICAL_FLAG,
                                        loss=weighted_crossentropy([1.0, 58], 'heart_failure'), path_prefix='categorical',
