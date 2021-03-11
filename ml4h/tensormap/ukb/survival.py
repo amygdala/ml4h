@@ -267,7 +267,7 @@ mgb_afib_wrt_instance2 = TensorMap(
     days_window=DAYS_IN_5_YEARS,
     tensor_from_file=_survival_tensor('ukb_cardiac_mri/cine_segmented_lax_2ch/2/instance_0/', DAYS_IN_5_YEARS,
                                       disease_name_override='atrial_fibrillation_or_flutter',
-                                      start_date_is_attribute=True),
+                                      start_date_is_attribute=True, incidence_only=True),
 )
 
 
