@@ -158,7 +158,7 @@ def evaluate_predictions(
         #performance_metrics.update(subplot_roc_per_class(y_predictions, y_truth, tm.channel_map, protected, title, folder))
         #performance_metrics.update(plot_precision_recall_per_class(y_predictions, y_truth, tm.channel_map, title, folder))
         #rocs.append((y_predictions, y_truth, tm.channel_map))
-    elif tm.axes() > 1 or tm.is_mesh():
+    elif tm.axes() > 1 or tm.is_mesh() or tm.is_embedding():
         plot_reconstruction(tm, tm.rescale(y_truth), tm.rescale(y_predictions), folder, test_paths)
         if tm.sentinel is not None:
             y_predictions = y_predictions[y_truth != tm.sentinel]
