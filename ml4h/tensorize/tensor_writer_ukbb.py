@@ -1024,15 +1024,17 @@ def append_fields_from_csv(tensors, csv_file, group, delimiter):
                             else:
                                 stats[f'Could not parse categorical field: {field} with value: {value}'] += 1
                                 continue
-
                         hd5_key = group + HD5_GROUP_CHAR + field
-                        if field in hd5[group]:
-                            data = hd5[hd5_key]
-                            data[0] = value
-                            stats['updated'] += 1
-                        else:
-                            hd5.create_dataset(hd5_key, data=[value])
-                            stats['created'] += 1
+                        if group == 'dates':
+                            hd5.create_dataset(hd5_key, (1,), data=value, dtype=h5py.special_dtype(vlen=str))
+                        elif group in ['categorical', 'continuous']:
+                            if field in hd5[group]:
+                                data = hd5[hd5_key]
+                                data[0] = value
+                                stats['updated'] += 1
+                            else:
+                                hd5.create_dataset(hd5_key, data=[value])
+                                stats['created'] += 1
                 else:
                     stats['sample id missing']
         except:
