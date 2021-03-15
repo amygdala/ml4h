@@ -1650,6 +1650,13 @@ myocardium_mask_systole_as_random_time = TensorMap(
                                           LAX_4CH_MYOCARDIUM_LABELS,
                                           15),
 )
+myocardium_mask_i30_as_random_time = TensorMap(
+    'myocardium_mask_lax_4ch_random_time', Interpretation.CONTINUOUS, shape=(120, 180, 1), path_prefix='ukb_cardiac_mri',
+    tensor_from_file=_heart_mask_instance('cine_segmented_lax_4ch/2/',
+                                          'cine_segmented_lax_4ch_annotated_',
+                                          LAX_4CH_MYOCARDIUM_LABELS,
+                                          30),
+)
 myocardium_mask_systole_guess = TensorMap(
     'myocardium_mask_systole_guess', Interpretation.CONTINUOUS, shape=(120, 180, 1), path_prefix='ukb_cardiac_mri',
     tensor_from_file=_heart_mask_instance('cine_segmented_lax_4ch/2/',
