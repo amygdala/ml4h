@@ -22,6 +22,7 @@ class TransformerEncoder(Block):
 
         self.encoder_layers = encoder(
             vocab_size=len(tensor_map.channel_map),
+            window_size=tensor_map.shape[0],
             num_layers=len(dense_layers),
             units=dense_layers[0],
             d_model=transformer_size,
@@ -58,6 +59,7 @@ class TransformerDecoder(Block):
         self.final_layer = tf.keras.layers.Dense(units=len(tensor_map.channel_map), name=self.tensor_map.output_name())
         self.decoder_layers = decoder(
             vocab_size=len(tensor_map.channel_map),
+            window_size=tensor_map.shape[0],
             num_layers=len(dense_layers),
             units=dense_layers[0],
             d_model=transformer_size,
@@ -233,6 +235,7 @@ def encoder_layer(units, d_model, num_heads, dropout, name="encoder_layer", inpu
 
 
 def encoder(vocab_size,
+            window_size,
             num_layers,
             units,
             d_model,
@@ -245,8 +248,7 @@ def encoder(vocab_size,
 
     embeddings = tf.keras.layers.Embedding(vocab_size, d_model)(inputs)
     embeddings *= tf.math.sqrt(tf.cast(d_model, tf.float32))
-    #embeddings = PositionalEncoding(vocab_size, d_model)(embeddings)
-    embeddings = PositionalEncoding(64, d_model)(embeddings)
+    embeddings = PositionalEncoding(window_size, d_model)(embeddings)
 
     outputs = tf.keras.layers.Dropout(rate=dropout)(embeddings)
 
@@ -305,6 +307,7 @@ def decoder_layer(units, d_model, num_heads, dropout, name="decoder_layer", inpu
 
 
 def decoder(vocab_size,
+            window_size,
             num_layers,
             units,
             d_model,
@@ -320,8 +323,7 @@ def decoder(vocab_size,
 
     embeddings = tf.keras.layers.Embedding(vocab_size, d_model)(inputs)
     embeddings *= tf.math.sqrt(tf.cast(d_model, tf.float32))
-    #embeddings = PositionalEncoding(vocab_size, d_model)(embeddings)
-    embeddings = PositionalEncoding(64, d_model)(embeddings)
+    embeddings = PositionalEncoding(window_size, d_model)(embeddings)
 
     outputs = tf.keras.layers.Dropout(rate=dropout)(embeddings)
 
