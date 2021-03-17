@@ -290,7 +290,7 @@ def generate_random_pixel_as_text_tensor_maps(tensors: str, path_prefix: str,
         cacheable=False,
     )
     input_map = TensorMap(
-        name, Interpretation.LANGUAGE, shape=shape,
+        name, Interpretation.LANGUAGE, shape=shape, path_prefix=path_prefix,
         tensor_from_file=random_array_window_tensors(window_shape),
         dependent_map=[burn_in, output_map],
         channel_map=token_dictionary,
