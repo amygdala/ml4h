@@ -321,7 +321,7 @@ def sample_from_language_model(language_input, next_input, model, test_data, max
         for k in test_data:
             cur_test[k] = np.expand_dims(test_data[k][i], axis=0)
         sentence = ''.join([str(index_2_token[index]) for index in cur_test[language_input.input_name()][0]])
-        sentence2 = ''.join(str([index_2_token[index]) for index in cur_test[next_input.input_name()][0]])
+        sentence2 = ''.join([str(index_2_token[index]) for index in cur_test[next_input.input_name()][0]])
         full_sentence = f'{sentence}{sentence2[-1:]}'
         logging.info(f'Start: {full_sentence}')
         for x in range(max_samples):
