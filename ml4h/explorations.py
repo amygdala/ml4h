@@ -320,8 +320,8 @@ def sample_from_language_model(language_input, next_input, model, test_data, max
     for i in range(test_data[language_input.input_name()].shape[0]):  # iterate over the batch
         for k in test_data:
             cur_test[k] = np.expand_dims(test_data[k][i], axis=0)
-        sentence = ''.join([index_2_token[index] for index in cur_test[language_input.input_name()][0]])
-        sentence2 = ''.join([index_2_token[index] for index in cur_test[next_input.input_name()][0]])
+        sentence = ''.join([str(index_2_token[index]) for index in cur_test[language_input.input_name()][0]])
+        sentence2 = ''.join(str([index_2_token[index]) for index in cur_test[next_input.input_name()][0]])
         full_sentence = f'{sentence}{sentence2[-1:]}'
         logging.info(f'Start: {full_sentence}')
         for x in range(max_samples):
@@ -334,8 +334,8 @@ def sample_from_language_model(language_input, next_input, model, test_data, max
                     offset = 0
                 for j in range(test_data[k].shape[1]):
                     cur_test[k][0, -(j+1)] = language_input.channel_map[full_sentence[-(1+j+offset)]]
-            s = ' '.join([index_2_token[index] for index in cur_test[language_input.input_name()][0]])
-            s2 = ' '.join([index_2_token[index] for index in cur_test[next_input.input_name()][0]])
+            s = ' '.join([str(index_2_token[index]) for index in cur_test[language_input.input_name()][0]])
+            s2 = ' '.join([str(index_2_token[index]) for index in cur_test[next_input.input_name()][0]])
         logging.info(f'Model: {full_sentence}             \n --- {i} --- \n')
 
 
