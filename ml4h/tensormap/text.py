@@ -88,9 +88,9 @@ def random_array_window_tensors(
     def window_as_text_from_file(tm, hd5, dependents={}):
         full_tensor = get_tensor_at_first_date(hd5, tm.path_prefix, tm.name)
         indexes = [np.random.randint(window_shape[i], edge-window_shape[i]) for i, edge in enumerate(full_tensor.shape)]
-        random_window = tuple(slice(window_shape[i], index) for i, index in enumerate(indexes))
-        next_window1 = tuple(slice(window_shape[i], index + 1 if i == shift_axis else index) for i, index in enumerate(indexes))
-        next_window2 = tuple(slice(window_shape[i], index + 2 if i == shift_axis else index) for i, index in enumerate(indexes))
+        random_window = tuple(slice(index-window_shape[i], index) for i, index in enumerate(indexes))
+        next_window1 = tuple(slice((index + 1 if i == shift_axis else index)-window_shape[i], index + 1 if i == shift_axis else index) for i, index in enumerate(indexes))
+        next_window2 = tuple(slice((index + 2 if i == shift_axis else index)-window_shape[i], index + 2 if i == shift_axis else index) for i, index in enumerate(indexes))
         tensor = full_tensor[random_window].flatten()
         if tm.dependent_map is not None:
             for dm, window in zip(tm.dependent_map, [next_window1, next_window2]):
