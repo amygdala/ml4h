@@ -44,7 +44,7 @@ def token_dictionary_from_hd5_key(
                 characters.update(np.unique(get_tensor_at_first_date(hd5, path_prefix, name)))
                 break
     logging.info(f'Total characters from HD5 Tensor {path_prefix} and name {name}: {len(characters)}')
-    char2index = dict((str(c), i) for i, c in enumerate(sorted(list(characters))))
+    char2index = dict((c, i) for i, c in enumerate(sorted(list(characters))))
     logging.info(f'char2index:\n {char2index} \n')
     return char2index
 
@@ -91,13 +91,13 @@ def random_array_window_tensors(
         random_window = tuple(slice(index-window_shape[i], index) for i, index in enumerate(indexes))
         next_window1 = tuple(slice((index + 1 if i == shift_axis else index)-window_shape[i], index + 1 if i == shift_axis else index) for i, index in enumerate(indexes))
         next_window2 = tuple(slice((index + 2 if i == shift_axis else index)-window_shape[i], index + 2 if i == shift_axis else index) for i, index in enumerate(indexes))
-        tensor = full_tensor[random_window].flatten().astype(str)
+        tensor = full_tensor[random_window].flatten()
         if tm.dependent_map is not None:
             for dm, window in zip(tm.dependent_map, [next_window1, next_window2]):
-                dependents[dm] = np.zeros(dm.shape, dtype=str)
+                dependents[dm] = np.zeros(dm.shape, dtype=np.float32)
                 flat = full_tensor[window].flatten()
                 for j, c in enumerate(flat):
-                    dependents[dm][j] = dm.channel_map[str(c)]
+                    dependents[dm][j] = dm.channel_map[c]
         logging.debug(f'Full shape:{full_tensor.shape} window_shape:{window_shape} random idx:{indexes} tensor shape:{tensor.shape}')
         return tensor
     return window_as_text_from_file
