@@ -44,7 +44,7 @@ def token_dictionary_from_hd5_key(
                 characters.update(np.unique(get_tensor_at_first_date(hd5, path_prefix, name)))
                 break
     logging.info(f'Total characters from HD5 Tensor {path_prefix} and name {name}: {len(characters)}')
-    char2index = dict((c, i) for i, c in enumerate(sorted(list(characters))))
+    char2index = dict((str(c), i) for i, c in enumerate(sorted(list(characters))))
     logging.info(f'char2index:\n {char2index} \n')
     return char2index
 
