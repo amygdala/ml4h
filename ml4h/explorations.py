@@ -323,17 +323,19 @@ def sample_from_language_model(language_input, next_input, model, test_data, max
         sentence = ''.join([str(index_2_token[index]) for index in cur_test[language_input.input_name()][0]])
         sentence2 = ''.join([str(index_2_token[index]) for index in cur_test[next_input.input_name()][0]])
         full_sentence = f'{sentence}{sentence2[-1:]}'
+        sentence_tokens = [index_2_token[index] for index in cur_test[next_input.input_name()][0]]
         logging.info(f'Start: {full_sentence}')
         for x in range(max_samples):
             prediction = model.predict(cur_test)
             next_token = index_2_token[_sample_with_heat(_softmax(prediction[0, -1, :]), 0.5)]
             offset = 1
+            sentence_tokens.append(next_token)
             full_sentence += str(next_token)
             for k in test_data:
                 if 'next' in k:
                     offset = 0
                 for j in range(test_data[k].shape[1]):
-                    cur_test[k][0, -(j+1)] = str(language_input.channel_map[float(full_sentence[-(1+j+offset)])])
+                    cur_test[k][0, -(j+1)] = language_input.channel_map[sentence_tokens[-(1+j+offset)]]
             s = ' '.join([str(index_2_token[index]) for index in cur_test[language_input.input_name()][0]])
             s2 = ' '.join([str(index_2_token[index]) for index in cur_test[next_input.input_name()][0]])
         logging.info(f'Model: {full_sentence}             \n --- {i} --- \n')
