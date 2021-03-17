@@ -299,3 +299,13 @@ prevalent_hf_wrt_instance2 = TensorMap('heart_failure', Interpretation.CATEGORIC
                                                                          start_date_is_attribute=True),
 
                                        )
+
+prevalent_af_as_hf_wrt_instance2 = TensorMap('heart_failure', Interpretation.CATEGORICAL, storage_type=StorageType.CATEGORICAL_FLAG,
+                                       loss=weighted_crossentropy([1.0, 58], 'heart_failure'), path_prefix='categorical',
+                                       channel_map={'no_heart_failure': 0, 'prevalent_heart_failure': 1},
+                                       tensor_from_file=prevalent_tensor('ukb_cardiac_mri/cine_segmented_lax_2ch/2/instance_0/',
+                                                                         'dates/atrial_fibrillation_or_flutter_date',
+                                                                         start_date_is_attribute=True),
+
+                                       )
+
