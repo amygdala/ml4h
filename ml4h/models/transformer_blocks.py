@@ -245,7 +245,8 @@ def encoder(vocab_size,
 
     embeddings = tf.keras.layers.Embedding(vocab_size, d_model)(inputs)
     embeddings *= tf.math.sqrt(tf.cast(d_model, tf.float32))
-    embeddings = PositionalEncoding(vocab_size, d_model)(embeddings)
+    #embeddings = PositionalEncoding(vocab_size, d_model)(embeddings)
+    embeddings = PositionalEncoding(64, d_model)(embeddings)
 
     outputs = tf.keras.layers.Dropout(rate=dropout)(embeddings)
 
