@@ -1667,6 +1667,26 @@ myocardium_mask_systole_guess = TensorMap(
 )
 
 
+def _heart_mask_instances(mri_key, segmentation_key, labels):
+    def _heart_mask_tensor_from_file(tm, hd5, dependents={}):
+        diastole_categorical = get_tensor_at_first_date(hd5, tm.path_prefix, f'{segmentation_key}{1}')
+        heart_mask = np.isin(diastole_categorical, list(labels.values()))
+        i, j = np.where(heart_mask)
+        indices = np.meshgrid(np.arange(min(i), max(i) + 1), np.arange(min(j), max(j) + 1), indexing='ij')
+        tensor = np.zeros(tm.shape, dtype=np.float32)
+        for cycle_index in range(1, tm.shape[-1]):
+            mri = get_tensor_at_first_date(hd5, tm.path_prefix, f'{mri_key}')[..., cycle_index]
+            tensor[..., cycle_index] = pad_or_crop_array_to_shape(tm.shape, mri[indices])
+        return tensor
+    return _heart_mask_tensor_from_file
+
+
+lax_4ch_heart_center = TensorMap(
+    'myocardium_mask_systole_guess', Interpretation.CONTINUOUS, shape=(64, 64, 50), path_prefix='ukb_cardiac_mri', normalization=ZeroMeanStd1(),
+    tensor_from_file=_heart_mask_instances('cine_segmented_lax_4ch/2/', 'cine_segmented_lax_4ch_annotated_', LAX_4CH_MYOCARDIUM_LABELS),
+)
+
+
 def _segmented_index_slices(key_prefix: str, shape: Tuple[int], path_prefix: str ='ukb_cardiac_mri') -> Callable:
     """Get semantic segmentation with label index as pixel values for an MRI slice"""
     def _segmented_dicom_tensor_from_file(tm, hd5, dependents={}):
