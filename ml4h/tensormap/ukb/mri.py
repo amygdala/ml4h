@@ -1672,7 +1672,7 @@ def _heart_mask_instances(mri_key, segmentation_key, labels):
         diastole_categorical = get_tensor_at_first_date(hd5, tm.path_prefix, f'{segmentation_key}{1}')
         heart_mask = np.isin(diastole_categorical, list(labels.values()))
         i, j = np.where(heart_mask)
-        indices = np.meshgrid(np.arange(min(i), max(i) + 1), np.arange(min(j), max(j) + 1), np.arange(50), indexing='ijk')
+        indices = np.meshgrid(np.arange(min(i), max(i) + 1), np.arange(min(j), max(j) + 1), np.arange(50), indexing='ij')
         mri = get_tensor_at_first_date(hd5, tm.path_prefix, f'{mri_key}')
         tensor = pad_or_crop_array_to_shape(tm.shape, mri[indices])
         return tensor
