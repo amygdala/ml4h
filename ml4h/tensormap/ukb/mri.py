@@ -1680,7 +1680,7 @@ def _heart_mask_instances(mri_key, segmentation_key, labels):
 
 
 lax_4ch_heart_center = TensorMap(
-    'lax_4ch_heart_center', Interpretation.CONTINUOUS, shape=(64, 64, 50), path_prefix='ukb_cardiac_mri', normalization=ZeroMeanStd1(),
+    'lax_4ch_heart_center', Interpretation.CONTINUOUS, shape=(96, 96, 50), path_prefix='ukb_cardiac_mri', normalization=ZeroMeanStd1(),
     tensor_from_file=_heart_mask_instances('cine_segmented_lax_4ch/2/', 'cine_segmented_lax_4ch_annotated_', LAX_4CH_MYOCARDIUM_LABELS),
 )
 
