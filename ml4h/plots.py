@@ -1606,7 +1606,10 @@ def _bootstrap_performance(
     performance = []
     for _ in range(n_samples):
         idx = np.random.randint(0, truth.shape[0], size=truth.shape[0])
-        performance.append(metric(truth[idx], prediction[idx]))
+        try:
+            performance.append(metric(truth[idx], prediction[idx]))
+        except ValueError as e:
+            logging.warning(f'ValueError trying to compute metric {metric.__name__}\n Error: {e}')
     return performance
 
 
