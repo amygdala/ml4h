@@ -36,13 +36,17 @@ def token_dictionary_from_hd5_key(
         name: str,
 ) -> Dict[str, int]:
     characters = set()
-    for tp in os.listdir(tensors):
+    for i, tp in enumerate(os.listdir(tensors)):
         if os.path.splitext(tp)[-1].lower() != TENSOR_EXT:
             continue
+        if i % 50 == 0:
+            logging.info(f'Found {len(characters)} unique tokens in {i} HD5 files at:{tensors}')
+        if i > 1000:
+            break
         with h5py.File(tensors + tp, 'r') as hd5:
             if name in hd5[path_prefix]:
                 characters.update(np.unique(get_tensor_at_first_date(hd5, path_prefix, name)))
-                break
+
     logging.info(f'Total characters from HD5 Tensor {path_prefix} and name {name}: {len(characters)}')
     char2index = dict((c, i) for i, c in enumerate(sorted(list(characters))))
     logging.info(f'char2index:\n {char2index} \n')
