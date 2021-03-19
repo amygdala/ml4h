@@ -431,14 +431,14 @@ def _process_args(args):
     args.tensor_maps_in = []
     args.tensor_maps_out = []
     if args.text_file is not None or args.hd5_as_text is not None:
-        del args.input_tensors[:2]
+        del args.input_tensors[0]
         del args.output_tensors[0]
         if args.hd5_as_text is not None:
             window_shape = (int(np.sqrt(args.text_window)), int(np.sqrt(args.text_window)))
-            input_map, burn_in, output_map = generate_random_pixel_as_text_tensor_maps(args.tensors, args.hd5_as_text, window_shape)
+            input_map, output_map = generate_random_pixel_as_text_tensor_maps(args.tensors, args.hd5_as_text, window_shape)
         else:
-            input_map, burn_in, output_map = generate_random_text_tensor_maps(args.text_file, args.text_window)
-        args.tensor_maps_in.extend([input_map, burn_in])
+            input_map, output_map = generate_random_text_tensor_maps(args.text_file, args.text_window)
+        args.tensor_maps_in.append(input_map)
         args.tensor_maps_out.append(output_map)
 
     args.tensor_maps_in.extend([tensormap_lookup(it, args.tensormap_prefix) for it in args.input_tensors])

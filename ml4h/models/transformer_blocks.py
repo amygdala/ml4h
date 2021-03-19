@@ -73,11 +73,11 @@ class TransformerDecoder(Block):
             if self.tensor_map == tm:
                 encoder_input = intermediates[self.tensor_map][0]
                 encoder_outputs = intermediates[self.tensor_map][-1]
-            elif 'next' in tm.name:  # TODO: this should depend on magic strings
-                decoder_inputs = intermediates[tm][-1]
-        look_ahead = self.look_ahead_mask(decoder_inputs)
+            # elif 'next' in tm.name:  # TODO: this should not depend on magic strings
+            #     decoder_inputs = intermediates[tm][-1]
+        look_ahead = self.look_ahead_mask(encoder_input)
         pad = self.decoder_padding_mask(encoder_input)
-        decoder_outputs = self.decoder_layers(inputs=[decoder_inputs, encoder_outputs, look_ahead, pad])
+        decoder_outputs = self.decoder_layers(inputs=[encoder_input, encoder_outputs, look_ahead, pad])
         decoded = self.final_layer(decoder_outputs)
         intermediates[self.tensor_map].append(decoded)
         return decoded
@@ -340,7 +340,6 @@ def decoder(vocab_size,
         inputs=[inputs, enc_outputs, look_ahead_mask, padding_mask],
         outputs=outputs,
         name=name)
-
 
 
 def transformer(vocab_size,
