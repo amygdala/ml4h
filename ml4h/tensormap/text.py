@@ -59,15 +59,10 @@ def random_text_window_tensor(
         for i, c in enumerate(text[random_index:random_index+window_size]):
             tensor[i] = tm.channel_map[c]
         if tm.dependent_map is not None:
-            for i, dm in enumerate(tm.dependent_map):
-                start_next_window = random_index+1+i
-                dependents[dm] = np.zeros(dm.shape, dtype=np.float32)
-                if dm.axes() == 1:
-                    for j, c in enumerate(text[start_next_window:start_next_window+dm.shape[0]]):
-                        dependents[dm][j] = dm.channel_map[c]
-                else:
-                    raise ValueError(f'No method to process dependent map:{dm.name} of shape {dm.shape}.')
-                logging.debug(f'\nInput text: {text[random_index:random_index+window_size]}\n Dependent: {text[start_next_window:start_next_window+dm.shape[0]]}')
+            start_next_window = random_index + 1
+            dependents[tm.dependent_map] = np.zeros(tm.dependent_map.shape, dtype=np.float32)
+            for j, c in enumerate(text[start_next_window:start_next_window + tm.dependent_map.shape[0]]):
+                dependents[tm.dependent_map][j] = tm.dependent_map.channel_map[c]
         return tensor
     return text_from_file
 
@@ -89,15 +84,12 @@ def random_array_window_tensors(
         full_tensor = get_tensor_at_first_date(hd5, tm.path_prefix, tm.name)
         indexes = [np.random.randint(window_shape[i], edge-window_shape[i]) for i, edge in enumerate(full_tensor.shape)]
         random_window = tuple(slice(index-window_shape[i], index) for i, index in enumerate(indexes))
-        next_window1 = tuple(slice((index + 1 if i == shift_axis else index)-window_shape[i], index + 1 if i == shift_axis else index) for i, index in enumerate(indexes))
-        next_window2 = tuple(slice((index + 2 if i == shift_axis else index)-window_shape[i], index + 2 if i == shift_axis else index) for i, index in enumerate(indexes))
+        next_window = tuple(slice((index + 1 if i == shift_axis else index)-window_shape[i], index + 1 if i == shift_axis else index) for i, index in enumerate(indexes))
         tensor = full_tensor[random_window].flatten()
         if tm.dependent_map is not None:
-            for dm, window in zip(tm.dependent_map, [next_window1, next_window2]):
-                dependents[dm] = np.zeros(dm.shape, dtype=np.float32)
-                flat = full_tensor[window].flatten()
-                for j, c in enumerate(flat):
-                    dependents[dm][j] = dm.channel_map[c]
-        logging.debug(f'Full shape:{full_tensor.shape} window_shape:{window_shape} random idx:{indexes} tensor shape:{tensor.shape}')
+            dependents[tm.dependent_map] = np.zeros(tm.dependent_map.shape, dtype=np.float32)
+            flat = full_tensor[next_window].flatten()
+            for j, c in enumerate(flat):
+                dependents[tm.dependent_map][j] = tm.dependent_map.channel_map[c]
         return tensor
     return window_as_text_from_file

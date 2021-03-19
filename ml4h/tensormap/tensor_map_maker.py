@@ -247,11 +247,7 @@ def generate_random_text_tensor_maps(text_file: str, window_size: int) -> Tuple[
     name = os.path.basename(text_file).split('.')[0]
     text, token_dictionary = token_dictionary_and_text_from_file(text_file)
     shape = (window_size,)
-    # burn_in = TensorMap(
-    #     f'next_{name}', Interpretation.CONTINUOUS, shape=shape,
-    #     channel_map=token_dictionary,
-    #     cacheable=False,
-    # )
+
     output_map = TensorMap(
         f'next_{name}', Interpretation.LANGUAGE,
         shape=shape,
@@ -262,7 +258,7 @@ def generate_random_text_tensor_maps(text_file: str, window_size: int) -> Tuple[
     input_map = TensorMap(
         name, Interpretation.LANGUAGE, shape=shape,
         tensor_from_file=random_text_window_tensor(text, window_size),
-        dependent_map=[output_map],
+        dependent_map=output_map,
         channel_map=token_dictionary,
         cacheable=False,
     )
@@ -270,20 +266,15 @@ def generate_random_text_tensor_maps(text_file: str, window_size: int) -> Tuple[
 
 
 def generate_random_pixel_as_text_tensor_maps(tensors: str, path_prefix: str,
-                                              window_shape: Tuple[int]) -> Tuple[TensorMap, TensorMap, TensorMap]:
+                                              window_shape: Tuple[int]) -> Tuple[TensorMap, TensorMap]:
     name = path_prefix.split('/')[-1]
     path_prefix = '/'.join(path_prefix.split('/')[:-1])
     logging.info(f'prefix {path_prefix} and name is {name}')
     token_dictionary = token_dictionary_from_hd5_key(tensors, path_prefix, name)
-    window_size = np.prod(window_shape)
+    window_size = int(np.prod(window_shape))
     shape = (window_size,)
-    burn_in = TensorMap(
-        f'next_{name}', Interpretation.CONTINUOUS, shape=shape,
-        channel_map=token_dictionary,
-        cacheable=False,
-    )
     output_map = TensorMap(
-        f'next_next_{name}', Interpretation.LANGUAGE,
+        f'next_{name}', Interpretation.LANGUAGE,
         shape=shape,
         loss=sparse_cross_entropy(window_size),
         channel_map=token_dictionary,
@@ -292,9 +283,9 @@ def generate_random_pixel_as_text_tensor_maps(tensors: str, path_prefix: str,
     input_map = TensorMap(
         name, Interpretation.LANGUAGE, shape=shape, path_prefix=path_prefix,
         tensor_from_file=random_array_window_tensors(window_shape),
-        dependent_map=[burn_in, output_map],
+        dependent_map=output_map,
         channel_map=token_dictionary,
         cacheable=False,
     )
-    return input_map, burn_in, output_map
+    return input_map, output_map
 
