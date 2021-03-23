@@ -448,9 +448,9 @@ ecg_rest_median_raw = TensorMap(
     metrics=['mse', 'mae', 'logcosh'], channel_map=ECG_REST_MEDIAN_LEADS, normalization=Standardize(mean=0, std=2000),
 )
 
-ecg_rest_median_raw_100 = TensorMap(
-    'ecg_rest_median_raw_100', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest', shape=(600, 12), loss='logcosh', activation='linear', tensor_from_file=_make_ecg_rest(),
-    metrics=['mse', 'mae', 'logcosh'], channel_map=ECG_REST_MEDIAN_LEADS, normalization=Standardize(mean=0, std=100),
+ecg_rest_median_raw_10 = TensorMap(
+    'ecg_rest_median_raw_10', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest', shape=(600, 12), loss='logcosh', activation='linear', tensor_from_file=_make_ecg_rest(),
+    metrics=['mse', 'mae', 'logcosh'], channel_map=ECG_REST_MEDIAN_LEADS, normalization=Standardize(mean=0, std=10),
 )
 
 ecg_rest_median = TensorMap(
