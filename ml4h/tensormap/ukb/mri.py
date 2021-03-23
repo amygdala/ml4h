@@ -1710,7 +1710,7 @@ def _segmented_heart_mask_instances(segmentation_key, labels):
             frame_categorical = get_tensor_at_first_date(hd5, tm.path_prefix, f'{segmentation_key}{frame}')
             reshape_categorical = pad_or_crop_array_to_shape(tm.shape[:2], frame_categorical[indices])
             one_hot = to_categorical(reshape_categorical, len(tm.channel_map))
-            tensor[..., frame, :] = one_hot
+            tensor[..., frame-1, :] = one_hot
         return tensor
     return _heart_mask_tensor_from_file
 
