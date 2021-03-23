@@ -1704,9 +1704,12 @@ def _segmented_heart_mask_instances(segmentation_key, labels):
         diastole_categorical = get_tensor_at_first_date(hd5, tm.path_prefix, f'{segmentation_key}{1}')
         heart_mask = np.isin(diastole_categorical, list(labels.values()))
         i, j = np.where(heart_mask)
-        indices = np.meshgrid(np.arange(min(i), max(i) + 1), np.arange(min(j), max(j) + 1), np.arange(50), indexing='ij')
-        one_hot = to_categorical(diastole_categorical[indices], len(tm.channel_map))
-        tensor = pad_or_crop_array_to_shape(tm.shape, one_hot)
+        indices = np.meshgrid(np.arange(min(i), max(i) + 1), np.arange(min(j), max(j) + 1), indexing='ij')
+        tensor = np.zeros(tm.shape, dtype=np.float32)
+        for frame in range(1, 51):
+            frame_categorical = get_tensor_at_first_date(hd5, tm.path_prefix, f'{segmentation_key}{frame}')
+            one_hot = to_categorical(frame_categorical[indices], len(tm.channel_map))
+        tensor[..., frame, :] = pad_or_crop_array_to_shape(tm.shape[:2], one_hot)
         return tensor
     return _heart_mask_tensor_from_file
 
