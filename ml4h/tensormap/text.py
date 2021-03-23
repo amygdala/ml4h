@@ -39,9 +39,9 @@ def token_dictionary_from_hd5_key(
     for i, tp in enumerate(os.listdir(tensors)):
         if os.path.splitext(tp)[-1].lower() != TENSOR_EXT:
             continue
-        if i % 50 == 0:
-            logging.info(f'Found {len(characters)} unique tokens in {i} HD5 files at:{tensors}')
-        if i > 1000:
+        if i % 400 == 0:
+            logging.debug(f'Found {len(characters)} unique tokens in {i} HD5 files at:{tensors}')
+        if i > 2000:
             break
         with h5py.File(tensors + tp, 'r') as hd5:
             if name in hd5[path_prefix]:
@@ -88,7 +88,9 @@ def random_array_window_tensors(
         full_tensor = get_tensor_at_first_date(hd5, tm.path_prefix, tm.name)
         indexes = [np.random.randint(window_shape[i], edge-window_shape[i]) for i, edge in enumerate(full_tensor.shape)]
         random_window = tuple(slice(index-window_shape[i], index) for i, index in enumerate(indexes))
-        next_window = tuple(slice((index + 1 if i == shift_axis else index)-window_shape[i], index + 1 if i == shift_axis else index) for i, index in enumerate(indexes))
+        next_window = tuple(
+            slice((index + 1 if i == shift_axis else index)-window_shape[i], index + 1 if i == shift_axis else index) for i, index in enumerate(indexes)
+        )
         tensor = full_tensor[random_window].flatten()
         if tm.dependent_map is not None:
             dependents[tm.dependent_map] = np.zeros(tm.dependent_map.shape, dtype=np.float32)

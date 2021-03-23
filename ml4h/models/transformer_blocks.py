@@ -34,7 +34,7 @@ class TransformerEncoder(Block):
     def can_apply(self):
         return self.tensor_map.is_language()
 
-    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
+    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]] = None) -> Tensor:
         if not self.can_apply():
             return x
         padded = self.padding_mask_layer(x)
@@ -65,17 +65,14 @@ class TransformerDecoder(Block):
             d_model=transformer_size,
             num_heads=attention_heads,
             dropout=dense_regularize_rate,
-            #input_name=tensor_map.dependent_map.input_name(),
         )
 
-    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
+    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]] = None) -> Tensor:
         for tm in intermediates:
             if self.tensor_map == tm:
                 encoder_input = intermediates[self.tensor_map][0]
                 encoder_outputs = intermediates[self.tensor_map][-1]
-            # elif 'next' in tm.name:  # TODO: this should not depend on magic strings
-            #     decoder_inputs = intermediates[tm][-1]
-        look_ahead = self.look_ahead_mask(encoder_input)
+        look_ahead = self.look_ahead_mask(encoder_input)  # Decoder does not need to use same domain as encoder/ can have different inputs
         pad = self.decoder_padding_mask(encoder_input)
         decoder_outputs = self.decoder_layers(inputs=[encoder_input, encoder_outputs, look_ahead, pad])
         decoded = self.final_layer(decoder_outputs)
