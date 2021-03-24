@@ -1718,13 +1718,13 @@ def _segmented_heart_mask_instances(segmentation_key, labels, frames=50):
 segmented_lax_4ch_heart_center_4d = TensorMap(
     'lax_4ch_heart_center', Interpretation.CATEGORICAL,
     shape=(96, 96, 50, len(MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP)),
-    path_prefix='ukb_cardiac_mri', normalization=ZeroMeanStd1(), channel_map=MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP,
+    path_prefix='ukb_cardiac_mri', channel_map=MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP,
     tensor_from_file=_segmented_heart_mask_instances('cine_segmented_lax_4ch_annotated_', LAX_4CH_HEART_LABELS),
 )
 segmented_lax_4ch_heart_center_48_frame_4d = TensorMap(
     'lax_4ch_heart_center_48_frame', Interpretation.CATEGORICAL,
     shape=(96, 96, 48, len(MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP)),
-    path_prefix='ukb_cardiac_mri', normalization=ZeroMeanStd1(), channel_map=MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP,
+    path_prefix='ukb_cardiac_mri', channel_map=MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP,
     tensor_from_file=_segmented_heart_mask_instances('cine_segmented_lax_4ch_annotated_', LAX_4CH_HEART_LABELS, frames=48),
 )
 
