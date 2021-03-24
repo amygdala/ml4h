@@ -1699,14 +1699,14 @@ lax_4ch_heart_center_4d = TensorMap(
 )
 
 
-def _segmented_heart_mask_instances(segmentation_key, labels):
+def _segmented_heart_mask_instances(segmentation_key, labels, frames=50):
     def _heart_mask_tensor_from_file(tm, hd5, dependents={}):
         diastole_categorical = get_tensor_at_first_date(hd5, tm.path_prefix, f'{segmentation_key}{1}')
         heart_mask = np.isin(diastole_categorical, list(labels.values()))
         i, j = np.where(heart_mask)
         indices = np.meshgrid(np.arange(min(i), max(i) + 1), np.arange(min(j), max(j) + 1), indexing='ij')
         tensor = np.zeros(tm.shape, dtype=np.float32)
-        for frame in range(1, 51):
+        for frame in range(1, frames+1):
             frame_categorical = get_tensor_at_first_date(hd5, tm.path_prefix, f'{segmentation_key}{frame}')
             reshape_categorical = pad_or_crop_array_to_shape(tm.shape[:2], frame_categorical[indices])
             one_hot = to_categorical(reshape_categorical, len(tm.channel_map))
@@ -1720,6 +1720,12 @@ segmented_lax_4ch_heart_center_4d = TensorMap(
     shape=(96, 96, 50, len(MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP)),
     path_prefix='ukb_cardiac_mri', normalization=ZeroMeanStd1(), channel_map=MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP,
     tensor_from_file=_segmented_heart_mask_instances('cine_segmented_lax_4ch_annotated_', LAX_4CH_HEART_LABELS),
+)
+segmented_lax_4ch_heart_center_48_frame_4d = TensorMap(
+    'lax_4ch_heart_center_48_frame', Interpretation.CATEGORICAL,
+    shape=(96, 96, 48, len(MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP)),
+    path_prefix='ukb_cardiac_mri', normalization=ZeroMeanStd1(), channel_map=MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP,
+    tensor_from_file=_segmented_heart_mask_instances('cine_segmented_lax_4ch_annotated_', LAX_4CH_HEART_LABELS, frames=48),
 )
 
 
