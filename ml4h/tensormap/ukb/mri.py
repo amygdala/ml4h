@@ -1693,7 +1693,7 @@ lax_4ch_heart_center_4d = TensorMap(
     tensor_from_file=_heart_mask_instances('cine_segmented_lax_4ch/2/', 'cine_segmented_lax_4ch_annotated_', LAX_4CH_HEART_LABELS),
 )
 myocardium_mask_lax_4ch_50frame = TensorMap(
-    'myocardium_mask_lax_4ch_50frame', Interpretation.CONTINUOUS, shape=(72, 72, 50), path_prefix='ukb_cardiac_mri', normalization=ZeroMeanStd1(),
+    'myocardium_mask_lax_4ch_50frame', Interpretation.CONTINUOUS, shape=(96, 96, 50), path_prefix='ukb_cardiac_mri', normalization=ZeroMeanStd1(),
     tensor_from_file=_heart_mask_instances('cine_segmented_lax_4ch/2/', 'cine_segmented_lax_4ch_annotated_', LAX_4CH_MYOCARDIUM_LABELS, mask=True),
 )
 heart_mask_lax_4ch_50frame = TensorMap(
