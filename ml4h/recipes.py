@@ -27,7 +27,7 @@ from ml4h.models.legacy_models import make_character_model_plus, embed_model_pre
 from ml4h.metrics import get_roc_aucs, get_precision_recall_aucs, get_pearson_coefficients, log_aucs, log_pearson_coefficients
 from ml4h.models.legacy_models import get_model_inputs_outputs, make_shallow_model, make_hidden_layer_model
 from ml4h.plots import evaluate_predictions, plot_scatters, plot_rocs, plot_precision_recalls, subplot_roc_per_class, plot_tsne, plot_prediction_calibrations, \
-    plot_reconstruction, plot_hit_to_miss_transforms
+    plot_reconstruction, plot_hit_to_miss_transforms, plot_survival
 from ml4h.tensorize.tensor_writer_ukbb import write_tensors, append_fields_from_csv, append_gene_csv, write_tensors_from_dicom_pngs, write_tensors_from_ecg_pngs
 from ml4h.plots import subplot_rocs, subplot_comparison_rocs, subplot_scatters, subplot_comparison_scatters, plot_saliency_maps, plot_partners_ecgs, plot_ecg_rest_mp
 
@@ -830,6 +830,11 @@ def _calculate_and_plot_prediction_stats(args, predictions, outputs, paths):
             plot_rocs(new_predictions, outputs[tm.output_name()][:, 0, np.newaxis], {f'_vs_ROC': 0}, plot_title, plot_folder)
             rocs.append((new_predictions, outputs[tm.output_name()][:, 0, np.newaxis], {f'_vs_ROC': 0}))
             plot_prediction_calibrations(new_predictions, outputs[tm.output_name()][:, 0, np.newaxis], {f'_vs_ROC': 0}, plot_title, plot_folder)
+        elif tm.is_survival_curve():
+            new_predictions = {}
+            for m in predictions[tm]:
+                plot_survival(predictions[tm][m], outputs[tm.output_name()], f'{m}_{plot_title}',
+                              tm.days_window, prefix=plot_folder)
         else:
             scaled_predictions = {k: tm.rescale(predictions[tm][k]) for k in predictions[tm]}
             plot_scatters(scaled_predictions, tm.rescale(outputs[tm.output_name()]), plot_title, plot_folder)
