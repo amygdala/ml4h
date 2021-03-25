@@ -1675,7 +1675,7 @@ def _heart_mask_instances(mri_key, segmentation_key, labels, mask=False):
         indices = np.meshgrid(np.arange(min(i), max(i) + 1), np.arange(min(j), max(j) + 1), np.arange(50), indexing='ij')
         mri = get_tensor_at_first_date(hd5, tm.path_prefix, f'{mri_key}')
         if mask:
-            for frame in range(50):
+            for frame in range(1, 51):
                 frame_categorical = get_tensor_at_first_date(hd5, tm.path_prefix, f'{segmentation_key}{frame}')
                 heart_mask = np.isin(frame_categorical, list(labels.values()))
                 mri[..., frame] *= heart_mask
