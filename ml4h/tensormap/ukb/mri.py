@@ -1699,7 +1699,7 @@ lax_4ch_heart_center_4d = TensorMap(
 )
 
 
-def _segmented_heart_mask_instances(segmentation_key, labels, frames=50):
+def _segmented_heart_mask_instances(segmentation_key, labels, frames=50, one_hot=True):
     def _heart_mask_tensor_from_file(tm, hd5, dependents={}):
         diastole_categorical = get_tensor_at_first_date(hd5, tm.path_prefix, f'{segmentation_key}{1}')
         heart_mask = np.isin(diastole_categorical, list(labels.values()))
@@ -1709,12 +1709,27 @@ def _segmented_heart_mask_instances(segmentation_key, labels, frames=50):
         for frame in range(1, frames+1):
             frame_categorical = get_tensor_at_first_date(hd5, tm.path_prefix, f'{segmentation_key}{frame}')
             reshape_categorical = pad_or_crop_array_to_shape(tm.shape[:2], frame_categorical[indices])
-            one_hot = to_categorical(reshape_categorical, len(tm.channel_map))
-            tensor[..., frame-1, :] = one_hot
+            if one_hot:
+                slice_one_hot = to_categorical(reshape_categorical, len(tm.channel_map))
+                tensor[..., frame-1, :] = slice_one_hot
+            else:
+                tensor[..., frame-1] = reshape_categorical
         return tensor
     return _heart_mask_tensor_from_file
 
 
+segmented_lax_4ch_heart_center = TensorMap(
+    'lax_4ch_heart_center', Interpretation.CONTINUOUS,
+    shape=(96, 96, 50),
+    path_prefix='ukb_cardiac_mri', channel_map=MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP,
+    tensor_from_file=_segmented_heart_mask_instances('cine_segmented_lax_4ch_annotated_', LAX_4CH_HEART_LABELS, one_hot=False),
+)
+segmented_lax_4ch_heart_center_48_frame = TensorMap(
+    'lax_4ch_heart_center_48_frame', Interpretation.CONTINUOUS,
+    shape=(96, 96, 48),
+    path_prefix='ukb_cardiac_mri', channel_map=MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP,
+    tensor_from_file=_segmented_heart_mask_instances('cine_segmented_lax_4ch_annotated_', LAX_4CH_HEART_LABELS, frames=48, one_hot=False),
+)
 segmented_lax_4ch_heart_center_4d = TensorMap(
     'lax_4ch_heart_center', Interpretation.CATEGORICAL,
     shape=(96, 96, 50, len(MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP)),
