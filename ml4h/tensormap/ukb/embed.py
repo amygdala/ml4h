@@ -102,7 +102,13 @@ seg_autoencoder_256d = TensorMap('embed_seg_autoencoder_256d', Interpretation.EM
                                  )
 
 latent_file = '/home/sam/trained_models/ecg_median_raw_10_autoencoder_256d/hidden_activation_14_ecg_median_raw_10_autoencoder_256d.tsv'
-ecg_median_autoencoder_256d = TensorMap('embed_seg_autoencoder_256d', Interpretation.EMBEDDING,
+ecg_median_autoencoder_256d = TensorMap('ecg_median_autoencoder_256d', Interpretation.EMBEDDING,
+                                 shape=(256,), channel_map={f'latent_{i}': i for i in range(256)},
+                                 tensor_from_file=tff,
+                                 )
+
+latent_file = '/home/sam/trained_models/lax_4ch_heart_center_autoencoder_256d/hidden_activation_14_lax_4ch_heart_center_autoencoder_256d.tsv'
+lax_4ch_heart_center_autoencoder_256d = TensorMap('lax_4ch_heart_center_autoencoder_256d', Interpretation.EMBEDDING,
                                  shape=(256,), channel_map={f'latent_{i}': i for i in range(256)},
                                  tensor_from_file=tff,
                                  )
