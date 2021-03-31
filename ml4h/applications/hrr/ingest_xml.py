@@ -143,7 +143,7 @@ def read_compressed(data_set: h5py.Dataset):
 
 
 def _sample_id_from_path(path: str) -> int:
-    return path.split("_")[0]
+    return os.path.basename(path).split("_")[0]
 
 
 def xml_to_hd5(xml_path: str, output_directory: str):
@@ -171,7 +171,7 @@ def _process_files(files: List[str], destination: str) -> Dict[str, str]:
         try:
             xml_to_hd5(path, destination)
         except Exception as e:
-            errors[path] = str(e)
+            errors[path] = repr(e)
         if len(files) % max(i // 10, 1) == 0:
             print(f'{name}: {(i + 1) / len(files):.2%} done')
 
@@ -209,12 +209,11 @@ def multiprocess_ingest(
     Returns:
         [dict]: Returns a dictionary of encountered errors.
     """
-    print(f'Beginning ingestion of {len(files)} MRIs.')
+    print(f'Beginning ingestion of {len(files)} xmls.')
     os.makedirs(destination, exist_ok=True)
     start = time.time()
     # partition files by sample id so no race conditions across workers due to multiple instances
     split_files = _partition_files(files, cpu_count())
-    print(split_files)
     errors = {}
     with Pool(cpu_count()) as pool:
         results = [pool.apply_async(_process_files, (split, destination)) for split in split_files]
