@@ -1721,26 +1721,26 @@ def _segmented_heart_mask_instances(segmentation_key, labels, frames=50, one_hot
     return _heart_mask_tensor_from_file
 
 
-segmented_lax_4ch_heart_center = TensorMap(
-    'lax_4ch_heart_center', Interpretation.CONTINUOUS,
+segmented_lax_4ch_50_frame = TensorMap(
+    'segmented_lax_4ch_50_frame', Interpretation.CONTINUOUS,
     shape=(96, 96, 50),
     path_prefix='ukb_cardiac_mri', channel_map=MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP,
     tensor_from_file=_segmented_heart_mask_instances('cine_segmented_lax_4ch_annotated_', LAX_4CH_HEART_LABELS, one_hot=False),
 )
-segmented_lax_4ch_heart_center_48_frame = TensorMap(
-    'lax_4ch_heart_center_48_frame', Interpretation.CONTINUOUS,
+segmented_lax_4ch_48_frame = TensorMap(
+    'segmented_lax_4ch_48_frame', Interpretation.CONTINUOUS,
     shape=(96, 96, 48),
     path_prefix='ukb_cardiac_mri', channel_map=MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP,
     tensor_from_file=_segmented_heart_mask_instances('cine_segmented_lax_4ch_annotated_', LAX_4CH_HEART_LABELS, frames=48, one_hot=False),
 )
-segmented_lax_4ch_heart_center_4d = TensorMap(
-    'lax_4ch_heart_center', Interpretation.CATEGORICAL,
+segmented_lax_4ch_50_frame_4d = TensorMap(
+    'segmented_lax_4ch_50_frame_4d', Interpretation.CATEGORICAL,
     shape=(96, 96, 50, len(MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP)),
     path_prefix='ukb_cardiac_mri', channel_map=MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP,
     tensor_from_file=_segmented_heart_mask_instances('cine_segmented_lax_4ch_annotated_', LAX_4CH_HEART_LABELS),
 )
-segmented_lax_4ch_heart_center_48_frame_4d = TensorMap(
-    'lax_4ch_heart_center_48_frame', Interpretation.CATEGORICAL,
+segmented_lax_4ch_48_frame_4d = TensorMap(
+    'segmented_lax_4ch_48_frame_4d', Interpretation.CATEGORICAL,
     shape=(96, 96, 48, len(MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP)),
     path_prefix='ukb_cardiac_mri', channel_map=MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP,
     tensor_from_file=_segmented_heart_mask_instances('cine_segmented_lax_4ch_annotated_', LAX_4CH_HEART_LABELS, frames=48),
