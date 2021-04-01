@@ -97,6 +97,7 @@ def _process_xml(xml_path: str):
         trends = _process_trend(root)
     except Exception as e:
         print(f"Excepted error {repr(e)} during unnecesary trend extraction")
+        trends = {}
     try:
         protocol = _process_protocol(root)
     except Exception as e:
@@ -153,13 +154,16 @@ def xml_to_hd5(xml_path: str, output_directory: str):
     full_disclosure, trends, protocol, phase_durations = _process_xml(xml_path)
     pretest = full_disclosure[:15 * SAMPLE_RATE]
 
-    with h5py.File(os.path.join(output_directory, f"{sample_id}.h5"), "a") as hd5:
+    with h5py.File(os.path.join(output_directory, f"{sample_id}.hd5"), "a") as hd5:
         compress_and_store(hd5, full_disclosure, f"full_disclosure/{instance}")
         compress_and_store(hd5, pretest, f"pretest/{instance}")
 
         hd5[f"protocol/{instance}"] = protocol
         for phase_name, duration in phase_durations.items():
             hd5[f"{phase_name}_duration/{instance}"] = duration
+
+        for trend_name, trend in trends.items():
+            hd5[f"{trend_name}/{instance}"] = duration
 
 
 def _process_files(files: List[str], destination: str) -> Dict[str, str]:
