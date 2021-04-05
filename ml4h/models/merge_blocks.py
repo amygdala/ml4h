@@ -164,7 +164,7 @@ def contrastive_difference(left, right):
     loss_i = tf.keras.losses.SparseCategoricalCrossentropy(logits, labels)#, from_logits=True, reduction='none')
     loss_t = tf.keras.losses.SparseCategoricalCrossentropy(logits, labels)#, from_logits=True, reduction='none')
     loss = (loss_i + loss_t)/2
-    return K.mean(loss)
+    return K.reduce_mean(loss)
 
 
 def l2_norm(x, axis=None):
