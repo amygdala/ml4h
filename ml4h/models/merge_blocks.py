@@ -162,7 +162,7 @@ def contrastive_difference(left, right, batch_size=4):
     # symmetric loss function
     logging.info(f'tf.shape(logits): {logits.shape[-1]} ')
     labels = tf.convert_to_tensor(np.arange(batch_size), dtype=tf.float32)
-    loss_i = tf.keras.losses.CategoricalCrossentropy(from_logits=True, reduction=tf.keras.losses.Reduction.NONE)(logits, labels)
+    loss_i = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)(logits, labels)
     #loss_t = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction=tf.keras.losses.Reduction.SUM)(tf.transpose(logits), labels)
     #loss = (loss_i + loss_t)/2
     logging.info(f'tf.shape(loss_i): {loss_i} ')
