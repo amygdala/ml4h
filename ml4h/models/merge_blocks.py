@@ -154,7 +154,7 @@ def contrastive_difference(left, right):
     T_e = l2_norm(right, axis=1)
 
     # scaled pairwise cosine similarities [n, n]
-    logits = np.dot(I_e, T_e.T) # * np.exp(t)
+    logits = np.dot(I_e, tf.transpose(T_e)) # * np.exp(t)
 
     # symmetric loss function
     labels = np.arange(4)
