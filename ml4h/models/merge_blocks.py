@@ -1,3 +1,4 @@
+import logging
 from typing import Dict, List, Tuple
 
 import numpy as np
@@ -157,6 +158,7 @@ def contrastive_difference(left, right):
     logits = np.dot(I_e, tf.transpose(T_e)) # * np.exp(t)
 
     # symmetric loss function
+    logging.info(f'tf.shape(I_e): {tf.shape(I_e)}')
     labels = np.arange(4)
     loss_i = categorical_crossentropy(logits, labels, axis=0)
     loss_t = categorical_crossentropy(logits, labels, axis=1)
