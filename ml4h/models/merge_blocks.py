@@ -158,11 +158,11 @@ def contrastive_difference(left, right):
     # scaled pairwise cosine similarities [n, n]
    # logits = np.dot(I_e, np.transpose(T_e)) # * np.exp(t)
     logits = K.batch_dot(I_e, tf.transpose(T_e))
-    logging.info(f'tf.shape(logits): {tf.shape(logits)} ')
+    logging.info(f'tf.shape(logits): {logits} ')
     # symmetric loss function
     labels = np.arange(4)
-    loss_i = tf.keras.losses.SparseCategoricalCrossentropy(logits, labels, from_logits=True, reduction='none')
-    loss_t = tf.keras.losses.SparseCategoricalCrossentropy(logits, labels, from_logits=True, reduction='none')
+    loss_i = tf.keras.losses.SparseCategoricalCrossentropy(logits, labels)#, from_logits=True, reduction='none')
+    loss_t = tf.keras.losses.SparseCategoricalCrossentropy(logits, labels)#, from_logits=True, reduction='none')
     loss = (loss_i + loss_t)/2
     return K.mean(loss)
 
