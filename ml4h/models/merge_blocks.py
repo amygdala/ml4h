@@ -1,8 +1,10 @@
 from typing import Dict, List, Tuple
 
+import numpy as np
 import tensorflow as tf
 import tensorflow.keras.backend as K
 import tensorflow_probability as tfp
+from tensorflow.keras.losses import categorical_crossentropy
 from tensorflow.keras.layers import concatenate, Flatten, Average, Layer
 
 from ml4h.models.Block import Block
@@ -21,7 +23,7 @@ class FlatConcatBlock(Block):
     def __init__(self,  **kwargs):
         pass
 
-    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
+    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]] = None) -> Tensor:
         y = [Flatten()(x[-1]) for tm, x in intermediates.items() if not tm.is_embedding()]
         y = concatenate(y) if len(y) > 1 else y[0]
         return y
@@ -49,7 +51,7 @@ class FlatConcatDenseBlock(Block):
             name='embed',
         ) if dense_layers else None
 
-    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
+    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]] = None) -> Tensor:
         y = [Flatten()(x[-1]) for tm, x in intermediates.items()]
         y = concatenate(y) if len(y) > 1 else y[0]
         y = self.fully_connected(y, intermediates) if self.fully_connected else y
@@ -78,7 +80,7 @@ class GlobalAveragePoolBlock(Block):
             name='embed',
         ) if dense_layers else None
 
-    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
+    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]] = None) -> Tensor:
         y = [Flatten()(x[-1]) for tm, x in intermediates.items() if tm.axes() == 1]  # Flat tensors
         y += [global_average_pool(x[-2 if self.fully_connected else -1]) for tm, x in intermediates.items() if tm.axes() > 1]  # Structured tensors
         y = concatenate(y) if len(y) > 1 else y[0]
@@ -93,7 +95,7 @@ class AverageBlock(Block):
     def __init__(self, **kwargs):
         pass
 
-    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
+    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]] = None) -> Tensor:
         return Average()([t[-1] for tm, t in intermediates.items()])
 
 
@@ -104,7 +106,7 @@ class ReduceMean(Block):
     def __init__(self, **kwargs):
         pass
 
-    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
+    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]] = None) -> Tensor:
         y = [x[-1] for tm, x in intermediates.items()]
         y = tf.math.reduce_mean(y, axis=0)
         return y
@@ -117,7 +119,7 @@ class EncodeIdentityBlock(Block):
     def __init__(self, tensor_map, **kwargs):
         self.tensor_map = tensor_map
 
-    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
+    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]] = None) -> Tensor:
         intermediates[self.tensor_map].append(x)
         return x
 
@@ -138,11 +140,28 @@ class PairLossBlock(Block):
             self.loss_layer = CosineLossLayer(pair_loss_weight)
         elif pair_loss == 'euclid':
             self.loss_layer = L2LossLayer(pair_loss_weight)
+        elif pair_loss == 'contrastive':
+            self.loss_layer = ContrastiveLossLayer(pair_loss_weight)
 
-    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]]) -> Tensor:
+    def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]] = None) -> Tensor:
         for left, right in self.pairs:
             y = self.loss_layer([intermediates[left][-1], intermediates[right][-1]])
         return Average()(y)
+
+
+def contrastive_difference(left, right):
+    I_e = l2_norm(left, axis=1)
+    T_e = l2_norm(right, axis=1)
+
+    # scaled pairwise cosine similarities [n, n]
+    logits = np.dot(I_e, T_e.T) # * np.exp(t)
+
+    # symmetric loss function
+    labels = np.arange(4)
+    loss_i = categorical_crossentropy(logits, labels, axis=0)
+    loss_t = categorical_crossentropy(logits, labels, axis=1)
+    loss = (loss_i + loss_t)/2
+    return loss
 
 
 def l2_norm(x, axis=None):
@@ -196,6 +215,25 @@ class L2LossLayer(Layer):
 
     def call(self, inputs):
         self.add_loss(self.weight * tf.reduce_sum(tf.square(inputs[0] - inputs[1])))
+        return inputs
+
+
+class ContrastiveLossLayer(Layer):
+    """Layer that creates an Cosine loss."""
+
+    def __init__(self, weight, **kwargs):
+        super(ContrastiveLossLayer, self).__init__(**kwargs)
+        self.weight = weight
+
+    def get_config(self):
+        config = super().get_config().copy()
+        config.update({'weight': self.weight})
+        return config
+
+    def call(self, inputs):
+        # We use `add_loss` to create a regularization loss
+        # that depends on the inputs.
+        self.add_loss(self.weight * contrastive_difference(inputs[0], inputs[1]))
         return inputs
 
 
