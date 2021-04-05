@@ -151,9 +151,8 @@ class PairLossBlock(Block):
 
 
 def contrastive_difference(left, right):
-    I_e = l2_norm(left, axis=0)
-    T_e = l2_norm(right, axis=0)
-
+    I_e = left / l2_norm(left, axis=-1)
+    T_e = right / l2_norm(right, axis=-1)
     logging.info(f'tf.shape(lllllll): {left}  tf.shape(T_e): {right}')
     logging.info(f'tf.shape(I_e): {tf.shape(I_e)}  tf.shape(T_e): {tf.shape(T_e)}')
     # scaled pairwise cosine similarities [n, n]
