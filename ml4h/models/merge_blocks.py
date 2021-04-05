@@ -150,7 +150,7 @@ class PairLossBlock(Block):
         return Average()(y)
 
 
-def contrastive_difference(left, right):
+def contrastive_difference(left, right, batch_size=4):
     I_e = left / l2_norm(left, axis=-1)
     T_e = right / l2_norm(right, axis=-1)
     logging.info(f'tf.shape(lllllll): {left}  tf.shape(T_e): {right}')
@@ -161,7 +161,7 @@ def contrastive_difference(left, right):
     logging.info(f'tf.shape(logits): {logits} ')
     # symmetric loss function
     logging.info(f'tf.shape(logits): {logits.shape[-1]} ')
-    labels = np.arange(4)
+    labels = tf.convert_to_tensor(np.arange(batch_size), dtype=tf.float32)
     loss_i = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction=tf.keras.losses.Reduction.NONE)(logits, labels)
     #loss_t = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction=tf.keras.losses.Reduction.NONE)(tf.transpose(logits), labels)
     #loss = (loss_i + loss_t)/2
