@@ -156,7 +156,7 @@ def contrastive_difference(left, right):
 
     logging.info(f'tf.shape(I_e): {tf.shape(I_e)}')
     # scaled pairwise cosine similarities [n, n]
-    logits = np.dot(I_e, K.transpose(T_e)) # * np.exp(t)
+    logits = np.dot(I_e, np.transpose(T_e)) # * np.exp(t)
 
     # symmetric loss function
     labels = np.arange(4)
