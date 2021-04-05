@@ -154,10 +154,10 @@ def contrastive_difference(left, right):
     I_e = l2_norm(left, axis=1)
     T_e = l2_norm(right, axis=1)
 
-    logging.info(f'tf.shape(I_e): {tf.shape(I_e)}')
+    logging.info(f'tf.shape(I_e): {tf.shape(I_e)}  tf.shape(T_e): {tf.shape(T_e)}')
     # scaled pairwise cosine similarities [n, n]
-    logits = np.dot(I_e, np.transpose(T_e)) # * np.exp(t)
-
+   # logits = np.dot(I_e, np.transpose(T_e)) # * np.exp(t)
+    logits = np.dot(I_e, T_e)
     # symmetric loss function
     labels = np.arange(4)
     loss_i = categorical_crossentropy(logits, labels, axis=0)
