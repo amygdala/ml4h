@@ -231,7 +231,7 @@ class ContrastiveLossLayer(Layer):
 
     def get_config(self):
         config = super().get_config().copy()
-        config.update({'weight': self.weight, 'batch_size': self.batch_size})
+        config.update({'weight': self.weight})
         return config
 
     def call(self, inputs):
