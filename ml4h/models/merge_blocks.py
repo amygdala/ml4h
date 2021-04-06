@@ -134,6 +134,7 @@ class PairLossBlock(Block):
             pairs: List[Tuple[TensorMap, TensorMap]],
             pair_loss: str = 'cosine',
             pair_loss_weight: float = 1.0,
+            batch_size: int = 4,
             **kwargs,
     ):
         self.pairs = pairs
@@ -142,7 +143,7 @@ class PairLossBlock(Block):
         elif pair_loss == 'euclid':
             self.loss_layer = L2LossLayer(pair_loss_weight)
         elif pair_loss == 'contrastive':
-            self.loss_layer = ContrastiveLossLayer(pair_loss_weight)
+            self.loss_layer = ContrastiveLossLayer(pair_loss_weight, batch_size)
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]] = None) -> Tensor:
         for left, right in self.pairs:
@@ -151,30 +152,18 @@ class PairLossBlock(Block):
 
 
 def contrastive_difference(left, right, batch_size=4):
-    I_e = left / l2_norm(left, axis=-1)
-    T_e = right / l2_norm(right, axis=-1)
-    logging.info(f'left {left}  tf.shape(T_e): {right}')
-
-    # scaled pairwise cosine similarities [n, n]
-    logits_left = tf.linalg.matmul(I_e, T_e, transpose_b=True)
+    left_normed = left / l2_norm(left, axis=-1)
+    right_normed = right / l2_norm(right, axis=-1)
+    logits_left = tf.linalg.matmul(left_normed, right_normed, transpose_b=True)
+    logits_right = tf.linalg.matmul(right_normed, left_normed, transpose_b=True)
     prob_left = tf.keras.activations.softmax(logits_left, axis=-1)
-    logits_right = tf.linalg.matmul(T_e, I_e, transpose_b=True)
     prob_right = tf.keras.activations.softmax(logits_right, axis=-1)
-    #logits = K.clip(tf.keras.layers.dot(left, K.transpose(right), axis=-1, normalize=True), -1, 1)
-    #logits = K.clip(K.batch_dot(I_e, T_e), -1, 1)
 
-    #tf.print(prob_left)
-    #tf.print(prob_right)
-    # symmetric loss function
-
+    # identity function matches left row modality with right column modality
     labels = tf.convert_to_tensor(np.eye(batch_size), dtype=tf.float32)
-    loss_i = tf.keras.losses.CategoricalCrossentropy(from_logits=False, reduction=tf.keras.losses.Reduction.SUM)(prob_left, labels)
-    loss_t = tf.keras.losses.CategoricalCrossentropy(from_logits=False, reduction=tf.keras.losses.Reduction.SUM)(prob_right, labels)
-    loss = (loss_i + loss_t)/2
-    logging.info(f'tf.shape(loss): {loss} ')
-    #tf.print(loss_i)
-    #tf.print(loss_t)
-    #tf.print(loss)
+    loss_left = tf.keras.losses.CategoricalCrossentropy(from_logits=False, reduction=tf.keras.losses.Reduction.SUM)(prob_left, labels)
+    loss_right = tf.keras.losses.CategoricalCrossentropy(from_logits=False, reduction=tf.keras.losses.Reduction.SUM)(prob_right, labels)
+    loss = (loss_left + loss_right)/2
     return loss
 
 
@@ -235,19 +224,20 @@ class L2LossLayer(Layer):
 class ContrastiveLossLayer(Layer):
     """Layer that creates an Cosine loss."""
 
-    def __init__(self, weight, **kwargs):
+    def __init__(self, weight, batch_size, **kwargs):
         super(ContrastiveLossLayer, self).__init__(**kwargs)
         self.weight = weight
+        self.batch_size = batch_size
 
     def get_config(self):
         config = super().get_config().copy()
-        config.update({'weight': self.weight})
+        config.update({'weight': self.weight, 'batch_size': self.batch_size})
         return config
 
     def call(self, inputs):
         # We use `add_loss` to create a regularization loss
         # that depends on the inputs.
-        self.add_loss(self.weight * contrastive_difference(inputs[0], inputs[1]))
+        self.add_loss(self.weight * contrastive_difference(inputs[0], inputs[1], self.batch_size))
         return inputs
 
 
