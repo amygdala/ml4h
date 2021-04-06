@@ -160,15 +160,18 @@ def contrastive_difference(left, right, batch_size=4):
     # scaled pairwise cosine similarities [n, n]
    # logits = np.dot(I_e, np.transpose(T_e)) # * np.exp(t)
     logits = tf.linalg.matmul(I_e, T_e, transpose_b=True)
-    logits = tf.keras.activations.softmax(logits)
+    logits_left = tf.keras.activations.softmax(logits, axis=0)
+    logits_right = tf.keras.activations.softmax(logits, axis=1)
     #logits = K.clip(tf.keras.layers.dot(left, K.transpose(right), axis=-1, normalize=True), -1, 1)
     #logits = K.clip(K.batch_dot(I_e, T_e), -1, 1)
     tf.print(logits)
+    tf.print(logits_left)
+    tf.print(logits_right)
     # symmetric loss function
     logging.info(f'tf.shape(logits): {logits.shape} ')
     labels = tf.convert_to_tensor(np.eye(batch_size), dtype=tf.float32)
-    loss_i = tf.keras.losses.CategoricalCrossentropy(from_logits=False, reduction=tf.keras.losses.Reduction.SUM)(logits, labels)
-    loss_t = tf.keras.losses.CategoricalCrossentropy(from_logits=False, reduction=tf.keras.losses.Reduction.SUM)(tf.transpose(logits), labels)
+    loss_i = tf.keras.losses.CategoricalCrossentropy(from_logits=False, reduction=tf.keras.losses.Reduction.SUM)(logits_left, labels)
+    loss_t = tf.keras.losses.CategoricalCrossentropy(from_logits=False, reduction=tf.keras.losses.Reduction.SUM)(logits_right, labels)
     loss = (loss_i + loss_t)/2
     logging.info(f'tf.shape(loss): {loss} ')
     tf.print(loss_i)
