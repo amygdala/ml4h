@@ -151,13 +151,11 @@ class PairLossBlock(Block):
 
 
 def contrastive_difference(left, right, batch_size=4):
-    I_e = left / l2_norm(left, axis=-1)
-    T_e = right / l2_norm(right, axis=-1)
-    logging.info(f'tf.shape(lllllll): {left}  tf.shape(T_e): {right}')
-    logging.info(f'tf.shape(I_e): {I_e}  tf.shape(T_e): {T_e}')
+    logging.info(f'left {left}  right: {right}')
     # scaled pairwise cosine similarities [n, n]
-   # logits = np.dot(I_e, np.transpose(T_e)) # * np.exp(t)
-    logits = K.clip(K.dot(I_e, K.transpose(T_e)), -1, 1)
+    # logits = np.dot(I_e, np.transpose(T_e)) # * np.exp(t)
+
+    logits = K.clip(tf.keras.layers.dot(left, K.transpose(right), axis=-1, normalize=True), -1, 1)
     #logits = K.clip(K.batch_dot(I_e, T_e), -1, 1)
     logging.info(f'tf.shape(logits): {logits} ')
     # symmetric loss function
