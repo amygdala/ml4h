@@ -155,7 +155,7 @@ def contrastive_difference(left, right, batch_size=4):
     # scaled pairwise cosine similarities [n, n]
     # logits = np.dot(I_e, np.transpose(T_e)) # * np.exp(t)
 
-    logits = K.clip(tf.keras.layers.dot([left, right], -1, normalize=True), -1, 1)
+    logits = K.clip(tf.keras.layers.dot([left, right], -2, normalize=True), -1, 1)
     #logits = K.clip(K.batch_dot(I_e, T_e), -1, 1)
     logging.info(f'tf.shape(logits): {logits} ')
     # symmetric loss function
