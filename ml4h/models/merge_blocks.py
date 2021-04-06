@@ -175,7 +175,7 @@ def contrastive_difference(left, right, batch_size=4):
     #tf.print(loss_i)
     #tf.print(loss_t)
     #tf.print(loss)
-    return loss_t
+    return loss
 
 
 def l2_norm(x, axis=None):
