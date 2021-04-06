@@ -157,8 +157,8 @@ def contrastive_difference(left, right, batch_size=4):
     logging.info(f'tf.shape(I_e): {I_e}  tf.shape(T_e): {T_e}')
     # scaled pairwise cosine similarities [n, n]
    # logits = np.dot(I_e, np.transpose(T_e)) # * np.exp(t)
-    #logits = K.clip(K.batch_dot(I_e, K.transpose(T_e)), -1, 1)
-    logits = K.clip(K.batch_dot(I_e, T_e), -1, 1)
+    logits = K.clip(K.dot(I_e, K.transpose(T_e)), -1, 1)
+    #logits = K.clip(K.batch_dot(I_e, T_e), -1, 1)
     logging.info(f'tf.shape(logits): {logits} ')
     # symmetric loss function
     logging.info(f'tf.shape(logits): {logits.shape[-1]} ')
@@ -167,7 +167,7 @@ def contrastive_difference(left, right, batch_size=4):
     loss_t = tf.keras.losses.CategoricalCrossentropy(from_logits=True, reduction=tf.keras.losses.Reduction.SUM)(tf.transpose(logits), labels)
     loss = (loss_i + loss_t)/2
     logging.info(f'tf.shape(loss): {loss} ')
-    return loss_i
+    return loss_t
 
 
 def l2_norm(x, axis=None):
