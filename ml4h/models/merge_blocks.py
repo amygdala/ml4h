@@ -160,9 +160,9 @@ def contrastive_difference(left, right, batch_size=4):
     logits = tf.linalg.matmul(I_e, T_e, transpose_b=True)
     #logits = K.clip(tf.keras.layers.dot(left, K.transpose(right), axis=-1, normalize=True), -1, 1)
     #logits = K.clip(K.batch_dot(I_e, T_e), -1, 1)
-    logging.info(f'tf.shape(logits): {logits} ')
+    tf.print(logits)
     # symmetric loss function
-    logging.info(f'tf.shape(logits): {logits.shape[-1]} ')
+    logging.info(f'tf.shape(logits): {logits.shape} ')
     labels = tf.convert_to_tensor(np.eye(batch_size), dtype=tf.float32)
     loss_i = tf.keras.losses.CategoricalCrossentropy(from_logits=True, reduction=tf.keras.losses.Reduction.SUM)(logits, labels)
     loss_t = tf.keras.losses.CategoricalCrossentropy(from_logits=True, reduction=tf.keras.losses.Reduction.SUM)(tf.transpose(logits), labels)
