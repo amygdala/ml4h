@@ -228,7 +228,7 @@ class ContrastiveLossLayer(Layer):
         super(ContrastiveLossLayer, self).__init__(**kwargs)
         self.weight = weight
         self.batch_size = batch_size
-        self.temperature = self.add_weight(shape=(1,), initializer="ones", trainable=True)
+        self.temperature = self.add_weight(shape=(1,), initializer="zeros", trainable=True)
 
     def get_config(self):
         config = super().get_config().copy()
