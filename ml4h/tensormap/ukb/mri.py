@@ -13,7 +13,7 @@ from ml4h.normalizer import ZeroMeanStd1, Standardize
 from ml4h.TensorMap import TensorMap, Interpretation, make_range_validator
 from ml4h.tensormap.ukb.demographics import is_genetic_man, is_genetic_woman
 from ml4h.defines import MRI_TO_SEGMENT, MRI_SEGMENTED, MRI_SEGMENTED_CHANNEL_MAP, MRI_FRAMES, MRI_LVOT_SEGMENTED_CHANNEL_MAP, \
-    MRI_LAX_2CH_SEGMENTED_CHANNEL_MAP, MRI_SAX_SEGMENTED_CHANNEL_MAP, LAX_4CH_HEART_LABELS, LAX_4CH_MYOCARDIUM_LABELS
+    MRI_LAX_2CH_SEGMENTED_CHANNEL_MAP, MRI_SAX_SEGMENTED_CHANNEL_MAP, LAX_4CH_HEART_LABELS, LAX_4CH_MYOCARDIUM_LABELS, StorageType
 from ml4h.tensormap.general import get_tensor_at_first_date, normalized_first_date, pad_or_crop_array_to_shape
 from ml4h.defines import MRI_LAX_3CH_SEGMENTED_CHANNEL_MAP, MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP, MRI_SAX_PAP_SEGMENTED_CHANNEL_MAP, MRI_AO_SEGMENTED_CHANNEL_MAP, MRI_LIVER_SEGMENTED_CHANNEL_MAP
 
@@ -1973,9 +1973,8 @@ lvh_from_indexed_lvm_parented = TensorMap(
     ],
 )
 
-mri_not_in_sinus = TensorMap('mri_not_in_sinus', Interpretation.CATEGORICAL, path_prefix='categorical',
-                             channel_map={'no_mri_not_in_sinus': 0, 'mri_not_in_sinus': 1},
-                             loss=weighted_crossentropy([0.1, 10.0], 'mri_not_in_sinus'))
+mri_not_in_sinus = TensorMap('mri_not_in_sinus', Interpretation.CATEGORICAL, path_prefix='categorical', storage_type=StorageType.CATEGORICAL_INDEX,
+                             channel_map={'no_mri_not_in_sinus': 0, 'mri_not_in_sinus': 1}, loss=weighted_crossentropy([0.1, 10.0], 'mri_not_in_sinus'))
 
 shmolli_192i_both = TensorMap(
     'shmolli_192i', Interpretation.CONTINUOUS, shape=(288, 384, 7),
