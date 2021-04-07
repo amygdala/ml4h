@@ -1973,6 +1973,8 @@ lvh_from_indexed_lvm_parented = TensorMap(
     ],
 )
 
+mri_not_in_sinus = TensorMap('mri_not_in_sinus', Interpretation.CATEGORICAL, channel_map={'no_mri_not_in_sinus': 0, 'mri_not_in_sinus': 1},)
+
 shmolli_192i_both = TensorMap(
     'shmolli_192i', Interpretation.CONTINUOUS, shape=(288, 384, 7),
     tensor_from_file=_make_fallback_tensor_from_file(
