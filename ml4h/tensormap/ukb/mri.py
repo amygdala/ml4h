@@ -1974,7 +1974,8 @@ lvh_from_indexed_lvm_parented = TensorMap(
 )
 
 mri_not_in_sinus = TensorMap('mri_not_in_sinus', Interpretation.CATEGORICAL, path_prefix='categorical',
-                             channel_map={'no_mri_not_in_sinus': 0, 'mri_not_in_sinus': 1}, loss='categorical_crossentropy')
+                             channel_map={'no_mri_not_in_sinus': 0, 'mri_not_in_sinus': 1},
+                             loss=weighted_crossentropy([0.1, 10.0], 'mri_not_in_sinus'))
 
 shmolli_192i_both = TensorMap(
     'shmolli_192i', Interpretation.CONTINUOUS, shape=(288, 384, 7),
