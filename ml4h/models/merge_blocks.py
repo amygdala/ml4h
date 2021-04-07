@@ -151,15 +151,15 @@ class PairLossBlock(Block):
         return Average()(y)
 
 
-def contrastive_difference(left, right, batch_size=4):
+def contrastive_difference(left: tf.Tensor, right: tf.Tensor, batch_size: int, temperature: tf.Tensor):
     left_normed = left / l2_norm(left, axis=-1)
     right_normed = right / l2_norm(right, axis=-1)
-    logits_left = tf.linalg.matmul(left_normed, right_normed, transpose_b=True)
-    logits_right = tf.linalg.matmul(right_normed, left_normed, transpose_b=True)
+    logits_left = tf.linalg.matmul(left_normed, right_normed, transpose_b=True) * tf.math.exp(temperature)
+    logits_right = tf.linalg.matmul(right_normed, left_normed, transpose_b=True) * tf.math.exp(temperature)
     prob_left = tf.keras.activations.softmax(logits_left, axis=-1)
     prob_right = tf.keras.activations.softmax(logits_right, axis=-1)
 
-    # identity function matches left row modality with right column modality
+    # identity matrix (np.eye) matches left row modality with right column modality
     labels = tf.convert_to_tensor(np.eye(batch_size), dtype=tf.float32)
     loss_left = tf.keras.losses.CategoricalCrossentropy(from_logits=False, reduction=tf.keras.losses.Reduction.SUM)(prob_left, labels)
     loss_right = tf.keras.losses.CategoricalCrossentropy(from_logits=False, reduction=tf.keras.losses.Reduction.SUM)(prob_right, labels)
@@ -228,16 +228,17 @@ class ContrastiveLossLayer(Layer):
         super(ContrastiveLossLayer, self).__init__(**kwargs)
         self.weight = weight
         self.batch_size = batch_size
+        self.temperature = self.add_weight(shape=(1,), initializer="ones", trainable=True)
 
     def get_config(self):
         config = super().get_config().copy()
-        config.update({'weight': self.weight, 'batch_size': self.batch_size})
+        config.update({'weight': self.weight, 'batch_size': self.batch_size, 'temperature': self.temperature})
         return config
 
     def call(self, inputs):
         # We use `add_loss` to create a regularization loss
         # that depends on the inputs.
-        self.add_loss(self.weight * contrastive_difference(inputs[0], inputs[1], self.batch_size))
+        self.add_loss(self.weight * contrastive_difference(inputs[0], inputs[1], self.batch_size, self.temperature))
         return inputs
 
 
