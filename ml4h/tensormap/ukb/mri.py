@@ -1679,7 +1679,7 @@ def _heart_mask_instances(mri_key, segmentation_key, labels, mask=False):
                 frame_categorical = get_tensor_at_first_date(hd5, tm.path_prefix, f'{segmentation_key}{frame}')
                 heart_mask = np.isin(frame_categorical, list(labels.values()))
                 mri[..., frame-1] = heart_mask[:mri.shape[0], :mri.shape[1]] * mri[..., frame-1]
-        tensor = pad_or_crop_array_to_shape(tm.shape, mri[indices])
+        tensor = pad_or_crop_array_to_shape(tm.shape, mri[tuple(indices)])
         return tensor
     return _heart_mask_tensor_from_file
 
