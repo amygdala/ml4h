@@ -33,6 +33,7 @@ from tensorflow.keras.layers import GlobalAveragePooling1D, GlobalAveragePooling
 import tensorflow_probability as tfp
 
 from ml4h.metrics import get_metric_dict
+from ml4h.models.model_factory import _get_custom_objects
 from ml4h.plots import plot_metric_history
 from ml4h.TensorMap import TensorMap, Interpretation
 from ml4h.optimizers import get_optimizer, NON_KERAS_OPTIMIZERS
@@ -895,17 +896,6 @@ def parent_sort(tms: List[TensorMap]) -> List[TensorMap]:
         else:
             to_process.insert(0, tm)
     return final
-
-
-def _get_custom_objects(tensor_maps_out: List[TensorMap]) -> Dict[str, Any]:
-    custom_objects = {
-        obj.__name__: obj
-        for obj in chain(
-            NON_KERAS_OPTIMIZERS.values(), ACTIVATION_FUNCTIONS.values(), NORMALIZATION_CLASSES.values(),
-            [VariationalDiagNormal, L2LossLayer, CosineLossLayer],
-        )
-    }
-    return {**custom_objects, **get_metric_dict(tensor_maps_out)}
 
 
 def _repeat_dimension(filters: List[int], num_filters_needed: int) -> List[int]:
