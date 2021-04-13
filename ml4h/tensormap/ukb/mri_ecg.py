@@ -34,6 +34,7 @@ def _heart_mask_and_ecg_instances(mri_path_prefix, mri_shape, mri_key, mri_segme
         mri -= mri.mean()
         mri /= mri.std()
         ecg = _make_ecg_rest(hd5, ecg_prefix, ecg_shape, ecg_leads)
+        ecg /= 10.0
         tensor = np.zeros(tm.shape, dtype=np.float32)
         for frame in range(1, total_instances+1):
             if mask:
