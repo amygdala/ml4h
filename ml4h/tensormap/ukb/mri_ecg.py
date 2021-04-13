@@ -77,5 +77,5 @@ tff = _heart_mask_and_ecg_instances('ukb_cardiac_mri', (96, 96, 50, len(MRI_LAX_
                                     'ukb_ecg_rest', (600, 12), ECG_REST_MEDIAN_LEADS)
 ecg_and_seg_lax_4ch = TensorMap(
     'ecg_and_seg_lax_4ch', Interpretation.CATEGORICAL, shape=(108, 96, 50, len(MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP)+1),
-    tensor_from_file=tff,
+    tensor_from_file=tff, channel_map=MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP,
 )
