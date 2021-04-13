@@ -45,7 +45,7 @@ def _heart_mask_and_ecg_instances(mri_path_prefix, mri_shape, mri_key, mri_segme
             for lead in ecg_leads:
                 lead_index = ecg_leads[lead] + mri_shape[1]
                 logging.debug(f'frame {frame} lead_index {lead_index} for lead {lead}, ecg start {ecg_start}, ecg stop: {ecg_stop}, ecg.shape {ecg.shape}, mri.shape {mri.shape}, mri_shape {mri_shape}')
-                tensor[mri_shape[0]:, lead_index, frame-1] = ecg[ecg_start:ecg_stop, ecg_leads[lead]]
+                tensor[lead_index, :, frame-1] = np.repeat(ecg[ecg_start:ecg_stop, ecg_leads[lead]], tm.shape[1]//(ecg_stop-ecg_start))
 
         tensor[:mri_shape[0], :mri_shape[1], :mri_shape[2]] = pad_or_crop_array_to_shape(mri_shape, mri[tuple(indices)])
         return tensor
@@ -55,6 +55,6 @@ def _heart_mask_and_ecg_instances(mri_path_prefix, mri_shape, mri_key, mri_segme
 tff = _heart_mask_and_ecg_instances('ukb_cardiac_mri', (96, 96, 50), 'cine_segmented_lax_4ch/2/', 'cine_segmented_lax_4ch_annotated_', LAX_4CH_HEART_LABELS,
                                     'ukb_ecg_rest', (600, 12), ECG_REST_MEDIAN_LEADS)
 ecg_and_lax_4ch = TensorMap(
-    'ecg_and_lax_4ch', Interpretation.CONTINUOUS, shape=(108, 108, 50),
+    'ecg_and_lax_4ch', Interpretation.CONTINUOUS, shape=(108, 96, 50),
     tensor_from_file=tff,
 )
