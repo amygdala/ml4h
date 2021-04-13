@@ -24,7 +24,7 @@ def _make_ecg_rest(
 
 
 def _heart_mask_and_ecg_instances(mri_path_prefix, mri_shape, mri_key, mri_segmentation_key, mri_labels,
-                                  ecg_prefix, ecg_shape, ecg_leads, mask=False, total_instances=50):
+                                  ecg_prefix, ecg_shape, ecg_leads, include_mri_segmentation=False, total_instances=50):
     def _heart_mask_tensor_from_file(tm, hd5, dependents={}):
         diastole_categorical = get_tensor_at_first_date(hd5, mri_path_prefix, f'{mri_segmentation_key}{1}')
         heart_mask = np.isin(diastole_categorical, list(mri_labels.values()))
@@ -37,18 +37,28 @@ def _heart_mask_and_ecg_instances(mri_path_prefix, mri_shape, mri_key, mri_segme
         ecg /= 10.0
         tensor = np.zeros(tm.shape, dtype=np.float32)
         for frame in range(1, total_instances+1):
-            if mask:
+            if include_mri_segmentation:
                 frame_categorical = get_tensor_at_first_date(hd5, mri_path_prefix, f'{mri_segmentation_key}{frame}')
                 heart_mask = np.isin(frame_categorical, list(mri_labels.values()))
                 mri[..., frame-1] = heart_mask[:mri.shape[0], :mri.shape[1]] * mri[..., frame-1]
+
+                frame_categorical = get_tensor_at_first_date(hd5, mri_path_prefix, f'{mri_segmentation_key}{frame}')
+                reshape_categorical = pad_or_crop_array_to_shape(mri_shape[:2], frame_categorical[indices])
+                if len(mri_shape) == 4:
+                    slice_one_hot = to_categorical(reshape_categorical, len(mri_labels)+1)
+                    tensor[..., frame - 1, 1:] = slice_one_hot
+                else:
+                    tensor[..., frame - 1] = reshape_categorical
             ecg_start = (frame-1) * (ecg_shape[0] // total_instances)
             ecg_stop = frame * (ecg_shape[0] // total_instances)
             for lead in ecg_leads:
                 lead_index = ecg_leads[lead] + mri_shape[1]
-                logging.debug(f'frame {frame} lead_index {lead_index} for lead {lead}, ecg start {ecg_start}, ecg stop: {ecg_stop}, ecg.shape {ecg.shape}, mri.shape {mri.shape}, mri_shape {mri_shape}')
+                #logging.debug(f'frame {frame} lead_index {lead_index} for lead {lead}, ecg start {ecg_start}, ecg stop: {ecg_stop}, ecg.shape {ecg.shape}, mri.shape {mri.shape}, mri_shape {mri_shape}')
                 tensor[lead_index, :, frame-1] = np.repeat(ecg[ecg_start:ecg_stop, ecg_leads[lead]], tm.shape[1]//(ecg_stop-ecg_start))
-
-        tensor[:mri_shape[0], :mri_shape[1], :mri_shape[2]] = pad_or_crop_array_to_shape(mri_shape, mri[tuple(indices)])
+        if len(mri_shape) == 3:
+            tensor[:mri_shape[0], :mri_shape[1], :mri_shape[2]] = pad_or_crop_array_to_shape(mri_shape, mri[tuple(indices)])
+        elif len(mri_shape) == 4:
+            tensor[:mri_shape[0], :mri_shape[1], :mri_shape[2], 0] = pad_or_crop_array_to_shape(mri_shape, mri[tuple(indices)])
         return tensor
     return _heart_mask_tensor_from_file
 
@@ -57,5 +67,13 @@ tff = _heart_mask_and_ecg_instances('ukb_cardiac_mri', (96, 96, 50), 'cine_segme
                                     'ukb_ecg_rest', (600, 12), ECG_REST_MEDIAN_LEADS)
 ecg_and_lax_4ch = TensorMap(
     'ecg_and_lax_4ch', Interpretation.CONTINUOUS, shape=(108, 96, 50),
+    tensor_from_file=tff,
+)
+
+tff = _heart_mask_and_ecg_instances('ukb_cardiac_mri', (96, 96, 50, len(MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP)+1),
+                                    'cine_segmented_lax_4ch/2/', 'cine_segmented_lax_4ch_annotated_', LAX_4CH_HEART_LABELS,
+                                    'ukb_ecg_rest', (600, 12), ECG_REST_MEDIAN_LEADS)
+ecg_and_seg_lax_4ch = TensorMap(
+    'ecg_and_seg_lax_4ch', Interpretation.CONTINUOUS, shape=(108, 96, 50, len(MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP)+1),
     tensor_from_file=tff,
 )
