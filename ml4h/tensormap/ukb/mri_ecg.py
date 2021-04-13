@@ -15,9 +15,7 @@ def _make_ecg_rest(
     tensor = np.zeros(ecg_shape, dtype=np.float32)
     for k in hd5[path_prefix]:
         if k in ecg_leads:
-            data = get_tensor_at_first_date(
-                hd5, path_prefix, f'{k}/instance_{instance}',
-            )
+            data = hd5[f'{path_prefix}/{k}/instance_{instance}']
             if downsample_steps > 1:
                 tensor[:, ecg_leads[k]] = np.array(data, dtype=np.float32)[::downsample_steps]
             tensor[:, ecg_leads[k]] = pad_or_crop_array_to_shape((ecg_shape[0],), data)
