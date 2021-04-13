@@ -31,6 +31,8 @@ def _heart_mask_and_ecg_instances(mri_path_prefix, mri_shape, mri_key, mri_segme
         i, j = np.where(heart_mask)
         indices = np.meshgrid(np.arange(min(i), max(i) + 1), np.arange(min(j), max(j) + 1), np.arange(total_instances), indexing='ij')
         mri = get_tensor_at_first_date(hd5, mri_path_prefix, f'{mri_key}')
+        mri -= mri.mean()
+        mri /= mri.std()
         ecg = _make_ecg_rest(hd5, ecg_prefix, ecg_shape, ecg_leads)
         tensor = np.zeros(tm.shape, dtype=np.float32)
         for frame in range(1, total_instances+1):
