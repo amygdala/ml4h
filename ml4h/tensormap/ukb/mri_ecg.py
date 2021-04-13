@@ -38,8 +38,8 @@ def _heart_mask_and_ecg_instances(mri_path_prefix, mri_shape, mri_key, mri_segme
                 frame_categorical = get_tensor_at_first_date(hd5, mri_path_prefix, f'{mri_segmentation_key}{frame}')
                 heart_mask = np.isin(frame_categorical, list(mri_labels.values()))
                 mri[..., frame-1] = heart_mask[:mri.shape[0], :mri.shape[1]] * mri[..., frame-1]
-            ecg_start = (frame-1) * (ecg_shape[0] / total_instances)
-            ecg_stop = frame * (ecg_shape[0] / total_instances)
+            ecg_start = (frame-1) * (ecg_shape[0] // total_instances)
+            ecg_stop = frame * (ecg_shape[0] // total_instances)
             for lead in ecg_leads:
                 lead_index = ecg_leads[lead] + mri_shape[1]
                 logging.debug(f'frame {frame} lead_index {lead_index} for lead {lead}, ecg start {ecg_start}, ecg stop: {ecg_stop}, ecg.shape {ecg.shape}, mri.shape {mri.shape}, mri_shape {mri_shape}')
