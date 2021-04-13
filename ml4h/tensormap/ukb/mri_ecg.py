@@ -56,7 +56,7 @@ def _heart_mask_and_ecg_instances(mri_path_prefix, mri_shape, mri_key, mri_segme
                 if len(mri_shape) == 3:
                     tensor[lead_index, :, frame-1] = np.repeat(ecg[ecg_start:ecg_stop, ecg_leads[lead]], tm.shape[1]//(ecg_stop-ecg_start))
                 elif len(mri_shape) == 4:
-                    tensor[lead_index, :, frame - 1, :] = np.expand_dims(np.repeat(ecg[ecg_start:ecg_stop, ecg_leads[lead]], tm.shape[1] // (ecg_stop - ecg_start)))
+                    tensor[lead_index, :, frame - 1, :] = np.expand_dims(np.repeat(ecg[ecg_start:ecg_stop, ecg_leads[lead]], tm.shape[1] // (ecg_stop - ecg_start)), axis=-1)
         if len(mri_shape) == 3:
             tensor[:mri_shape[0], :mri_shape[1], :mri_shape[2]] = pad_or_crop_array_to_shape(mri_shape, mri[tuple(indices)])
         elif len(mri_shape) == 4:
