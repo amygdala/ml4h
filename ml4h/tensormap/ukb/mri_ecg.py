@@ -60,7 +60,7 @@ def _heart_mask_and_ecg_instances(mri_path_prefix, mri_shape, mri_key, mri_segme
         if len(mri_shape) == 3:
             tensor[:mri_shape[0], :mri_shape[1], :mri_shape[2]] = pad_or_crop_array_to_shape(mri_shape, mri[tuple(indices)])
         elif len(mri_shape) == 4:
-            tensor[:mri_shape[0], :mri_shape[1], :mri_shape[2], 0] = pad_or_crop_array_to_shape(mri_shape, mri[tuple(indices)])
+            tensor[:mri_shape[0], :mri_shape[1], :mri_shape[2], 0] = pad_or_crop_array_to_shape(mri_shape[:3], mri[tuple(indices)])
         return tensor
     return _heart_mask_tensor_from_file
 
