@@ -1,3 +1,4 @@
+import logging
 from typing import Dict, Tuple
 
 import numpy as np
@@ -41,6 +42,7 @@ def _heart_mask_and_ecg_instances(mri_path_prefix, mri_shape, mri_key, mri_segme
             ecg_stop = frame * (ecg_shape[0] / total_instances)
             for lead in ecg_leads:
                 lead_index = ecg_leads[lead] + mri_shape[1]
+                logging.debug(f'frame {frame} lead_index {lead_index} for lead {lead}, ecg start {ecg_start}, ecg stop: {ecg_stop}, ecg.shape {ecg.shape}, mri.shape {mri.shape}, mri_shape {mri_shape}')
                 tensor[mri_shape[0]:, lead_index, frame-1] = ecg[ecg_start:ecg_stop, ecg_leads[lead]]
 
         tensor[:mri_shape[0], :mri_shape[1], :mri_shape[2]] = pad_or_crop_array_to_shape(mri_shape, mri[tuple(indices)])
