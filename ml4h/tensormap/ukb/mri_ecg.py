@@ -13,6 +13,8 @@ from ml4h.tensormap.general import get_tensor_at_first_date, pad_or_crop_array_t
 def _make_ecg_rest(
         hd5, path_prefix: str, ecg_shape: Tuple[int], ecg_leads: Dict[str, int], instance: int = 2, downsample_steps: int = 0,
 ):
+    if ecg_shape[0] == 0:
+        return
     tensor = np.zeros(ecg_shape, dtype=np.float32)
     for k in hd5[path_prefix]:
         if k in ecg_leads:
