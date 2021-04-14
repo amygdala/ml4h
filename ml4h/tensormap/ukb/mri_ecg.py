@@ -6,7 +6,7 @@ from tensorflow.keras.utils import to_categorical
 
 from ml4h.TensorMap import TensorMap, Interpretation
 from ml4h.defines import LAX_4CH_HEART_LABELS, LAX_4CH_MYOCARDIUM_LABELS, MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP, ECG_REST_MEDIAN_LEADS
-from ml4h.normalizer import ZeroMeanStd1
+from ml4h.normalizer import ZeroMeanStd1, Standardize
 from ml4h.tensormap.general import get_tensor_at_first_date, pad_or_crop_array_to_shape
 
 
@@ -23,18 +23,15 @@ def _make_ecg_rest(
     return tensor
 
 
-def _heart_mask_and_ecg_instances(mri_path_prefix, mri_shape, mri_key, mri_segmentation_key, mri_labels,
-                                  ecg_prefix, ecg_shape, ecg_leads, include_mri_segmentation=False, total_instances=50):
+def _heart_mask_and_ecg_instances(mri_path_prefix, mri_shape, mri_key, mri_segmentation_key, mri_labels, mri_normalizer,
+                                  ecg_prefix, ecg_shape, ecg_leads, ecg_normalizer, include_mri_segmentation=False, total_instances=50):
     def _heart_mask_tensor_from_file(tm, hd5, dependents={}):
         diastole_categorical = get_tensor_at_first_date(hd5, mri_path_prefix, f'{mri_segmentation_key}{1}')
         heart_mask = np.isin(diastole_categorical, list(mri_labels.values()))
         i, j = np.where(heart_mask)
         indices = np.meshgrid(np.arange(min(i), max(i) + 1), np.arange(min(j), max(j) + 1), np.arange(total_instances), indexing='ij')
-        mri = get_tensor_at_first_date(hd5, mri_path_prefix, f'{mri_key}')
-        mri -= mri.mean()
-        mri /= mri.std()
-        ecg = _make_ecg_rest(hd5, ecg_prefix, ecg_shape, ecg_leads)
-        ecg /= 10.0
+        mri = mri_normalizer.normalize(get_tensor_at_first_date(hd5, mri_path_prefix, f'{mri_key}'))
+        ecg = ecg_normalizer(_make_ecg_rest(hd5, ecg_prefix, ecg_shape, ecg_leads))
         tensor = np.zeros(tm.shape, dtype=np.float32)
         for frame in range(1, total_instances+1):
             if include_mri_segmentation:
@@ -65,8 +62,9 @@ def _heart_mask_and_ecg_instances(mri_path_prefix, mri_shape, mri_key, mri_segme
     return _heart_mask_tensor_from_file
 
 
-tff = _heart_mask_and_ecg_instances('ukb_cardiac_mri', (96, 96, 50), 'cine_segmented_lax_4ch/2/', 'cine_segmented_lax_4ch_annotated_', LAX_4CH_HEART_LABELS,
-                                    'ukb_ecg_rest', (600, 12), ECG_REST_MEDIAN_LEADS)
+tff = _heart_mask_and_ecg_instances('ukb_cardiac_mri', (96, 96, 50), 'cine_segmented_lax_4ch/2/',
+                                    'cine_segmented_lax_4ch_annotated_', LAX_4CH_HEART_LABELS, ZeroMeanStd1(),
+                                    'ukb_ecg_rest', (600, 12), ECG_REST_MEDIAN_LEADS, Standardize(mean=0, std=10))
 ecg_and_lax_4ch = TensorMap(
     'ecg_and_lax_4ch', Interpretation.CONTINUOUS, shape=(108, 96, 50),
     tensor_from_file=tff,

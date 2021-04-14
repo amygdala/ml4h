@@ -55,9 +55,9 @@ def predictions_to_pngs(
             elif tm.shape == im.shape:
                 input_map = im
         logging.info(f"Write predictions as PNGs TensorMap:{tm.name}, y shape:{y.shape} labels:{labels[tm.output_name()].shape} folder:{folder}")
+        vmin = np.min(data[input_map.input_name()])
+        vmax = np.max(data[input_map.input_name()])
         if tm.is_mesh():
-            vmin = np.min(data[input_map.input_name()])
-            vmax = np.max(data[input_map.input_name()])
             for i in range(y.shape[0]):
                 sample_id = os.path.basename(paths[i]).replace(TENSOR_EXT, '')
                 if input_map.axes() == 4 and input_map.shape[-1] == 1:
@@ -121,15 +121,17 @@ def predictions_to_pngs(
 def _save_tensor_map_tensors_as_pngs(tensor_maps_in: List[TensorMap], data: Dict[str, np.ndarray], paths, folder):
     for tm in tensor_maps_in:
         tensor = data[tm.input_name()]
+        vmin = np.min(tensor)
+        vmax = np.max(tensor)
         for i in range(tensor.shape[0]):
             sample_id = os.path.basename(paths[i]).replace(TENSOR_EXT, '')
             if len(tm.shape) not in [3, 4]:
                 continue
             for j in range(tensor.shape[3]):
                 if len(tm.shape) == 3:
-                    plt.imsave(f"{folder}{sample_id}_input_{tm.name}_{i:02d}_{j:02d}{IMAGE_EXT}", tensor[i, :, :, j], cmap='gray')
+                    plt.imsave(f"{folder}{sample_id}_input_{tm.name}_{i:02d}_{j:02d}{IMAGE_EXT}", tensor[i, :, :, j], cmap='gray', vmin=vmin, vmax=vmax)
                 elif len(tm.shape) == 4:
-                    plt.imsave(f"{folder}{sample_id}_input_{tm.name}_{i:02d}_{j:02d}{IMAGE_EXT}", tensor[i, :, :, j, 0], cmap='gray')
+                    plt.imsave(f"{folder}{sample_id}_input_{tm.name}_{i:02d}_{j:02d}{IMAGE_EXT}", tensor[i, :, :, j, 0], cmap='gray', vmin=vmin, vmax=vmax)
 
 
 def plot_while_learning(
