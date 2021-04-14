@@ -46,14 +46,15 @@ def _heart_mask_and_ecg_instances(mri_path_prefix, mri_shape, mri_key, mri_segme
                     tensor[..., frame - 1, 1:] = slice_one_hot
                 else:
                     tensor[..., frame - 1] = reshape_categorical
-            ecg_start = (frame-1) * (ecg_shape[0] // total_instances)
-            ecg_stop = frame * (ecg_shape[0] // total_instances)
-            for lead in ecg_leads:
-                lead_index = ecg_leads[lead] + mri_shape[1]
-                if len(mri_shape) == 3:
-                    tensor[lead_index, :, frame-1] = np.repeat(ecg[ecg_start:ecg_stop, ecg_leads[lead]], tm.shape[1]//(ecg_stop-ecg_start))
-                elif len(mri_shape) == 4:
-                    tensor[lead_index, :, frame - 1, :] = np.expand_dims(np.repeat(ecg[ecg_start:ecg_stop, ecg_leads[lead]], tm.shape[1] // (ecg_stop - ecg_start)), axis=-1)
+            if ecg_shape[0] > 0:
+                ecg_start = (frame-1) * (ecg_shape[0] // total_instances)
+                ecg_stop = frame * (ecg_shape[0] // total_instances)
+                for lead in ecg_leads:
+                    lead_index = ecg_leads[lead] + mri_shape[1]
+                    if len(mri_shape) == 3:
+                        tensor[lead_index, :, frame-1] = np.repeat(ecg[ecg_start:ecg_stop, ecg_leads[lead]], tm.shape[1]//(ecg_stop-ecg_start))
+                    elif len(mri_shape) == 4:
+                        tensor[lead_index, :, frame - 1, :] = np.expand_dims(np.repeat(ecg[ecg_start:ecg_stop, ecg_leads[lead]], tm.shape[1] // (ecg_stop - ecg_start)), axis=-1)
         if len(mri_shape) == 3:
             tensor[:mri_shape[0], :mri_shape[1], :mri_shape[2]] = pad_or_crop_array_to_shape(mri_shape, mri[tuple(indices)])
         elif len(mri_shape) == 4:
@@ -75,5 +76,13 @@ tff = _heart_mask_and_ecg_instances('ukb_cardiac_mri', (96, 96, 50, len(MRI_LAX_
                                     'ukb_ecg_rest', (600, 12), ECG_REST_MEDIAN_LEADS, Standardize(mean=0, std=10))
 ecg_and_seg_lax_4ch = TensorMap(
     'ecg_and_seg_lax_4ch', Interpretation.CONTINUOUS, shape=(108, 96, 50, len(MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP)+1),
+    tensor_from_file=tff, channel_map=MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP,
+)
+
+tff = _heart_mask_and_ecg_instances('ukb_cardiac_mri', (96, 96, 50, len(MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP)+1), 'cine_segmented_lax_4ch/2/',
+                                    'cine_segmented_lax_4ch_annotated_', LAX_4CH_HEART_LABELS, ZeroMeanStd1(),
+                                    'ukb_ecg_rest', (0, 0), ECG_REST_MEDIAN_LEADS, Standardize(mean=0, std=10))
+seg_lax_4ch = TensorMap(
+    'seg_lax_4ch', Interpretation.CONTINUOUS, shape=(96, 96, 50, len(MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP)+1),
     tensor_from_file=tff, channel_map=MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP,
 )
