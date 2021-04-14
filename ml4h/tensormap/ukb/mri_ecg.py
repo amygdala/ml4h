@@ -80,7 +80,7 @@ ecg_and_seg_lax_4ch = TensorMap(
     tensor_from_file=tff, channel_map=MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP,
 )
 
-tff = _heart_mask_and_ecg_instances('ukb_cardiac_mri', (96, 96, 50, len(MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP)+1), 'cine_segmented_lax_4ch/2/',
+tff = _heart_mask_and_ecg_instances('ukb_cardiac_mri', (64, 64, 50, len(MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP)+1), 'cine_segmented_lax_4ch/2/',
                                     'cine_segmented_lax_4ch_annotated_', LAX_4CH_HEART_LABELS, ZeroMeanStd1(),
                                     'ukb_ecg_rest', (0, 0), ECG_REST_MEDIAN_LEADS, Standardize(mean=0, std=10))
 seg_lax_4ch_64xy_50z_18c = TensorMap(
