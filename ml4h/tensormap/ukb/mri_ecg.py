@@ -13,8 +13,6 @@ from ml4h.tensormap.general import get_tensor_at_first_date, pad_or_crop_array_t
 def _make_ecg_rest(
         hd5, path_prefix: str, ecg_shape: Tuple[int], ecg_leads: Dict[str, int], instance: int = 2, downsample_steps: int = 0,
 ):
-    if ecg_shape[0] == 0:
-        return
     tensor = np.zeros(ecg_shape, dtype=np.float32)
     for k in hd5[path_prefix]:
         if k in ecg_leads:
@@ -33,7 +31,8 @@ def _heart_mask_and_ecg_instances(mri_path_prefix, mri_shape, mri_key, mri_segme
         i, j = np.where(heart_mask)
         indices = np.meshgrid(np.arange(min(i), max(i) + 1), np.arange(min(j), max(j) + 1), np.arange(total_instances), indexing='ij')
         mri = mri_normalizer.normalize(get_tensor_at_first_date(hd5, mri_path_prefix, f'{mri_key}'))
-        ecg = ecg_normalizer.normalize(_make_ecg_rest(hd5, ecg_prefix, ecg_shape, ecg_leads))
+        if ecg_shape[0] > 0:
+            ecg = ecg_normalizer.normalize(_make_ecg_rest(hd5, ecg_prefix, ecg_shape, ecg_leads))
         tensor = np.zeros(tm.shape, dtype=np.float32)
         for frame in range(1, total_instances+1):
             if include_mri_segmentation:
