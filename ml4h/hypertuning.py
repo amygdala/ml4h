@@ -41,7 +41,7 @@ def run(args):
             model_builder,
             objective='val_loss',
             max_trials=args.max_models,
-            executions_per_trial=args.samples,
+            executions_per_trial=args.min_samples,
             directory=args.output_folder,
             project_name=args.id)
         generate_train, generate_valid, generate_test = test_train_valid_tensor_generators(**args.__dict__)
