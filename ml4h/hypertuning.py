@@ -48,9 +48,10 @@ def run(args):
     generate_train, generate_valid, generate_test = test_train_valid_tensor_generators(**args.__dict__)
     tuner.search(generate_train, epochs=args.epochs, steps_per_epoch=args.training_steps,
                  validation_data=generate_valid, validation_steps=args.validation_steps)
+    logging.info(f"Tuning done best models below!")
     [m.summary() for m in reversed(tuner.get_best_models(num_models=2))]
-    logging.info(f"")
     end_time = timer()
+    tuner.search_space_summary()
     logging.info(f"Tuning done best models above! Executed {args.mode} mode in {(end_time - start_time) / 60.0:.1f} minutes.")
 
 
