@@ -1,32 +1,16 @@
-# hyperparameters.py
+# hypertuning.py
 
 # Imports
-import gc
-import os
 import logging
-import numpy as np
 from timeit import default_timer as timer
 
 import kerastuner as kt
 from kerastuner.tuners import RandomSearch
 from tensorflow import keras
 
-import matplotlib
-matplotlib.use('Agg') # Need this to write images from the GSA servers.  Order matters:
-import matplotlib.pyplot as plt # First import matplotlib, then use Agg, then import plt
-
-from skimage.filters import threshold_otsu
-
-
 from ml4h.arguments import parse_args
-from ml4h.plots import plot_metric_history
-from ml4h.defines import IMAGE_EXT, MODEL_EXT
-from ml4h.models.train import train_model_from_generators
-from ml4h.models.legacy_models import make_multimodal_multitask_model
 from ml4h.models.model_factory import block_make_multimodal_multitask_model
-from ml4h.tensor_generators import test_train_valid_tensor_generators, big_batch_from_minibatch_generator
-
-MAX_LOSS = 9e9
+from ml4h.tensor_generators import test_train_valid_tensor_generators
 
 
 def run(args):
@@ -64,6 +48,7 @@ def make_model_builder(args):
         num_dense_blocks = hp.Int('num_dense_blocks', 0, 6)
         dense_block_size = hp.Int('dense_block_size', 16, 128, sampling='log')
         args.__dict__['dense_blocks'] = [dense_block_size] * num_dense_blocks
+        args.__dict__['block_size'] = hp.Int('block_size', 1, 7)
         num_dense_layers = hp.Int('num_dense_layers', 0, 4)
         dense_layer_size = hp.Int('dense_layer_size', 16, 128, sampling='log')
         args.__dict__['dense_layers'] = [dense_layer_size] * num_dense_layers
