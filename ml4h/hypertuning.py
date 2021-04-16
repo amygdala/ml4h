@@ -12,7 +12,7 @@ from ml4h.arguments import parse_args
 from ml4h.models.model_factory import block_make_multimodal_multitask_model
 from ml4h.tensor_generators import test_train_valid_tensor_generators
 
-tuner_type = 'bayes'
+tuner_type = 'random'
 
 
 def run(args):
@@ -25,7 +25,7 @@ def run(args):
     if 'random' == tuner_type:
         tuner = RandomSearch(
             model_builder,
-            objective=kt.Objective("val_pearson", direction="min"),
+            objective='val_loss', # kt.Objective("val_pearson", direction="min"),
             max_trials=args.max_models,
             max_model_size=args.max_parameters,
             executions_per_trial=args.min_samples,
@@ -36,7 +36,7 @@ def run(args):
     elif 'bayes' == tuner_type:
         tuner = BayesianOptimization(
             model_builder,
-            objective=kt.Objective("val_pearson", direction="min"),
+            objective='val_loss', #kt.Objective("val_pearson", direction="min"),
             max_trials=args.max_models,
             max_model_size=args.max_parameters,
             executions_per_trial=args.min_samples,
@@ -52,6 +52,7 @@ def run(args):
     [m.summary() for m in reversed(tuner.get_best_models(num_models=2))]
     end_time = timer()
     tuner.search_space_summary()
+    tuner.results_summary()
     logging.info(f"Tuning done best models above! Executed {args.mode} mode in {(end_time - start_time) / 60.0:.1f} minutes.")
 
 
