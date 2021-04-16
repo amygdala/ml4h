@@ -58,8 +58,8 @@ def run(args):
 
 def make_model_builder(args):
     def model_builder(hp):
-        conv_layers_sets = [[64], [48], [32], [24]]
-        args.__dict__['conv_layers'] = hp.Choice('conv_layers', values=conv_layers_sets),
+        conv_layers_sets = [64, 48, 32, 24]
+        args.__dict__['conv_layers'] = [hp.Choice('conv_layers', values=conv_layers_sets)],
         model, _, _, _ = block_make_multimodal_multitask_model(**args.__dict__)
         return model
     return model_builder
