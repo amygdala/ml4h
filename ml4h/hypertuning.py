@@ -27,24 +27,28 @@ def run(args):
             model_builder,
             objective=kt.Objective("val_pearson", direction="min"),
             max_trials=args.max_models,
+            max_model_size=args.max_parameters,
             executions_per_trial=args.min_samples,
             directory=args.output_folder,
             project_name=args.id,
+            seed=args.random_seed,
         )
     elif 'bayes' == tuner_type:
         tuner = BayesianOptimization(
             model_builder,
             objective=kt.Objective("val_pearson", direction="min"),
             max_trials=args.max_models,
+            max_model_size=args.max_parameters,
             executions_per_trial=args.min_samples,
             directory=args.output_folder,
             project_name=args.id,
+            seed=args.random_seed,
             #beta=5.2,  # Explore exploit tradeoff, higher value mean more exploration
         )
     generate_train, generate_valid, generate_test = test_train_valid_tensor_generators(**args.__dict__)
     tuner.search(generate_train, epochs=args.epochs, steps_per_epoch=args.training_steps,
                  validation_data=generate_valid, validation_steps=args.validation_steps)
-    [m.summary() for m in tuner.get_best_models(num_models=2)]
+    [m.summary() for m in reversed(tuner.get_best_models(num_models=2))]
     logging.info(f"")
     end_time = timer()
     logging.info(f"Tuning done best models above! Executed {args.mode} mode in {(end_time - start_time) / 60.0:.1f} minutes.")
