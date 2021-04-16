@@ -5,28 +5,42 @@ import logging
 from timeit import default_timer as timer
 
 import kerastuner as kt
-from kerastuner.tuners import RandomSearch
+from kerastuner.tuners import RandomSearch, BayesianOptimization, Hyperband
 from tensorflow import keras
 
 from ml4h.arguments import parse_args
 from ml4h.models.model_factory import block_make_multimodal_multitask_model
 from ml4h.tensor_generators import test_train_valid_tensor_generators
 
+tuner_type = 'bayes'
+
 
 def run(args):
     start_time = timer()
-
     if 'conv' == args.mode:
         model_builder = make_model_builder(args)
     else:
         raise ValueError('Unknown hyper-parameter optimization mode:', args.mode)
-    tuner = RandomSearch(
-        model_builder,
-        objective='val_pearson',
-        max_trials=args.max_models,
-        executions_per_trial=args.min_samples,
-        directory=args.output_folder,
-        project_name=args.id)
+
+    if 'random' == tuner_type:
+        tuner = RandomSearch(
+            model_builder,
+            objective=kt.Objective("val_pearson", direction="min"),
+            max_trials=args.max_models,
+            executions_per_trial=args.min_samples,
+            directory=args.output_folder,
+            project_name=args.id,
+        )
+    elif 'bayes' == tuner_type:
+        tuner = BayesianOptimization(
+            model_builder,
+            objective=kt.Objective("val_pearson", direction="min"),
+            max_trials=args.max_models,
+            executions_per_trial=args.min_samples,
+            directory=args.output_folder,
+            project_name=args.id,
+            beta=5.2,  # Explore exploit tradeoff, higher value mean more exploration
+        )
     generate_train, generate_valid, generate_test = test_train_valid_tensor_generators(**args.__dict__)
     tuner.search(generate_train, epochs=args.epochs, steps_per_epoch=args.training_steps,
                  validation_data=generate_valid, validation_steps=args.validation_steps)
