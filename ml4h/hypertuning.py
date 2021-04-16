@@ -39,7 +39,7 @@ def run(args):
             executions_per_trial=args.min_samples,
             directory=args.output_folder,
             project_name=args.id,
-            beta=5.2,  # Explore exploit tradeoff, higher value mean more exploration
+            #beta=5.2,  # Explore exploit tradeoff, higher value mean more exploration
         )
     generate_train, generate_valid, generate_test = test_train_valid_tensor_generators(**args.__dict__)
     tuner.search(generate_train, epochs=args.epochs, steps_per_epoch=args.training_steps,
