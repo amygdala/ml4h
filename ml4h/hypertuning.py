@@ -14,32 +14,26 @@ from ml4h.tensor_generators import test_train_valid_tensor_generators
 
 
 def run(args):
-    # Keep track of elapsed execution time
     start_time = timer()
-    try:
-        if 'conv' == args.mode:
-            model_builder = make_model_builder(args)
-        else:
-            raise ValueError('Unknown hyper-parameter optimization mode:', args.mode)
-        tuner = RandomSearch(
-            model_builder,
-            objective='val_loss',
-            max_trials=args.max_models,
-            executions_per_trial=args.min_samples,
-            directory=args.output_folder,
-            project_name=args.id)
-        generate_train, generate_valid, generate_test = test_train_valid_tensor_generators(**args.__dict__)
-        tuner.search(generate_train,
-                     epochs=args.epochs, steps_per_epoch=args.training_steps,
-                     validation_data=generate_valid, validation_steps=args.validation_steps)
-        [m.summary() for m in tuner.get_best_models(num_models=2)]
-        logging.info(f"Tuning done best models above !")
-    except Exception as e:
-        logging.exception(e)
 
+    if 'conv' == args.mode:
+        model_builder = make_model_builder(args)
+    else:
+        raise ValueError('Unknown hyper-parameter optimization mode:', args.mode)
+    tuner = RandomSearch(
+        model_builder,
+        objective='val_loss',
+        max_trials=args.max_models,
+        executions_per_trial=args.min_samples,
+        directory=args.output_folder,
+        project_name=args.id)
+    generate_train, generate_valid, generate_test = test_train_valid_tensor_generators(**args.__dict__)
+    tuner.search(generate_train, epochs=args.epochs, steps_per_epoch=args.training_steps,
+                 validation_data=generate_valid, validation_steps=args.validation_steps)
+    [m.summary() for m in tuner.get_best_models(num_models=2)]
+    logging.info(f"")
     end_time = timer()
-    elapsed_time = end_time - start_time
-    logging.info(f"Executed the '{args.mode}' operation in {elapsed_time / 60.0:.1f} minutes")
+    logging.info(f"Tuning done best models above! Executed {args.mode} mode in {(end_time - start_time) / 60.0:.1f} minutes.")
 
 
 def make_model_builder(args):
