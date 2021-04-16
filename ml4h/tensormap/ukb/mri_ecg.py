@@ -43,7 +43,7 @@ def _heart_mask_and_ecg_instances(mri_path_prefix, mri_shape, mri_key, mri_segme
                 frame_categorical = get_tensor_at_first_date(hd5, mri_path_prefix, f'{mri_segmentation_key}{frame}')
                 reshape_categorical = pad_or_crop_array_to_shape(mri_shape[:2], frame_categorical[segmentation_indices])
                 if len(mri_shape) == 4:
-                    slice_one_hot = to_categorical(reshape_categorical, len(mri_labels)+1)
+                    slice_one_hot = to_categorical(reshape_categorical, len(mri_labels))
                     tensor[..., frame - 1, 1:] = slice_one_hot
                 else:
                     tensor[mri_shape[0]:, :, frame - 1] = reshape_categorical
