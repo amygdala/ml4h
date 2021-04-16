@@ -22,7 +22,7 @@ def run(args):
         raise ValueError('Unknown hyper-parameter optimization mode:', args.mode)
     tuner = RandomSearch(
         model_builder,
-        objective='val_loss',
+        objective='val_pearson',
         max_trials=args.max_models,
         executions_per_trial=args.min_samples,
         directory=args.output_folder,
@@ -41,11 +41,11 @@ def make_model_builder(args):
         num_conv_layers = hp.Int('num_conv_layers', 0, 4)
         conv_layer_size = hp.Int('conv_layer_size', 16, 128, sampling='log')
         args.__dict__['conv_layers'] = [conv_layer_size] * num_conv_layers
-        num_dense_blocks = hp.Int('num_dense_blocks', 1, 6)
+        num_dense_blocks = hp.Int('num_dense_blocks', 0, 6)
         dense_block_size = hp.Int('dense_block_size', 16, 128, sampling='log')
         args.__dict__['dense_blocks'] = [dense_block_size] * num_dense_blocks
         args.__dict__['block_size'] = hp.Int('block_size', 1, 7)
-        num_dense_layers = hp.Int('num_dense_layers', 1, 4)
+        num_dense_layers = hp.Int('num_dense_layers', 0, 4)
         dense_layer_size = hp.Int('dense_layer_size', 16, 128, sampling='log')
         args.__dict__['dense_layers'] = [dense_layer_size] * num_dense_layers
         model, _, _, _ = block_make_multimodal_multitask_model(**args.__dict__)
