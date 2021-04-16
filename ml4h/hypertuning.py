@@ -59,7 +59,7 @@ def run(args):
 def make_model_builder(args):
     def model_builder(hp):
         args.__dict__['conv_layers'] = hp.Choice('conv_layers', values=[64, 32, 16]),
-        args.__dict__['dense_blocks'] = hp.Fixed('dense_blocks', values=[32, 32, 32], [16, 16, 16], [64, 64, 64]),
+        args.__dict__['dense_blocks'] = hp.Fixed('dense_blocks', values=[[32, 32, 32], [16, 16, 16], [64, 64, 64]]),
         model, _, _, _ = block_make_multimodal_multitask_model(**args.__dict__)
         return model
     return model_builder
