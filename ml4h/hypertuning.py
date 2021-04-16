@@ -32,6 +32,8 @@ def run(args):
         tuner.search(generate_train,
                      epochs=args.epochs, steps_per_epoch=args.training_steps,
                      validation_data=generate_valid, validation_steps=args.validation_steps)
+        [m.summary() for m in tuner.get_best_models(num_models=2)]
+        logging.info(f"Tuning done best models above !")
     except Exception as e:
         logging.exception(e)
 
