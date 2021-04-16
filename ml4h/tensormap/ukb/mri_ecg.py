@@ -45,7 +45,7 @@ def _heart_mask_and_ecg_instances(mri_path_prefix, mri_shape, mri_key, mri_segme
                     slice_one_hot = to_categorical(reshape_categorical, len(mri_labels)+1)
                     tensor[..., frame - 1, 1:] = slice_one_hot
                 else:
-                    tensor[mri.shape[0]:, :, frame - 1] = reshape_categorical
+                    tensor[mri_shape[0]:, :, frame - 1] = reshape_categorical
             if ecg_shape[0] > 0:
                 ecg_start = (frame-1) * (ecg_shape[0] // total_instances)
                 ecg_stop = frame * (ecg_shape[0] // total_instances)
