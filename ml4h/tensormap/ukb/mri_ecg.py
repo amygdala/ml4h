@@ -30,6 +30,7 @@ def _heart_mask_and_ecg_instances(mri_path_prefix, mri_shape, mri_key, mri_segme
         heart_mask = np.isin(diastole_categorical, list(mri_labels.values()))
         i, j = np.where(heart_mask)
         indices = np.meshgrid(np.arange(min(i), max(i) + 1), np.arange(min(j), max(j) + 1), np.arange(total_instances), indexing='ij')
+        segmentation_indices = np.meshgrid(np.arange(min(i), max(i) + 1), np.arange(min(j), max(j) + 1), indexing='ij')
         mri = mri_normalizer.normalize(get_tensor_at_first_date(hd5, mri_path_prefix, f'{mri_key}'))
         if ecg_shape[0] > 0:
             ecg = ecg_normalizer.normalize(_make_ecg_rest(hd5, ecg_prefix, ecg_shape, ecg_leads))
@@ -40,7 +41,7 @@ def _heart_mask_and_ecg_instances(mri_path_prefix, mri_shape, mri_key, mri_segme
                 heart_mask = np.isin(frame_categorical, list(mri_labels.values()))
                 mri[:mri.shape[0], :mri.shape[1], frame-1] = heart_mask[:mri.shape[0], :mri.shape[1]] * mri[..., frame-1]
                 frame_categorical = get_tensor_at_first_date(hd5, mri_path_prefix, f'{mri_segmentation_key}{frame}')
-                reshape_categorical = pad_or_crop_array_to_shape(mri_shape[:2], frame_categorical[indices])
+                reshape_categorical = pad_or_crop_array_to_shape(mri_shape[:2], frame_categorical[segmentation_indices])
                 if len(mri_shape) == 4:
                     slice_one_hot = to_categorical(reshape_categorical, len(mri_labels)+1)
                     tensor[..., frame - 1, 1:] = slice_one_hot
