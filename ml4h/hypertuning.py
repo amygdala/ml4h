@@ -46,8 +46,8 @@ def run(args):
             project_name=args.id)
         generate_train, generate_valid, generate_test = test_train_valid_tensor_generators(**args.__dict__)
         tuner.search(generate_train,
-                     epochs=args.epochs,
-                     validation_data=generate_valid)
+                     epochs=args.epochs, steps_per_epoch=args.training_steps,
+                     validation_data=generate_valid, validation_steps=args.validation_steps)
     except Exception as e:
         logging.exception(e)
 
