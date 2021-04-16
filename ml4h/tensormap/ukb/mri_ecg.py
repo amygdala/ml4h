@@ -73,15 +73,17 @@ ecg_and_lax_4ch = TensorMap(
 
 tff = _heart_mask_and_ecg_instances('ukb_cardiac_mri', (96, 96, 50, len(MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP)+1), 'cine_segmented_lax_4ch/2/',
                                     'cine_segmented_lax_4ch_annotated_', LAX_4CH_HEART_LABELS, ZeroMeanStd1(),
-                                    'ukb_ecg_rest', (600, 12), ECG_REST_MEDIAN_LEADS, Standardize(mean=0, std=10))
-ecg_and_seg_lax_4ch = TensorMap(
-    'ecg_and_seg_lax_4ch', Interpretation.CONTINUOUS, shape=(108, 96, 50, len(MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP)+1),
+                                    'ukb_ecg_rest', (600, 12), ECG_REST_MEDIAN_LEADS, Standardize(mean=0, std=10),
+                                    include_mri_segmentation=True)
+ecg_seg_lax_4ch = TensorMap(
+    'ecg_seg_lax_4ch', Interpretation.CONTINUOUS, shape=(108, 96, 50, len(MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP)+1),
     tensor_from_file=tff, channel_map=MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP,
 )
 
 tff = _heart_mask_and_ecg_instances('ukb_cardiac_mri', (64, 64, 50, len(MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP)+1), 'cine_segmented_lax_4ch/2/',
                                     'cine_segmented_lax_4ch_annotated_', LAX_4CH_HEART_LABELS, ZeroMeanStd1(),
-                                    'ukb_ecg_rest', (0, 0), ECG_REST_MEDIAN_LEADS, Standardize(mean=0, std=10))
+                                    'ukb_ecg_rest', (0, 0), ECG_REST_MEDIAN_LEADS, Standardize(mean=0, std=10),
+                                    include_mri_segmentation=True)
 seg_lax_4ch_64xy_50z_18c = TensorMap(
     'seg_lax_4ch_64xy_50z_18c', Interpretation.CONTINUOUS, shape=(64, 64, 50, len(MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP)+1),
     tensor_from_file=tff, channel_map=MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP,
@@ -89,7 +91,8 @@ seg_lax_4ch_64xy_50z_18c = TensorMap(
 
 tff = _heart_mask_and_ecg_instances('ukb_cardiac_mri', (64, 64, 50), 'cine_segmented_lax_4ch/2/',
                                     'cine_segmented_lax_4ch_annotated_', LAX_4CH_HEART_LABELS, ZeroMeanStd1(),
-                                    'ukb_ecg_rest', (0, 0), ECG_REST_MEDIAN_LEADS, Standardize(mean=0, std=10))
+                                    'ukb_ecg_rest', (0, 0), ECG_REST_MEDIAN_LEADS, Standardize(mean=0, std=10),
+                                    include_mri_segmentation=True)
 seg_lax_4ch_128x_64y_50z_1c = TensorMap(
     'seg_lax_4ch_128x_64y_50z_1c', Interpretation.CONTINUOUS, shape=(128, 64, 50),
     tensor_from_file=tff, channel_map=MRI_LAX_4CH_SEGMENTED_CHANNEL_MAP,
