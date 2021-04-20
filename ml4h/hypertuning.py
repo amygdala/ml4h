@@ -53,8 +53,9 @@ def run(args):
     end_time = timer()
     tuner.search_space_summary()
     tuner.results_summary()
-    best_hyper = tuner.get_best_hyperparameters(num_trials=1)[0]
-    logging.info(f"Tuning done best hyperparameters:\n{best_hyper.values}\n Executed {args.mode} mode in {(end_time - start_time) / 60.0:.1f} minutes.")
+    for i, best_hyper in enumerate(tuner.get_best_hyperparameters(num_trials=3)):
+        logging.info(f"\n#{i+1} best hyperparameters:\n{best_hyper.values}")
+    logging.info(f"Executed {args.mode} mode in {(end_time - start_time) / 60.0:.1f} minutes.")
 
 
 def make_model_builder(args):
