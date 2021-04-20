@@ -54,7 +54,7 @@ def run(args):
     tuner.search_space_summary()
     tuner.results_summary()
     for i, best_hyper in enumerate(tuner.get_best_hyperparameters(num_trials=3)):
-        logging.info(f"\n#{i+1} best hyperparameters:\n{best_hyper.values}")
+        logging.info(f"\n\n#{i+1} best hyperparameters:\n{best_hyper.values}")
     logging.info(f"Executed {args.mode} mode in {(end_time - start_time) / 60.0:.1f} minutes.")
 
 
