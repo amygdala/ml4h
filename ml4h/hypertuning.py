@@ -5,8 +5,8 @@ import logging
 from timeit import default_timer as timer
 
 import kerastuner as kt
+from tensorflow.keras.callbacks import EarlyStopping
 from kerastuner.tuners import RandomSearch, BayesianOptimization, Hyperband
-from tensorflow import keras
 
 from ml4h.arguments import parse_args
 from ml4h.models.model_factory import block_make_multimodal_multitask_model
@@ -46,8 +46,9 @@ def run(args):
             #beta=5.2,  # Explore exploit tradeoff, higher value mean more exploration
         )
     generate_train, generate_valid, generate_test = test_train_valid_tensor_generators(**args.__dict__)
+    stop_early = EarlyStopping(monitor='val_loss', patience=args.patience)
     tuner.search(generate_train, epochs=args.epochs, steps_per_epoch=args.training_steps,
-                 validation_data=generate_valid, validation_steps=args.validation_steps)
+                 validation_data=generate_valid, validation_steps=args.validation_steps, callbacks=[stop_early])
     logging.info(f"Tuning done best models below!")
     [m.summary() for m in tuner.get_best_models(num_models=1)]
     end_time = timer()
