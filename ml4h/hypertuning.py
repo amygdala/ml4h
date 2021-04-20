@@ -54,7 +54,7 @@ def run(args):
     tuner.search_space_summary()
     tuner.results_summary()
     best_hyper = tuner.get_best_hyperparameters(num_trials=1)[0]
-    logging.info(f"Tuning done best hyperparameters:\n{best_hyper}\n Executed {args.mode} mode in {(end_time - start_time) / 60.0:.1f} minutes.")
+    logging.info(f"Tuning done best hyperparameters:\n{best_hyper.values}\n Executed {args.mode} mode in {(end_time - start_time) / 60.0:.1f} minutes.")
 
 
 def make_model_builder(args):
