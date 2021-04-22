@@ -2249,16 +2249,11 @@ def stratify_latent_space(stratify_column, stratify_thresh, latent_cols, latent_
     return hit_mean_vector, miss_mean_vector
 
 
-def plot_hit_to_miss_transforms(latent_df, decoders, feature='Sex_Female_0_0', prefix='./figures/',
-                                thresh=1.0, latent_dimension=256, samples=16, scalar=1.0, cmap='plasma', test_csv=None):
+def plot_hit_to_miss_transforms(latent_df, decoders, input_data, feature='Sex_Female_0_0', prefix='./figures/',
+                                thresh=1.0, latent_dimension=256, samples=16, scalar=1.0, cmap='plasma'):
     latent_cols = [f'latent_{i}' for i in range(latent_dimension)]
     female, male = stratify_latent_space(feature, thresh, latent_cols, latent_df)
     sex_vector = female - male
-    if test_csv is not None:
-        all_sample_ids = [int(s) for s in _sample_csv_to_set(test_csv) if len(s) > 4]
-        latent_df = latent_df.loc[latent_df['sample_id'].isin(all_sample_ids)]
-        latent_df.info()
-        logging.info(f'Subset to test set with samples from {len(all_sample_ids)} from: {test_csv}')
 
     samples = min(len(latent_df.index), samples)
     embeddings = latent_df.iloc[:samples][latent_cols].to_numpy()
@@ -2269,27 +2264,13 @@ def plot_hit_to_miss_transforms(latent_df, decoders, feature='Sex_Female_0_0', p
     male_to_female = embeddings + (scalar * sex_vectors)
     female_to_male = embeddings - (scalar * sex_vectors)
 
-    # for i, etm in enumerate(encoders):
-    #     embed = encoders[etm].predict(test_data[etm.input_name()])
-    #     if etm.output_name() in predictions_dict:
-    #         plot_reconstruction(etm, test_data[etm.input_name()], predictions_dict[etm.output_name()], out_path, test_paths, samples)
-    #     for dtm in decoders:
-    #         reconstruction = decoders[dtm].predict(embed)
-    #         logging.info(f'{dtm.name} has prediction shape: {reconstruction.shape} from embed shape: {embed.shape}')
-    #         my_out_path = os.path.join(out_path, f'decoding_{dtm.name}_from_{etm.name}/')
-    #         os.makedirs(os.path.dirname(my_out_path), exist_ok=True)
-    #         if dtm.axes() > 1:
-    #             plot_reconstruction(dtm, test_data[dtm.input_name()], reconstruction, my_out_path, test_paths, samples)
-    #         else:
-    #             evaluate_predictions(dtm, reconstruction, test_labels[dtm.output_name()], {}, dtm.name, my_out_path, test_paths)
-
     for dtm in decoders:
         logging.info(f'Decoder {dtm.name} transform')
         predictions = decoders[dtm].predict(embeddings)
         m2f = decoders[dtm].predict(male_to_female)
         f2m = decoders[dtm].predict(female_to_male)
         if dtm.axes() == 3:
-            fig, axes = plt.subplots(max(2, samples), 2, figsize=(18, samples * 4))
+            fig, axes = plt.subplots(max(2, samples), 3, figsize=(18, samples * 4))
         elif dtm.axes() == 2:
             fig, axes = plt.subplots(dtm.shape[1], samples, figsize=(samples * 6, 28))
         for i in range(samples):
@@ -2299,6 +2280,7 @@ def plot_hit_to_miss_transforms(latent_df, decoders, feature='Sex_Female_0_0', p
                 axes[i, 1].axis('off')
                 if dtm.is_categorical():
                     axes[i, 0].imshow(np.argmax(predictions[i, ...], axis=-1), cmap=cmap)
+                    axes[i, 2].imshow(np.argmax(input_data[dtm.input_name()][i, ...], axis=-1), cmap=cmap)
                     if sexes[i] >= thresh:
                         axes[i, 1].imshow(np.argmax(f2m[i, ...], axis=-1), cmap=cmap)
                         axes[i, 1].set_title(f'Transform {feature[:16]} to less than {thresh:.2f}')
@@ -2307,6 +2289,7 @@ def plot_hit_to_miss_transforms(latent_df, decoders, feature='Sex_Female_0_0', p
                         axes[i, 1].set_title(f'Transform {feature[:16]} to more than or equal to {thresh:.2f}')
                 else:
                     axes[i, 0].imshow(predictions[i, ..., 0], cmap='gray')
+                    axes[i, 2].imshow(input_data[dtm.input_name()][i, ..., 0], cmap='gray')
                     if sexes[i] >= thresh:
                         axes[i, 1].imshow(f2m[i, ..., 0], cmap='gray')
                         axes[i, 1].set_title(f'Transform {feature[:16]} to less than {thresh:.2f}')

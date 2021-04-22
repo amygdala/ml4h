@@ -19,7 +19,7 @@ from ml4h.tensormap.tensor_map_maker import write_tensor_maps
 from ml4h.tensorize.tensor_writer_mgb import write_tensors_mgb
 from ml4h.models.model_factory import block_make_multimodal_multitask_model
 from ml4h.explorations import test_labels_to_label_map, infer_with_pixels, explore, latent_space_dataframe, pca_on_tsv
-from ml4h.tensor_generators import BATCH_INPUT_INDEX, BATCH_OUTPUT_INDEX, BATCH_PATHS_INDEX
+from ml4h.tensor_generators import BATCH_INPUT_INDEX, BATCH_OUTPUT_INDEX, BATCH_PATHS_INDEX, _sample_csv_to_set
 from ml4h.explorations import mri_dates, ecg_dates, predictions_to_pngs, sample_from_language_model
 from ml4h.explorations import plot_while_learning, plot_histograms_of_tensors_in_pdf, cross_reference
 from ml4h.tensor_generators import TensorGenerator, test_train_valid_tensor_generators, big_batch_from_minibatch_generator
@@ -509,16 +509,29 @@ def inspect_paired_model(args):
     infer_hidden_tsv = _hidden_file_name(args.output_folder, args.hidden_layer, args.id, '.tsv')
     latent_df = latent_space_dataframe(infer_hidden_tsv, args.app_csv)
     out_folder = os.path.join(args.output_folder, args.id, 'latent_transformations/')
+    if args.test_csv is not None:
+        all_sample_ids = [int(s) for s in _sample_csv_to_set(args.test_csv) if len(s) > 4]
+        latent_df = latent_df.loc[latent_df['sample_id'].isin(all_sample_ids)]
+        latent_df.info()
+        logging.info(f'Subset to test set with samples from {len(all_sample_ids)} from: {args.test_csv}')
+    samples = min(len(latent_df.index), 16)
+    tensor_paths = [f'{args.tensors}{s}{TENSOR_EXT}' for s in list(latent_df.iloc[:samples]['sample_id'])]
+    generate_test = TensorGenerator(
+        samples, args.tensor_maps_in, args.tensor_maps_out, tensor_paths, num_workers=0,
+        cache_size=args.cache_size, keep_paths=True, mixup=args.mixup_alpha,
+    )
+    batch = next(generate_test)
+    input_data = batch[BATCH_INPUT_INDEX]
     for tm in args.tensor_maps_protected:
         index2channel = {v: k for k, v in tm.channel_map.items()}
         thresh = 1 if tm.is_categorical() else tm.normalization.mean
-        plot_hit_to_miss_transforms(latent_df, decoders,
+        plot_hit_to_miss_transforms(latent_df, decoders, input_data,
                                     feature=index2channel[0],
                                     thresh=thresh,
                                     scalar=args.alpha,
                                     latent_dimension=args.dense_layers[0],
                                     prefix=out_folder,
-                                    test_csv=args.test_csv)
+                                    samples=samples)
 
 
 def pca_on_hidden_inference(args):
