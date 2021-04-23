@@ -2275,7 +2275,7 @@ def plot_hit_to_miss_transforms(latent_df, decoders, input_data, feature='Sex_Fe
             fig, axes = plt.subplots(dtm.shape[1], samples, figsize=(samples * 6, 28))
         for i in range(samples):
             if dtm.axes() == 3:
-                axes[i, 0].set_title(f"{feature}:{sexes[i]:.2f}, Threshold:{thresh:.2f}")
+                axes[i, 0].set_title(f"{feature}: {sexes[i]:.2f}")
                 axes[i, 1].set_title(f"Reconstruction")
                 axes[i, 0].axis('off')
                 axes[i, 1].axis('off')
@@ -2288,7 +2288,7 @@ def plot_hit_to_miss_transforms(latent_df, decoders, input_data, feature='Sex_Fe
                         axes[i, 2].set_title(f'Transform {feature[:16]} to less than {thresh:.2f}')
                     else:
                         axes[i, 2].imshow(np.argmax(m2f[i, ...], axis=-1), cmap=cmap)
-                        axes[i, 2].set_title(f'Transform {feature[:16]} to more than or equal to {thresh:.2f}')
+                        axes[i, 2].set_title(f'Transform {feature[:16]} to more than {thresh:.2f}')
                 else:
                     axes[i, 0].imshow(input_data[dtm.input_name()][i, ..., 0], cmap='gray')
                     axes[i, 1].imshow(predictions[i, ..., 0], cmap='gray')
@@ -2297,7 +2297,7 @@ def plot_hit_to_miss_transforms(latent_df, decoders, input_data, feature='Sex_Fe
                         axes[i, 2].set_title(f'Transform {feature[:16]} to less than {thresh:.2f}')
                     else:
                         axes[i, 2].imshow(m2f[i, ..., 0], cmap='gray')
-                        axes[i, 2].set_title(f'Transform {feature[:16]} to more than or equal to {thresh:.2f}')
+                        axes[i, 2].set_title(f'Transform {feature[:16]} to more than {thresh:.2f}')
             elif dtm.axes() == 2:
                 index2channel = {v: k for k, v in dtm.channel_map.items()}
                 for j in range(dtm.shape[1]):

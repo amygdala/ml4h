@@ -8,34 +8,37 @@ from typing import Callable, Dict, List, Tuple, Union
 
 import csv
 import h5py
+import scipy
 import numpy as np
 import pandas as pd
 
-from ml4h.defines import CARDIAC_SURGERY_DATE_FORMAT
+from ml4h.defines import CARDIAC_SURGERY_DATE_FORMAT, ECG_REST_UKB_LEADS_NEW
 from ml4h.normalizer import Standardize, ZeroMeanStd1
 from ml4h.defines import ECG_REST_AMP_LEADS, ECG_REST_UKB_LEADS
 from ml4h.defines import PARTNERS_DATE_FORMAT, PARTNERS_DATETIME_FORMAT
 from ml4h.TensorMap import TensorMap, str2date, Interpretation, decompress_data
 from ml4h.tensormap.mgb.ecg import _get_ecg_dates, _is_dynamic_shape, _make_hd5_path, make_voltage
-from ml4h.tensormap.mgb.ecg import validator_not_all_zero, _hd5_filename_to_mrn_int, _resample_voltage
+from ml4h.tensormap.mgb.ecg import validator_not_all_zero, _hd5_filename_to_mrn_int, _resample_voltage, make_partners_ecg_label
 
 YEAR_DAYS = 365.26
 INCIDENCE_CSV = '/media/erisone_snf13/lc_outcomes.csv'
 CARDIAC_SURGERY_OUTCOMES_CSV = '/data/sts-data/mgh-preop-ecg-outcome-labels.csv'
 PARTNERS_PREFIX = 'partners_ecg_rest'
-WIDE_FILE = '/home/sam/ml/hf-wide-2020-09-15-with-lvh-and-lbbb.tsv'
-#WIDE_FILE = '/home/sam/ml/mgh-wide-2020-06-25-with-mrn.tsv'
+WIDE_FILE = '/home/sam/ml/hf-wide-2020-08-18-with-lvh-and-lbbb.tsv'
+AF_IN_READ_STRINGS = ['atrial fib', 'afib', 'atrial fibrillation', 'atrial  fibrillation', 'afibrillation',
+                      ' af ', 'fibrillation/flutter', 'aflutter', 'probable flutter', 'atrial flutter']
 
 
-def make_mgb_dynamic_tensor_maps(desired_map_name: str) -> TensorMap:
-    tensor_map_maker_fxns = [make_lead_maps, make_waveform_maps, make_partners_diagnosis_maps, make_wide_file_maps]
+def make_mgb_dynamic_tensor_maps(desired_map_name: str, **kwargs) -> TensorMap:
+    tensor_map_maker_fxns = [make_lead_maps, make_waveform_maps, make_partners_diagnosis_maps,
+                             make_wide_file_maps, make_ukb_waveform_maps]
     for map_maker_function in tensor_map_maker_fxns:
-        desired_map = map_maker_function(desired_map_name)
+        desired_map = map_maker_function(desired_map_name, **kwargs)
         if desired_map is not None:
             return desired_map
 
 
-def make_waveform_maps(desired_map_name: str) -> TensorMap:
+def make_waveform_maps(desired_map_name: str, **kwargs) -> TensorMap:
     """Creates 12 possible Tensor Maps and returns the desired one or None:
 
         partners_ecg_2500      partners_ecg_2500_exact      partners_ecg_5000      partners_ecg_5000_exact
@@ -69,7 +72,22 @@ def make_waveform_maps(desired_map_name: str) -> TensorMap:
             )
 
 
-def make_lead_maps(desired_map_name: str) -> TensorMap:
+def make_ukb_waveform_maps(desired_map_name: str, **kwargs) -> TensorMap:
+    """Creates Tensor Maps with the same names as used in tensormap/ukb/ecg.py"""
+    if desired_map_name == 'ecg_rest_raw_ukb':
+            return TensorMap(
+                'ecg_rest_raw',
+                shape=(5000, 12),
+                path_prefix=PARTNERS_PREFIX,
+                tensor_from_file=make_voltage(5000),
+                normalization=Standardize(mean=0, std=2000),
+                channel_map=ECG_REST_UKB_LEADS_NEW,
+                time_series_limit=0,
+                validator=validator_not_all_zero,
+            )
+
+
+def make_lead_maps(desired_map_name: str, **kwargs) -> TensorMap:
     for lead in ECG_REST_AMP_LEADS:
         tensormap_name = f'lead_{lead}_len'
         if desired_map_name == tensormap_name:
@@ -300,6 +318,47 @@ def loyalty_time_to_event(
     return _cox_tensor_from_file
 
 
+def build_ecg_from_date(
+    file_name: str, patient_column: str = 'mrn',
+    ecg_date_column: str = 'partners_ecg_date', delimiter: str = ',',
+    population_normalize: int = 2000, target: str = 'ecg'
+) -> Callable:
+    """Build a tensor_from_file function for ECGs in the legacy cohort.
+
+    :param file_name: CSV or TSV file with header of patient IDs (MRNs) dates of enrollment and dates of diagnosis
+    :param patient_column: The header name of the column of patient ids
+    :param delimiter: The delimiter separating columns of the TSV or CSV
+    :return: The tensor_from_file function to provide to TensorMap constructors
+    """
+    with open(file_name, 'r', encoding='utf-8') as f:
+        reader = csv.reader(f, delimiter=delimiter)
+        header = next(reader)
+        patient_index = header.index(patient_column)
+        ecg_date_index = header.index(ecg_date_column)
+        patient_data = defaultdict(dict)
+        for row in reader:
+            try:
+                patient_key = int(row[patient_index])
+                patient_data[patient_key] = {
+                    'ecg_date': row[ecg_date_index],
+                }
+
+            except ValueError as e:
+                logging.debug(f'val err {e}')
+        logging.info(f'Done processing. Got {len(patient_data)} patient rows.')
+
+    def tensor_from_file(tm: TensorMap, hd5: h5py.File, dependents=None):
+        mrn_int = _hd5_filename_to_mrn_int(hd5.filename)
+        if mrn_int not in patient_data:
+            raise KeyError(f'{tm.name} mrn not in legacy csv.')
+
+        if target == 'ecg':
+            return _ecg_tensor_from_date(tm, hd5, patient_data[mrn_int]['ecg_date'], population_normalize)
+        else:
+            raise ValueError(f'{tm.name} has no way to handle target {target}')
+    return tensor_from_file
+
+
 def _survival_from_file(
     day_window: int, file_name: str, incidence_only: bool = False, patient_column: str = 'Mrn',
     follow_up_start_column: str = 'start_fu', follow_up_total_column: str = 'total_fu',
@@ -391,7 +450,7 @@ def _survival_from_file(
     return tensor_from_file
 
 
-def make_partners_diagnosis_maps(desired_map_name: str) -> Union[TensorMap, None]:
+def make_partners_diagnosis_maps(desired_map_name: str, **kwargs) -> Union[TensorMap, None]:
     diagnosis2column = {
         'atrial_fibrillation': 'first_af', 'blood_pressure_medication': 'first_bpmed',
         'coronary_artery_disease': 'first_cad', 'cardiovascular_disease': 'first_cvd',
@@ -433,49 +492,118 @@ def make_partners_diagnosis_maps(desired_map_name: str) -> Union[TensorMap, None
                 return TensorMap(f'{name}', Interpretation.SURVIVAL_CURVE, path_prefix=PARTNERS_PREFIX, shape=(50,), days_window=days_window, tensor_from_file=tff)
 
 
-def make_wide_file_maps(desired_map_name: str) -> Union[TensorMap, None]:
-    days_window = 1825
+def make_wide_file_maps(desired_map_name: str, **kwargs) -> Union[TensorMap, None]:
+    """Builds a TensorMap which uses data from a wide file CSV.
+    This function is tightly coupled with `_tensor_from_wide` defined below.
 
+    :param desired_map_name: The name of the TensorMap to create
+    :return: The TensorMap if their is a clause to create it from the specified string, otherwise None
+    """
     if desired_map_name == 'sex_from_wide_csv':
-        csv_tff = tensor_from_wide(WIDE_FILE, target='sex')
+        csv_tff = tensor_from_wide(kwargs['app_csv'], target='sex', diagnosis_column='af_age')
         return TensorMap(
             'sex_from_wide', Interpretation.CATEGORICAL, annotation_units=2, tensor_from_file=csv_tff,
-            channel_map={'female': 0, 'male': 1},
+            cacheable=False, path_prefix=PARTNERS_PREFIX, channel_map={'female': 0, 'male': 1},
         )
     elif desired_map_name == 'age_from_wide_csv':
-        csv_tff = tensor_from_wide(WIDE_FILE, target='age')
+        csv_tff = tensor_from_wide(kwargs['app_csv'], target='age', diagnosis_column='af_age')
         return TensorMap(
-            'age_from_wide', Interpretation.CONTINUOUS, shape=(1,),
-            tensor_from_file=csv_tff, channel_map={'age': 0},
-            normalization={'mean': 63.35798891483556, 'std': 7.554638350423902},
+            'age_from_wide_csv', Interpretation.CONTINUOUS, shape=(1,),
+            path_prefix=PARTNERS_PREFIX, tensor_from_file=csv_tff, channel_map={'age_in_days': 0},
+            cacheable=False, normalization=Standardize(mean=20177, std=6122),
         )
-    elif desired_map_name == 'bmi_from_wide_csv':
-        csv_tff = csv_tff = tensor_from_wide(WIDE_FILE, target='bmi')
+    elif desired_map_name == 'ecg_2500_raw_from_wide_csv':
+        tff = tensor_from_wide(kwargs['app_csv'], target='ecg', diagnosis_column='af_age')
         return TensorMap(
-            'bmi_from_wide', Interpretation.CONTINUOUS, shape=(1,), channel_map={'bmi': 0},
-            annotation_units=1, normalization={'mean': 27.3397, 'std': 4.77216}, tensor_from_file=csv_tff,
+            'ecg_2500_raw', shape=(2500, 12), path_prefix=PARTNERS_PREFIX, tensor_from_file=tff,
+            cacheable=False, channel_map=ECG_REST_UKB_LEADS, normalization=Standardize(mean=0, std=2000),
         )
     elif desired_map_name == 'ecg_2500_from_wide_csv':
-        tff = tensor_from_wide(WIDE_FILE, target='ecg')
+        tff = tensor_from_wide(kwargs['app_csv'], target='ecg', diagnosis_column='af_age')
         return TensorMap(
-            'ecg_rest_raw', shape=(2500, 12), path_prefix=PARTNERS_PREFIX, tensor_from_file=tff,
-            cacheable=False, channel_map=ECG_REST_UKB_LEADS,
+            'ecg_2500_std', shape=(2500, 12), path_prefix=PARTNERS_PREFIX, tensor_from_file=tff,
+            cacheable=False, channel_map=ECG_REST_UKB_LEADS, normalization=ZeroMeanStd1(),
+        )
+    elif desired_map_name == 'ecg_2500_from_wide_csv_0mean_std1':
+        tff = tensor_from_wide(kwargs['app_csv'], target='ecg', diagnosis_column='af_age')
+        return TensorMap(
+            'partners_ecg_2500_newest', shape=(2500, 12), path_prefix=PARTNERS_PREFIX, tensor_from_file=tff,
+            cacheable=False, channel_map=ECG_REST_AMP_LEADS, normalization=ZeroMeanStd1(),
         )
     elif desired_map_name == 'ecg_5000_from_wide_csv':
-        tff = tensor_from_wide(WIDE_FILE, target='ecg')
+        tff = tensor_from_wide(kwargs['app_csv'], target='ecg', diagnosis_column='af_age')
         return TensorMap(
-            'ecg_rest_raw', shape=(5000, 12), path_prefix=PARTNERS_PREFIX, tensor_from_file=tff,
+            'ecg_5000_std', shape=(5000, 12), path_prefix=PARTNERS_PREFIX, tensor_from_file=tff,
+            cacheable=False, channel_map=ECG_REST_UKB_LEADS, normalization=ZeroMeanStd1(),
+        )
+    elif desired_map_name == 'ecg_5000_raw_from_wide_csv':
+        tff = tensor_from_wide(kwargs['app_csv'], target='ecg', diagnosis_column='af_age')
+        return TensorMap(
+            'ecg_5000_raw', shape=(5000, 12), path_prefix=PARTNERS_PREFIX, tensor_from_file=tff,
+            cacheable=False, channel_map=ECG_REST_UKB_LEADS, normalization=Standardize(mean=0, std=2000),
+        )
+    elif desired_map_name == 'ecg_rest_stft_33_158_from_wide_csv':
+        tff = tensor_from_wide(kwargs['app_csv'], target='ecg', diagnosis_column='af_age',
+                               short_time_nperseg=64, short_time_noverlap=32)
+        return TensorMap(
+            'ecg_stft_33_158_std',  shape=(33, 158, 12), path_prefix=PARTNERS_PREFIX, tensor_from_file=tff,
             cacheable=False, channel_map=ECG_REST_UKB_LEADS,
         )
-    elif desired_map_name == 'time_to_hf_wide_csv':
-        tff = tensor_from_wide(WIDE_FILE, target='time_to_event')
-        return TensorMap('time_to_hf', Interpretation.TIME_TO_EVENT, tensor_from_file=tff)
+    elif desired_map_name == 'ecg_strip_I_from_wide_csv':
+        tff = tensor_from_wide(kwargs['app_csv'], target='ecg', diagnosis_column='af_age')
+        return TensorMap(
+            'ecg_strip_I', shape=(5000, 1), path_prefix=PARTNERS_PREFIX,
+            tensor_from_file=tff, normalization=ZeroMeanStd1(),
+            cacheable=False, channel_map={'I': 0})
+    elif desired_map_name == 'ecg_strip_II_from_wide_csv':
+        tff = tensor_from_wide(kwargs['app_csv'], target='ecg', diagnosis_column='af_age')
+        return TensorMap(
+            'ecg_strip_II', shape=(5000, 1), path_prefix=PARTNERS_PREFIX,
+            tensor_from_file=tff,  normalization=ZeroMeanStd1(),
+            cacheable=False, channel_map={'II': 0})
     elif desired_map_name == 'survival_curve_hf_wide_csv':
-        tff = tensor_from_wide(WIDE_FILE, target='survival_curve')
-        return TensorMap('survival_curve_hf', Interpretation.SURVIVAL_CURVE, tensor_from_file=tff, shape=(50,), days_window=days_window)
+        tff = tensor_from_wide(kwargs['app_csv'], target='survival_curve', )
+        return TensorMap('survival_curve_hf', Interpretation.SURVIVAL_CURVE, path_prefix=PARTNERS_PREFIX,
+                         cacheable=False, tensor_from_file=tff, shape=(50,))
+    elif desired_map_name == 'survival_curve_af_wide_csv':
+        tff = tensor_from_wide(kwargs['app_csv'], target='survival_curve', diagnosis_column='af_age', skip_prevalent=True, random_ecg_from_date_window=False)
+        return TensorMap('survival_curve_af', Interpretation.SURVIVAL_CURVE, path_prefix=PARTNERS_PREFIX,
+                         cacheable=False, tensor_from_file=tff, shape=(50,))
+    elif desired_map_name == 'survival_curve_af_include_prevalent_wide_csv':
+        tff = tensor_from_wide(kwargs['app_csv'], target='survival_curve', diagnosis_column='af_age', skip_prevalent=False)
+        return TensorMap('survival_curve_af', Interpretation.SURVIVAL_CURVE, path_prefix=PARTNERS_PREFIX,
+                         cacheable=False, tensor_from_file=tff, shape=(50,))
+    elif desired_map_name == 'survival_curve_af_include_prevalent_exclude_af_in_read_wide_csv':
+        tff = tensor_from_wide(kwargs['app_csv'], target='survival_curve', diagnosis_column='af_age',
+                               skip_prevalent=False, skip_af_in_read=True)
+        return TensorMap('survival_curve_af', Interpretation.SURVIVAL_CURVE, path_prefix=PARTNERS_PREFIX,
+                         cacheable=False, tensor_from_file=tff, shape=(50,))
+    elif desired_map_name == 'af_in_read_wide_csv':
+        tff = tensor_from_wide(kwargs['app_csv'], target='af_in_read', diagnosis_column='af_age',
+                               skip_prevalent=False)
+        return TensorMap('af_in_read', Interpretation.CATEGORICAL, path_prefix=PARTNERS_PREFIX,
+                         cacheable=False, tensor_from_file=tff, channel_map={'no_atrial_fibrillation': 0, 'atrial_fibrillation': 1})
+    elif desired_map_name == 'survival_curve_early_af_wide_csv':
+        tff = tensor_from_wide(kwargs['app_csv'], target='survival_curve', diagnosis_column='af_age', early_onset_only=True)
+        return TensorMap('survival_curve_af', Interpretation.SURVIVAL_CURVE, path_prefix=PARTNERS_PREFIX,
+                         cacheable=False, tensor_from_file=tff, shape=(50,))
+    elif desired_map_name == 'survival_curve_early_af_include_prevalent_wide_csv':
+        tff = tensor_from_wide(kwargs['app_csv'], target='survival_curve', diagnosis_column='af_age',
+                               skip_prevalent=False, early_onset_only=True)
+    elif desired_map_name == 'survival_curve_early_af_wide_csv':
+        tff = tensor_from_wide(kwargs['app_csv'], target='survival_curve', diagnosis_column='af_age',
+                               skip_prevalent=True, early_onset_only=True)
+        return TensorMap('survival_curve_af', Interpretation.SURVIVAL_CURVE, path_prefix=PARTNERS_PREFIX,
+                         cacheable=False, tensor_from_file=tff, shape=(50,))
+    elif desired_map_name == 'time_to_af_wide_csv':
+        tff = tensor_from_wide(kwargs['app_csv'], target='time_to_event', diagnosis_column='af_age', skip_prevalent=True)
+        return TensorMap('time_to_af', Interpretation.TIME_TO_EVENT, path_prefix=PARTNERS_PREFIX, tensor_from_file=tff)
+    elif desired_map_name == 'time_to_af_include_prevalent_wide_csv':
+        tff = tensor_from_wide(kwargs['app_csv'], target='time_to_event', diagnosis_column='af_age', skip_prevalent=False)
+        return TensorMap('time_to_af', Interpretation.TIME_TO_EVENT, path_prefix=PARTNERS_PREFIX, tensor_from_file=tff)
 
 
-def _date_from_dates(ecg_dates, target_date=None, earliest_date=None):
+def _date_from_dates(ecg_dates, target_date=None, earliest_date=None, random_choice=False):
     if target_date:
         if target_date and earliest_date:
             incident_dates = [d for d in ecg_dates if earliest_date < datetime.datetime.strptime(d, PARTNERS_DATETIME_FORMAT) < target_date]
@@ -483,19 +611,30 @@ def _date_from_dates(ecg_dates, target_date=None, earliest_date=None):
             incident_dates = [d for d in ecg_dates if datetime.datetime.strptime(d, PARTNERS_DATETIME_FORMAT) < target_date]
         if len(incident_dates) == 0:
             raise ValueError('No ECGs prior to target were found.')
-        return np.random.choice(incident_dates)
-    return np.random.choice(ecg_dates)
+        incident_dates.sort()
+        if random_choice:
+            return np.random.choice(incident_dates)
+        return incident_dates[-1]
+    if random_choice:
+        return np.random.choice(ecg_dates)
+    ecg_dates.sort()
+    return ecg_dates[-1]
 
-
-def _ecg_tensor_from_date(tm: TensorMap, hd5: h5py.File, ecg_date: str, population_normalize: int = None):
+def _ecg_tensor_from_date(tm: TensorMap, hd5: h5py.File, ecg_date: str,
+                          short_time_nperseg: int = 0, short_time_noverlap: int = 0):
     tensor = np.zeros(tm.shape, dtype=np.float32)
     for cm in tm.channel_map:
         path = _make_hd5_path(tm, ecg_date, cm)
         voltage = decompress_data(data_compressed=hd5[path][()], dtype=hd5[path].attrs['dtype'])
-        voltage = _resample_voltage(voltage, tm.shape[0])
-        tensor[..., tm.channel_map[cm]] = voltage
-    if population_normalize is not None:
-        tensor /= population_normalize
+        if short_time_nperseg > 0 and short_time_noverlap > 0:
+            voltage = _resample_voltage(voltage, 5000)
+            f, t, short_time_ft = scipy.signal.stft(
+                voltage, nperseg=short_time_nperseg, noverlap=short_time_noverlap,
+            )
+            tensor[..., tm.channel_map[cm]] = short_time_ft
+        else:
+            voltage = _resample_voltage(voltage, tm.shape[0])
+            tensor[..., tm.channel_map[cm]] = voltage
     return tensor
 
 
@@ -506,18 +645,18 @@ def _to_float_or_none(s):
         return None
 
 
-def _days_to_years_float(s: str):
+def _parse_days_as_float(s: str):
     try:
-        return float(s.split(' ')[0]) / YEAR_DAYS
+        return float(s.split(' ')[0])
     except ValueError:
         return None
 
 
 def _time_to_event_tensor_from_days(tm: TensorMap, has_disease: int, follow_up_days: int):
     tensor = np.zeros(tm.shape, dtype=np.float32)
-    if follow_up_days > tm.days_window:
-        has_disease = 0
-        follow_up_days = tm.days_window + 1
+    # if follow_up_days > tm.days_window:
+    #     has_disease = 0
+    #     follow_up_days = tm.days_window + 1
     tensor[0] = has_disease
     tensor[1] = follow_up_days
     return tensor
@@ -537,38 +676,64 @@ def _survival_curve_tensor_from_dates(tm: TensorMap, has_disease: int, assessmen
 
 
 def tensor_from_wide(
-    file_name: str, patient_column: str = 'Mrn', age_column: str = 'age', bmi_column: str = 'bmi',
-    sex_column: str = 'sex', hf_column: str = 'any_hf_age', start_column: str = 'start_fu',
-    end_column: str = 'last_encounter', delimiter: str = '\t', population_normalize: int = 2000,
-    target: str = 'ecg', skip_prevalent: bool = True,
+    file_name: str,
+    patient_column: str = 'fpath',
+    age_column: str = 'age',
+    sex_column: str = 'sex',
+    diagnosis_column: str = 'any_hf_age',
+    start_column: str = 'start_fu',
+    end_column: str = 'last_encounter',
+    delimiter: str = '\t',
+    target: str = 'ecg',
+    skip_prevalent: bool = False,
+    skip_af_in_read: bool = False,
+    af_in_read_strings: List = AF_IN_READ_STRINGS,
+    use_ecg_date: bool = True,
+    random_ecg_from_date_window: bool = True,
+    early_onset_only: bool = False,
+    early_onset_age: float = 65.0,
+    short_time_nperseg: int = 0,
+    short_time_noverlap: int = 0,
 ) -> Callable:
     """Build a tensor_from_file function for ECGs in the legacy cohort.
 
-    :param file_name: CSV or TSV file with header of patient IDs (MRNs) dates of enrollment and dates of diagnosis
-    :param patient_column: The header name of the column of patient ids
+    :param file_name:
+    :param patient_column:
     :param delimiter: The delimiter separating columns of the TSV or CSV
     :return: The tensor_from_file function to provide to TensorMap constructors
+
+    Args:
+        file_name: CSV or TSV file with header of patient IDs (MRNs) dates of enrollment and dates of diagnosis
+        patient_column: The header of the column of patient ids BWH or MGH MRNs, NOT linker IDs.
+        age_column: The header of the column with patient ages at start of follow-up
+        sex_column: The header of the column with patient sex
+        diagnosis_column: The header of the column with diagnosis ages (if applicable)
+        start_column: The date of the start of follow-up
+        end_column: The date of the end of follow-up
+        delimiter: delimiter character of the CSV/TSV
+        target: What data the tensor_from_file function should load.
+        skip_prevalent: Whether to include patient with a diagnosis prior to start of follow-up
+        use_ecg_date: Whether to use date of the ECG or date of start of follow-up to make predicition relative to.
+        short_time_nperseg: If 0 use raw ECG waveform when target is ecg,
+                            If not 0, Short-time Fourier Transform of ECG waveform window size
+        short_time_noverlap: Short-time Fourier Transform of ECG waveform overlap
     """
     with open(file_name, 'r', encoding='utf-8') as f:
         reader = csv.reader(f, delimiter=delimiter)
         header = next(reader)
-        hf_index = header.index(hf_column)
+        patient_data = defaultdict(dict)
         age_index = header.index(age_column)
-        bmi_index = header.index(bmi_column)
         sex_index = header.index(sex_column)
         end_index = header.index(end_column)
         start_index = header.index(start_column)
         patient_index = header.index(patient_column)
-        patient_data = defaultdict(dict)
+        diagnosis_index = header.index(diagnosis_column)
         for row in reader:
             try:
                 patient_key = int(float(row[patient_index]))
                 patient_data[patient_key] = {
-                    'age': _days_to_years_float(row[age_index]),
-                    'bmi': _to_float_or_none(row[bmi_index]),
-                    'sex': row[sex_index],
-                    'hf_age': _days_to_years_float(row[hf_index]),
-                    'end_age': _days_to_years_float(row[end_index]),
+                    'age': _parse_days_as_float(row[age_index]), 'sex': row[sex_index],
+                    'hf_age': _parse_days_as_float(row[diagnosis_index]), 'end_age': _parse_days_as_float(row[end_index]),
                     'start_date': datetime.datetime.strptime(row[start_index], CARDIAC_SURGERY_DATE_FORMAT),
                 }
 
@@ -576,26 +741,55 @@ def tensor_from_wide(
                 logging.debug(f'val err {e}')
         logging.info(f'Done processing. Got {len(patient_data)} patient rows.')
 
-    def tensor_from_file(tm: TensorMap, hd5: h5py.File, dependents=None):
+    def tensor_from_file(tm: TensorMap, hd5: h5py.File, dependents={}):
         mrn_int = _hd5_filename_to_mrn_int(hd5.filename)
         if mrn_int not in patient_data:
-            raise KeyError(f'{tm.name} mrn not in csv.')
+            raise KeyError(f'{tm.name} mrn not in wide file csv.')
         if patient_data[mrn_int]['end_age'] is None or patient_data[mrn_int]['age'] is None:
             raise ValueError(f'{tm.name} could not find ages.')
         if patient_data[mrn_int]['end_age'] - patient_data[mrn_int]['age'] < 0:
             raise ValueError(f'{tm.name} has negative follow up time.')
 
+        ecg_dates = list(hd5[tm.path_prefix])
+        earliest = patient_data[mrn_int]['start_date'] - datetime.timedelta(days=3*YEAR_DAYS)
+
+        if target == 'ecg':
+            ecg_date_key = _date_from_dates(ecg_dates, patient_data[mrn_int]['start_date'], earliest, random_choice=random_ecg_from_date_window)
+            dependents[mrn_int] = ecg_date_key
+            logging.debug(f'For MRN: {mrn_int} chose ecg_date_key: {ecg_date_key}')
+        else:
+            ecg_date_key = dependents[mrn_int]
+            logging.debug(f'For MRN: {mrn_int} loaded ecg_date_key: {ecg_date_key}')
+        ecg_date = datetime.datetime.strptime(ecg_date_key, PARTNERS_DATETIME_FORMAT)
+        age = patient_data[mrn_int]['age']
+        if use_ecg_date:
+            age = patient_data[mrn_int]['age'] - (patient_data[mrn_int]['start_date'] - ecg_date).days
+        days_to_censor = patient_data[mrn_int]['end_age'] - age
+
         if patient_data[mrn_int]['hf_age'] is None:
             has_disease = 0
-            follow_up_days = (patient_data[mrn_int]['end_age'] - patient_data[mrn_int]['age']) * YEAR_DAYS
-        elif patient_data[mrn_int]['hf_age'] > patient_data[mrn_int]['age']:
+            follow_up_days = days_to_censor
+        elif early_onset_only and patient_data[mrn_int]['hf_age'] / YEAR_DAYS > early_onset_age:
+            raise ValueError(f'{tm.name} skips cases with onset after age {early_onset_age}')
+        elif patient_data[mrn_int]['hf_age'] > age:
             has_disease = 1
-            follow_up_days = (patient_data[mrn_int]['hf_age'] - patient_data[mrn_int]['age']) * YEAR_DAYS
-        elif skip_prevalent and patient_data[mrn_int]['age'] > patient_data[mrn_int]['hf_age']:
+            follow_up_days = patient_data[mrn_int]['hf_age'] - age
+        elif skip_prevalent and age > patient_data[mrn_int]['hf_age']:
             raise ValueError(f'{tm.name} skips prevalent cases.')
+        elif skip_af_in_read:
+            for key in ['read_md_clean', 'read_pc_clean']:
+                path = _make_hd5_path(tm, ecg_date_key, key)
+                if path not in hd5:
+                    continue
+                read = decompress_data(data_compressed=hd5[path][()], dtype=hd5[path].attrs['dtype'])
+                for string in af_in_read_strings:
+                    if string in read:
+                        raise ValueError(f'{tm.name} skips ECGs with AF in the reads.')
+            has_disease = 1
+            follow_up_days = patient_data[mrn_int]['hf_age'] - age
         else:
             has_disease = 1
-            follow_up_days = (patient_data[mrn_int]['hf_age'] - patient_data[mrn_int]['age']) * YEAR_DAYS
+            follow_up_days = patient_data[mrn_int]['hf_age'] - age
 
         if target == 'time_to_event':
             tensor = _time_to_event_tensor_from_days(tm, has_disease, follow_up_days)
@@ -605,21 +799,20 @@ def tensor_from_wide(
             end_date = patient_data[mrn_int]['start_date'] + datetime.timedelta(days=follow_up_days)
             tensor = _survival_curve_tensor_from_dates(tm, has_disease, patient_data[mrn_int]['start_date'], end_date)
             logging.debug(
-                f"Got survival disease {has_disease}, censor: {end_date}, assess {patient_data[mrn_int]['start_date']}, age {patient_data[mrn_int]['age']} "
+                f"Got survival disease {has_disease}, censor: {end_date}, assess {patient_data[mrn_int]['start_date']}, age {age} "
                 f"end age: {patient_data[mrn_int]['end_age']} hf age: {patient_data[mrn_int]['hf_age']} "
                 f"fu total {follow_up_days/YEAR_DAYS} tensor:{tensor[:4]} mid tense: {tensor[tm.shape[0] // 2:(tm.shape[0] // 2)+4]} ",
             )
             return tensor
         elif target == 'ecg':
-            ecg_dates = list(hd5[tm.path_prefix])
-            earliest = patient_data[mrn_int]['start_date'] - datetime.timedelta(days=3*YEAR_DAYS)
-            ecg_date_key = _date_from_dates(ecg_dates, patient_data[mrn_int]['start_date'], earliest)
-            return _ecg_tensor_from_date(tm, hd5, ecg_date_key, population_normalize)
-        elif target in ['age', 'bmi']:
+            return _ecg_tensor_from_date(tm, hd5, ecg_date_key,
+                                         short_time_nperseg=short_time_nperseg,
+                                         short_time_noverlap=short_time_noverlap)
+        elif target == 'age':
             tensor = np.zeros(tm.shape, dtype=np.float32)
             if patient_data[mrn_int][target] is None:
                 raise ValueError(f'Missing target value {target}')
-            tensor[0] = patient_data[mrn_int][target]
+            tensor[0] = age
             return tensor
         elif target == 'sex':
             tensor = np.zeros(tm.shape, dtype=np.float32)
@@ -628,6 +821,19 @@ def tensor_from_wide(
             elif patient_data[mrn_int][target].lower() == 'male':
                 tensor[1] = 1.0
             logging.debug(f'Returning {tensor} for {patient_data[mrn_int][target]} key {mrn_int}')
+            return tensor
+        elif target == 'af_in_read':
+            tensor = np.zeros(tm.shape, dtype=np.float32)
+            index = 0
+            for key in ['read_md_clean', 'read_pc_clean']:
+                path = _make_hd5_path(tm, ecg_date_key, key)
+                if path not in hd5:
+                    continue
+                read = decompress_data(data_compressed=hd5[path][()], dtype=hd5[path].attrs['dtype'])
+                for string in af_in_read_strings:
+                    if string in read:
+                        index = 1
+            tensor[index] = 1
             return tensor
         else:
             raise ValueError(f'{tm.name} has no way to handle target {target}')
