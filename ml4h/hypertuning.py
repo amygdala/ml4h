@@ -49,7 +49,8 @@ def run(args):
     tuner.search(generate_train, epochs=args.epochs, steps_per_epoch=args.training_steps,
                  validation_data=generate_valid, validation_steps=args.validation_steps, callbacks=[stop_early])
     logging.info(f"Tuning done best models below!")
-    [m.summary() for m in tuner.get_best_models(num_models=1)]
+    for i, m in enumerate(tuner.get_best_models(num_models=3)):
+        m.summary()
     end_time = timer()
     tuner.search_space_summary()
     tuner.results_summary()
