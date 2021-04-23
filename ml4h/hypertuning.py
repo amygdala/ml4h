@@ -9,6 +9,7 @@ from tensorflow.keras.callbacks import EarlyStopping
 from kerastuner.tuners import RandomSearch, BayesianOptimization, Hyperband
 
 from ml4h.arguments import parse_args
+from ml4h.models.layer_wrappers import NORMALIZATION_CLASSES
 from ml4h.models.model_factory import block_make_multimodal_multitask_model
 from ml4h.tensor_generators import test_train_valid_tensor_generators
 
@@ -69,8 +70,11 @@ def make_model_builder(args):
         args.__dict__['dense_blocks'] = [dense_block_size] * num_dense_blocks
         args.__dict__['block_size'] = hp.Int('block_size', 1, 7)
         num_dense_layers = hp.Int('num_dense_layers', 1, 4)
-        dense_layer_size = hp.Int('dense_layer_size', 16, 128, sampling='log')
+        dense_layer_size = hp.Int('dense_layer_size', 16, 512, sampling='log')
         args.__dict__['dense_layers'] = [dense_layer_size] * num_dense_layers
+        args.__dict__['activation'] = hp.Choice('activation', ['leaky', 'swish', 'gelu', 'lisht', 'mish', 'relu', 'selu'])
+        args.__dict__['dense_normalize'] = hp.Choice('dense_normalize', list(NORMALIZATION_CLASSES.keys()) + [None])
+        args.__dict__['conv_normalize'] = hp.Choice('conv_normalize', list(NORMALIZATION_CLASSES.keys()) + [None])
         model, _, _, _ = block_make_multimodal_multitask_model(**args.__dict__)
         return model
     return model_builder
