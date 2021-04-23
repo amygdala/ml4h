@@ -12,7 +12,7 @@ import scipy
 import numpy as np
 import pandas as pd
 
-from ml4h.defines import CARDIAC_SURGERY_DATE_FORMAT, ECG_REST_UKB_LEADS_NEW
+from ml4h.defines import CARDIAC_SURGERY_DATE_FORMAT
 from ml4h.normalizer import Standardize, ZeroMeanStd1
 from ml4h.defines import ECG_REST_AMP_LEADS, ECG_REST_UKB_LEADS
 from ml4h.defines import PARTNERS_DATE_FORMAT, PARTNERS_DATETIME_FORMAT
@@ -81,7 +81,7 @@ def make_ukb_waveform_maps(desired_map_name: str, **kwargs) -> TensorMap:
                 path_prefix=PARTNERS_PREFIX,
                 tensor_from_file=make_voltage(5000),
                 normalization=Standardize(mean=0, std=2000),
-                channel_map=ECG_REST_UKB_LEADS_NEW,
+                channel_map=ECG_REST_UKB_LEADS,
                 time_series_limit=0,
                 validator=validator_not_all_zero,
             )
