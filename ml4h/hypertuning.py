@@ -78,7 +78,7 @@ def make_model_builder(args):
         model, _, _, _ = block_make_multimodal_multitask_model(**args.__dict__)
         if model.count_params() > args.max_parameters:
             logging.info(f"Model too big, max parameters is:{args.max_parameters}, model has:{model.count_params()}. Return max loss.")
-            return None
+            raise ValueError(f"Model too big, max parameters is:{args.max_parameters}, model has:{model.count_params()}. Return max loss.")
         return model
     return model_builder
 
