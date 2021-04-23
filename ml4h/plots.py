@@ -2301,12 +2301,10 @@ def plot_hit_to_miss_transforms(latent_df, decoders, input_data, feature='Sex_Fe
             elif dtm.axes() == 2:
                 index2channel = {v: k for k, v in dtm.channel_map.items()}
                 for j in range(dtm.shape[1]):
-                    axes[j, i].plot(input_data[dtm.input_name()][i, ..., j], c='g', label='Original')
+                    axes[j, i].plot(input_data[dtm.input_name()][i, ..., j], c='g', label=f'Original {feature[:16]}: {sexes[i]:.2f}')
                     axes[j, i].plot(predictions[i, ..., j], c='orange', label='Reconstruction')
-                    if sexes[i] >= thresh:
-                        axes[j, i].plot(f2m[i, ..., j], c='b', label=f'Transform {feature[:16]} to < {thresh:.2f}')
-                    else:
-                        axes[j, i].plot(m2f[i, ..., j], c='r', label=f'Transform {feature[:16]} to >= {thresh:.2f}')
+                    axes[j, i].plot(f2m[i, ..., j], c='b', label=f'Transform {feature[:16]} to < {thresh:.2f}')
+                    axes[j, i].plot(m2f[i, ..., j], c='r', label=f'Transform {feature[:16]} to > {thresh:.2f}')
                     axes[j, i].set_title(f'Lead: {index2channel[j]}')
                     axes[j, i].legend()
         plt.tight_layout()
