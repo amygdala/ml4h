@@ -177,7 +177,7 @@ def parse_args():
     parser.add_argument('--pair_loss', default='euclid', help='Distance metric between paired embeddings', choices=['euclid', 'cosine', 'contrastive'])
     parser.add_argument('--pair_loss_weight', type=float, default=1.0, help='Weight on the pair loss term relative to other losses')
     parser.add_argument(
-        '--max_parameters', default=10000000, type=int,
+        '--max_parameters', default=20000000, type=int,
         help='Maximum number of trainable parameters in a model during hyperparameter optimization.',
     )
     parser.add_argument('--bottleneck_type', type=str, default=list(BOTTLENECK_STR_TO_ENUM)[0], choices=list(BOTTLENECK_STR_TO_ENUM))
