@@ -16,7 +16,7 @@ bokeh
 Pillow==7.0.0
 notebook
 pytest
-tensorflow==2.1.0
+tensorflow==2.4.1
 tensorflow-addons==0.12.1
 tensorflow_probability==0.12.2
 keras-tuner==1.0.2
