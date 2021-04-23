@@ -3,7 +3,6 @@ pydot==1.2.4
 nibabel==2.5.0
 pydicom==1.2.2
 hyperopt==0.1.2
-keras-tuner==1.0.0
 seaborn==0.9.0
 scikit-image
 scikit-survival
@@ -20,6 +19,7 @@ pytest
 tensorflow==2.1.0
 tensorflow-addons==0.9.1
 tensorflow_probability==0.9.0
+keras-tuner==1.0.0
 numcodecs
 beautifulsoup4
 lxml
