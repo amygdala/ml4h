@@ -28,7 +28,6 @@ def run(args):
             model_builder,
             objective='val_loss', # kt.Objective("val_pearson", direction="min"),
             max_trials=args.max_models,
-            max_model_size=args.max_parameters,
             executions_per_trial=args.min_samples,
             directory=args.output_folder,
             project_name=args.id,
@@ -39,7 +38,6 @@ def run(args):
             model_builder,
             objective='val_loss', #kt.Objective("val_pearson", direction="min"),
             max_trials=args.max_models,
-            max_model_size=args.max_parameters,
             executions_per_trial=args.min_samples,
             directory=args.output_folder,
             project_name=args.id,
@@ -78,6 +76,9 @@ def make_model_builder(args):
         conv_normalize = hp.Choice('conv_normalize', list(NORMALIZATION_CLASSES.keys()) + ['None'])
         args.__dict__['conv_normalize'] = None if conv_normalize == 'None' else conv_normalize
         model, _, _, _ = block_make_multimodal_multitask_model(**args.__dict__)
+        if model.count_params() > args.max_parameters:
+            logging.info(f"Model too big, max parameters is:{args.max_parameters}, model has:{model.count_params()}. Return max loss.")
+            return None
         return model
     return model_builder
 
