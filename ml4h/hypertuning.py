@@ -26,7 +26,7 @@ def run(args):
     if 'random' == tuner_type:
         tuner = RandomSearch(
             model_builder,
-            objective='val_loss', # kt.Objective("val_pearson", direction="min"),
+            objective='val_loss', # kt.Objective("val_pearson", direction="max"),
             max_trials=args.max_models,
             executions_per_trial=args.min_samples,
             directory=args.output_folder,
@@ -36,8 +36,9 @@ def run(args):
     elif 'bayes' == tuner_type:
         tuner = BayesianOptimization(
             model_builder,
-            objective='val_loss', #kt.Objective("val_pearson", direction="min"),
+            objective='val_loss', #kt.Objective("val_pearson", direction="max"),
             max_trials=args.max_models,
+            max_model_size=args.max_parameters,
             executions_per_trial=args.min_samples,
             directory=args.output_folder,
             project_name=args.id,
@@ -61,10 +62,10 @@ def run(args):
 
 def make_model_builder(args):
     def model_builder(hp):
-        num_conv_layers = hp.Int('num_conv_layers', 0, 4)
+        num_conv_layers = hp.Int('num_conv_layers', 0, 3)
         conv_layer_size = hp.Int('conv_layer_size', 16, 64, sampling='log')
         args.__dict__['conv_layers'] = [conv_layer_size] * num_conv_layers
-        num_dense_blocks = hp.Int('num_dense_blocks', 1, 3)
+        num_dense_blocks = hp.Int('num_dense_blocks', 1, 4)
         dense_block_size = hp.Int('dense_block_size', 16, 64, sampling='log')
         args.__dict__['dense_blocks'] = [dense_block_size] * num_dense_blocks
         args.__dict__['block_size'] = hp.Int('block_size', 1, 7)
@@ -77,9 +78,9 @@ def make_model_builder(args):
         conv_normalize = hp.Choice('conv_normalize', list(NORMALIZATION_CLASSES.keys()) + ['None'])
         args.__dict__['conv_normalize'] = None if conv_normalize == 'None' else conv_normalize
         model, _, _, _ = block_make_multimodal_multitask_model(**args.__dict__)
-        if model.count_params() > args.max_parameters:
-            logging.info(f"Model too big, max parameters is:{args.max_parameters}, model has:{model.count_params()}. Return max loss.")
-            raise ValueError(f"Model too big, max parameters is:{args.max_parameters}, model has:{model.count_params()}. Return max loss.")
+        # if model.count_params() > args.max_parameters:
+        #     logging.info(f"Model too big, max parameters is:{args.max_parameters}, model has:{model.count_params()}. Return max loss.")
+        #     raise ValueError(f"Model too big, max parameters is:{args.max_parameters}, model has:{model.count_params()}. Return max loss.")
         return model
     return model_builder
 
