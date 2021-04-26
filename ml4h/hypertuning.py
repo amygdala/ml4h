@@ -70,7 +70,7 @@ def make_model_builder(args):
         args.__dict__['dense_blocks'] = [dense_block_size] * num_dense_blocks
         args.__dict__['block_size'] = hp.Int('block_size', 1, 7)
         num_dense_layers = hp.Int('num_dense_layers', 1, 4)
-        dense_layer_size = hp.Int('dense_layer_size', 16, 256, sampling='log')
+        dense_layer_size = hp.Int('dense_layer_size', 16, 128, sampling='log')
         args.__dict__['dense_layers'] = [dense_layer_size] * num_dense_layers
         args.__dict__['activation'] = hp.Choice('activation', ['leaky', 'swish', 'gelu', 'lisht', 'mish', 'relu', 'selu'])
         dense_normalize = hp.Choice('dense_normalize', list(NORMALIZATION_CLASSES.keys()) + ['None'])
