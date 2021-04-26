@@ -14,4 +14,10 @@ do
      --learning_rate 0.00005
      MODEL_FILES="${MODEL_FILES} /home/sam/trained_models/${i}_to_lv_rv/${i}_to_lv_rv.h5"
 done
-$ECHO $MODEL_FILES
+$ECHO   ./scripts/tf.sh /home/sam/ml4h/ml4h/recipes.py --mode compare_scalar --tensors /mnt/disks/annotated-cardiac-tensors-45k-2021-03-25/2020-09-21/  \
+    --input_tensors ecg.ecg_rest_median_raw_10  --output_tensors mri.LVEDV mri.LVEF mri.LVESV mri.LVM mri.LVSV mri.RVEDV mri.RVEF mri.RVESV mri.RVSV \
+    --batch_size 4 --epochs 1 --training_steps 1 --validation_steps 1 --test_steps 120 \
+    --num_workers 1 --patience 12 --tensormap_prefix ml4h.tensormap.ukb \
+    --id ecg_subsets_to_lv_rv --output_folder /home/sam/trained_models/ \
+     --test_csv /home/sam/csvs/multimodal_test_set_488.csv \
+     --models_files $MODEL_FILES
