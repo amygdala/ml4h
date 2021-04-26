@@ -1,4 +1,4 @@
-ECHO=echo
+ECHO=
 MODEL_FILES=
 array=( "multimodal_train_set_1024.csv"  "multimodal_train_set_16.csv"  "multimodal_train_set_2048.csv"  "multimodal_train_set_256.csv"  "multimodal_train_set_3350.csv"  "multimodal_train_set_3488.csv"  "multimodal_train_set_64.csv" )
 for i in "${array[@]}"
@@ -20,4 +20,4 @@ $ECHO   ./scripts/tf.sh /home/sam/ml4h/ml4h/recipes.py --mode compare_scalar --t
     --num_workers 1 --patience 12 --tensormap_prefix ml4h.tensormap.ukb \
     --id ecg_subsets_to_lv_rv --output_folder /home/sam/trained_models/ \
      --test_csv /home/sam/csvs/multimodal_test_set_488.csv \
-     --models_files $MODEL_FILES
+     --model_files $MODEL_FILES
