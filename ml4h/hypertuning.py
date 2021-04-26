@@ -20,6 +20,8 @@ def run(args):
     start_time = timer()
     if 'conv' == args.mode:
         model_builder = make_model_builder(args)
+    elif 'conv1d' == args.mode:
+        model_builder = make_model_builder_conv1d(args)
     else:
         raise ValueError('Unknown hyper-parameter optimization mode:', args.mode)
 
@@ -78,9 +80,29 @@ def make_model_builder(args):
         conv_normalize = hp.Choice('conv_normalize', list(NORMALIZATION_CLASSES.keys()) + ['None'])
         args.__dict__['conv_normalize'] = None if conv_normalize == 'None' else conv_normalize
         model, _, _, _ = block_make_multimodal_multitask_model(**args.__dict__)
-        # if model.count_params() > args.max_parameters:
-        #     logging.info(f"Model too big, max parameters is:{args.max_parameters}, model has:{model.count_params()}. Return max loss.")
-        #     raise ValueError(f"Model too big, max parameters is:{args.max_parameters}, model has:{model.count_params()}. Return max loss.")
+        return model
+    return model_builder
+
+
+def make_model_builder_conv1d(args):
+    def model_builder(hp):
+        num_conv_layers = hp.Int('num_conv_layers', 0, 3)
+        conv_layer_size = hp.Int('conv_layer_size', 16, 64, sampling='log')
+        args.__dict__['conv_layers'] = [conv_layer_size] * num_conv_layers
+        args.__dict__['conv_width'] = hp.Int('conv_layer_size', 3, 151, sampling='log')
+        num_dense_blocks = hp.Int('num_dense_blocks', 1, 3)
+        dense_block_size = hp.Int('dense_block_size', 16, 64, sampling='log')
+        args.__dict__['dense_blocks'] = [dense_block_size] * num_dense_blocks
+        args.__dict__['block_size'] = hp.Int('block_size', 1, 7)
+        num_dense_layers = hp.Int('num_dense_layers', 1, 4)
+        dense_layer_size = hp.Int('dense_layer_size', 16, 256, sampling='log')
+        args.__dict__['dense_layers'] = [dense_layer_size] * num_dense_layers
+        args.__dict__['activation'] = hp.Choice('activation', ['leaky', 'swish', 'gelu', 'lisht', 'mish', 'relu', 'selu'])
+        dense_normalize = hp.Choice('dense_normalize', list(NORMALIZATION_CLASSES.keys()) + ['None'])
+        args.__dict__['dense_normalize'] = None if dense_normalize == 'None' else dense_normalize
+        conv_normalize = hp.Choice('conv_normalize', list(NORMALIZATION_CLASSES.keys()) + ['None'])
+        args.__dict__['conv_normalize'] = None if conv_normalize == 'None' else conv_normalize
+        model, _, _, _ = block_make_multimodal_multitask_model(**args.__dict__)
         return model
     return model_builder
 
