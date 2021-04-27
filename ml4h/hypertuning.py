@@ -23,7 +23,7 @@ def run(args):
     elif 'activation' == args.mode:
         model_builder = make_model_builder_activation(args)
     elif 'normalization' == args.mode:
-        model_builder = make_model_builder_activation(args)
+        model_builder = make_model_builder_normalization(args)
     else:
         raise ValueError('Unknown hyper-parameter optimization mode:', args.mode)
 
