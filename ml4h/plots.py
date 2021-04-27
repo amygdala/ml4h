@@ -2150,7 +2150,7 @@ def plot_reconstruction(
     if None in tm.shape:  # can't handle dynamic shapes
         return
     os.makedirs(os.path.dirname(folder), exist_ok=True)
-    for i in range(num_samples):
+    for i in range(min(len(paths), num_samples)):
         sample_id = os.path.basename(paths[i]).replace(TENSOR_EXT, '')
         title = f'{tm.name}_{sample_id}_reconstruction'
         y = y_true[i]
