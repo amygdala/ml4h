@@ -67,10 +67,10 @@ def run(args):
 def make_model_builder(args):
     def model_builder(hp):
         num_conv_layers = hp.Int('num_conv_layers', 0, 3)
-        conv_layer_size = hp.Int('conv_layer_size', 16, 64, sampling='log')
+        conv_layer_size = hp.Int('conv_layer_size', 16, 64, sampling='log', step=8)
         args.__dict__['conv_layers'] = [conv_layer_size] * num_conv_layers
-        num_dense_blocks = hp.Int('num_dense_blocks', 1, 3)
-        dense_block_size = hp.Int('dense_block_size', 16, 64, sampling='log')
+        num_dense_blocks = hp.Int('num_dense_blocks', 1, 4)
+        dense_block_size = hp.Int('dense_block_size', 16, 64, sampling='log', step=8)
         args.__dict__['dense_blocks'] = [dense_block_size] * num_dense_blocks
         args.__dict__['block_size'] = hp.Int('block_size', 1, 7)
         # num_dense_layers = hp.Int('num_dense_layers', 1, 4)
@@ -81,6 +81,7 @@ def make_model_builder(args):
         args.__dict__['dense_normalize'] = None if dense_normalize == 'None' else dense_normalize
         conv_normalize = hp.Choice('conv_normalize', list(NORMALIZATION_CLASSES.keys()) + ['None'])
         args.__dict__['conv_normalize'] = None if conv_normalize == 'None' else conv_normalize
+        args.__dict__['pool_type'] = 'max' if hp.Boolean('pool_type_is_max') else 'average'
         model, _, _, _ = block_make_multimodal_multitask_model(**args.__dict__)
         return model
     return model_builder
