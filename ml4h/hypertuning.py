@@ -65,6 +65,8 @@ def run(args):
 
 
 def make_model_builder(args):
+    model_count = 0
+    
     def model_builder(hp):
         num_conv_layers = hp.Int('num_conv_layers', 0, 3)
         conv_layer_size = hp.Int('conv_layer_size', 16, 64, step=8)
@@ -83,9 +85,9 @@ def make_model_builder(args):
         args.__dict__['conv_normalize'] = None if conv_normalize == 'None' else conv_normalize
         args.__dict__['pool_type'] = 'max' if hp.Boolean('pool_type_is_max') else 'average'
         model, _, _, _ = block_make_multimodal_multitask_model(**args.__dict__)
-        nonlocal i
-        i += 1
-        logging.info(f'Hypertuner built model #{i} with {model.count_params()} parameters.')
+        nonlocal model_count
+        model_count += 1
+        logging.info(f'Hypertuner built model #{model_count} with {model.count_params()} parameters.')
         return model
     return model_builder
 
