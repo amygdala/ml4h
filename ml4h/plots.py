@@ -146,8 +146,8 @@ def evaluate_predictions(
         plot_survivorship(events_at_end, follow_up, predictions_at_end, tm.name, folder, tm.days_window)
         prediction_flat = tm.rescale(y_predictions).flatten()[:max_melt]
         truth_flat = tm.rescale(y_truth).flatten()[:max_melt]
-        if len(protected) > 0 and prediction_flat.shape[0] == truth_flat.shape[0]:
-            performance_metrics.update(subplot_pearson_per_class(prediction_flat, truth_flat, tm.channel_map, protected, title, prefix=folder))
+        if len(protected) > 0 and predictions_at_end.shape[0] == events_at_end.shape[0]:
+            performance_metrics.update(subplot_pearson_per_class(predictions_at_end, events_at_end, tm.channel_map, protected, title, prefix=folder))
     elif tm.is_time_to_event():
         c_index = 0.0  #package no longer supported concordance_index_censored(y_truth[:, 0] == 1.0, y_truth[:, 1], y_predictions[:, 0])
         concordance_return_values = ['C-Index', 'Concordant Pairs', 'Discordant Pairs', 'Tied Predicted Risk', 'Tied Event Time']
