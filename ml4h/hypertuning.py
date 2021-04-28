@@ -54,8 +54,6 @@ def run(args):
     tuner.search(generate_train, epochs=args.epochs, steps_per_epoch=args.training_steps,
                  validation_data=generate_valid, validation_steps=args.validation_steps, callbacks=[stop_early])
     logging.info(f"Tuning done best models below!")
-    for i, m in enumerate(tuner.get_best_models(num_models=3)):
-        m.summary()
     end_time = timer()
     tuner.search_space_summary()
     tuner.results_summary()
@@ -86,9 +84,9 @@ def make_model_builder(args):
         args.__dict__['pool_type'] = 'max' if hp.Boolean('pool_type_is_max') else 'average'
         model, _, _, _ = block_make_multimodal_multitask_model(**args.__dict__)
         nonlocal model_count
-        model_count += 1
         logging.info(f'Hyper-tuner is {100.0*(model_count / (args.max_models*args.min_samples))}% complete. '
                      f'Built model #{model_count} with {model.count_params()} parameters of a maximum of {args.max_models*args.min_samples}.')
+        model_count += 1
         return model
     return model_builder
 
