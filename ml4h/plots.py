@@ -144,8 +144,12 @@ def evaluate_predictions(
         calibration_title = f'{title}_at_{tm.days_window}_days'
         plot_prediction_calibration(predictions_at_end[:, np.newaxis], events_at_end[:, np.newaxis], {tm.name: 0}, calibration_title, folder)
         plot_survivorship(events_at_end, follow_up, predictions_at_end, tm.name, folder, tm.days_window)
+        prediction_flat = tm.rescale(y_predictions).flatten()[:max_melt]
+        truth_flat = tm.rescale(y_truth).flatten()[:max_melt]
+        if len(protected) > 0 and prediction_flat.shape[0] == truth_flat.shape[0]:
+            performance_metrics.update(subplot_pearson_per_class(prediction_flat, truth_flat, tm.channel_map, protected, title, prefix=folder))
     elif tm.is_time_to_event():
-        c_index = concordance_index_censored(y_truth[:, 0] == 1.0, y_truth[:, 1], y_predictions[:, 0])
+        c_index = 0.0  #package no longer supported concordance_index_censored(y_truth[:, 0] == 1.0, y_truth[:, 1], y_predictions[:, 0])
         concordance_return_values = ['C-Index', 'Concordant Pairs', 'Discordant Pairs', 'Tied Predicted Risk', 'Tied Event Time']
         logging.info(f"{[f'{label}: {value:.3f}' for label, value in zip(concordance_return_values, c_index)]}")
         new_title = f'{title}_C_Index_{c_index[0]:0.3f}'
