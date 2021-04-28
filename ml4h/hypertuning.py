@@ -66,7 +66,7 @@ def run(args):
 
 def make_model_builder(args):
     model_count = 0
-    
+
     def model_builder(hp):
         num_conv_layers = hp.Int('num_conv_layers', 0, 3)
         conv_layer_size = hp.Int('conv_layer_size', 16, 64, step=8)
@@ -87,7 +87,8 @@ def make_model_builder(args):
         model, _, _, _ = block_make_multimodal_multitask_model(**args.__dict__)
         nonlocal model_count
         model_count += 1
-        logging.info(f'Hypertuner built model #{model_count} with {model.count_params()} parameters.')
+        logging.info(f'Hyper-tuner is {100.0*(model_count / (args.max_models*args.min_samples))}% complete. '
+                     f'Built model #{model_count} with {model.count_params()} parameters of a maximum of {args.max_models*args.min_samples}.')
         return model
     return model_builder
 
