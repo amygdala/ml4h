@@ -285,7 +285,7 @@ def infer_multimodal_multitask(args):
     )
     logging.info(f"Found {len(tensor_paths)} tensor paths.")
     generate_test.set_worker_paths(tensor_paths)
-    output_maps = {tm.output_name(): tm for tm in args.tensor_maps_out}
+    output_maps = {tm.output_name(): tm for tm in no_fail_tmaps_out}
     with open(inference_tsv, mode='w') as inference_file:
         # TODO: csv.DictWriter is much nicer for this
         inference_writer = csv.writer(inference_file, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
@@ -313,14 +313,16 @@ def infer_multimodal_multitask(args):
                 logging.info(f"Inference on {stats['count']} tensors finished. Inference TSV file at: {inference_tsv}")
                 break
             prediction = model.predict(input_data)
-            predictions_dict = {name: pred for name, pred in zip(model.output_names, prediction)}
             if len(no_fail_tmaps_out) == 1:
                 prediction = [prediction]
+            predictions_dict = {name: pred for name, pred in zip(model.output_names, prediction)}
 
             csv_row = [os.path.basename(tensor_paths[0]).replace(TENSOR_EXT, '')]  # extract sample id
             if tsv_style_is_genetics:
                 csv_row *= 2
-            for y, tm in zip(prediction, no_fail_tmaps_out):
+            for ot in model.output_names:
+                y = predictions_dict[otm]
+                tm = output_maps[ot]
                 if len(tm.shape) == 1 and tm.is_continuous():
                     csv_row.append(str(tm.rescale(y)[0][0]))  # first index into batch then index into the 1x1 structure
                     if ((tm.sentinel is not None and tm.sentinel == output_data[tm.output_name()][0][0])
