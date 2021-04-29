@@ -341,7 +341,7 @@ def infer_multimodal_multitask(args):
                 elif otm.is_survival_curve():
                     intervals = otm.shape[-1] // 2
                     predicted_survivals = np.cumprod(y[:, :intervals], axis=1)
-                    csv_row.append(str(predicted_survivals[0, -1]))
+                    csv_row.append(str(1-predicted_survivals[0, -1]))
                     sick = np.sum(output_data[otm.output_name()][:, intervals:], axis=-1)
                     csv_row.append(str(sick[0]))
                     logging.info(f"predicted_survivals on {predicted_survivals} sick[0]: {sick[0]}")
