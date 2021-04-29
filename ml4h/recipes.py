@@ -340,10 +340,11 @@ def infer_multimodal_multitask(args):
                             logging.debug(f'index error at {otm.name} item {i} key {k} with cm: {otm.channel_map} y is {y.shape} y is {y}')
                 elif otm.is_survival_curve():
                     intervals = otm.shape[-1] // 2
-                    predicted_survivals = 1.0 - np.cumprod(y[:, :intervals], axis=1)
+                    predicted_survivals = np.cumprod(y[:, :intervals], axis=1)
                     csv_row.append(str(predicted_survivals[0, -1]))
                     sick = np.sum(output_data[otm.output_name()][:, intervals:], axis=-1)
                     csv_row.append(str(sick[0]))
+                    logging.info(f"predicted_survivals on {predicted_survivals} sick[0]: {sick[0]}")
 
             inference_writer.writerow(csv_row)
             tensor_paths_inferred.add(tensor_paths[0])
