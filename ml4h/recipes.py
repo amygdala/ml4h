@@ -321,7 +321,7 @@ def infer_multimodal_multitask(args):
             if tsv_style_is_genetics:
                 csv_row *= 2
             for ot in model.output_names:
-                y = predictions_dict[otm]
+                y = predictions_dict[ot]
                 tm = output_maps[ot]
                 if len(tm.shape) == 1 and tm.is_continuous():
                     csv_row.append(str(tm.rescale(y)[0][0]))  # first index into batch then index into the 1x1 structure
