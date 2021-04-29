@@ -144,8 +144,6 @@ def evaluate_predictions(
         calibration_title = f'{title}_at_{tm.days_window}_days'
         plot_prediction_calibration(predictions_at_end[:, np.newaxis], events_at_end[:, np.newaxis], {tm.name: 0}, calibration_title, folder)
         plot_survivorship(events_at_end, follow_up, predictions_at_end, tm.name, folder, tm.days_window)
-        prediction_flat = tm.rescale(y_predictions).flatten()[:max_melt]
-        truth_flat = tm.rescale(y_truth).flatten()[:max_melt]
         if len(protected) > 0 and predictions_at_end.shape[0] == events_at_end.shape[0]:
             performance_metrics.update(subplot_pearson_per_class(predictions_at_end, events_at_end, tm.channel_map, protected, title, prefix=folder))
     elif tm.is_time_to_event():

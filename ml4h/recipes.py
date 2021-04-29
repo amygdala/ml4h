@@ -285,21 +285,23 @@ def infer_multimodal_multitask(args):
     )
     logging.info(f"Found {len(tensor_paths)} tensor paths.")
     generate_test.set_worker_paths(tensor_paths)
+    output_maps = {tm.output_name(): tm for tm in args.tensor_maps_out}
     with open(inference_tsv, mode='w') as inference_file:
         # TODO: csv.DictWriter is much nicer for this
         inference_writer = csv.writer(inference_file, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         header = ['sample_id']
         if tsv_style_is_genetics:
             header = ['FID', 'IID']
-        for ot, otm in zip(args.output_tensors, args.tensor_maps_out):
+        for ot in model.output_names:
+            otm = output_maps[ot]
             logging.info(f"Got ot  {ot} and otm {otm}  ot and otm {otm.name} ot  and otm {otm.channel_map} channel_map and otm {otm.interpretation}.")
             if len(otm.shape) == 1 and otm.is_continuous() or otm.is_survival_curve():
-                header.extend([ot+'_prediction', ot+'_actual'])
+                header.extend([otm.name+'_prediction', otm.name+'_actual'])
             elif len(otm.shape) == 1 and otm.is_categorical():
                 channel_columns = []
                 for k in otm.channel_map:
-                    channel_columns.append(ot + '_' + k + '_prediction')
-                    channel_columns.append(ot + '_' + k + '_actual')
+                    channel_columns.append(otm.name + '_' + k + '_prediction')
+                    channel_columns.append(otm.name + '_' + k + '_actual')
                 header.extend(channel_columns)
         inference_writer.writerow(header)
 
@@ -311,6 +313,7 @@ def infer_multimodal_multitask(args):
                 logging.info(f"Inference on {stats['count']} tensors finished. Inference TSV file at: {inference_tsv}")
                 break
             prediction = model.predict(input_data)
+            predictions_dict = {name: pred for name, pred in zip(model.output_names, prediction)}
             if len(no_fail_tmaps_out) == 1:
                 prediction = [prediction]
 
