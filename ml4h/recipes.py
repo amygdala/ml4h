@@ -322,27 +322,27 @@ def infer_multimodal_multitask(args):
                 csv_row *= 2
             for ot in model.output_names:
                 y = predictions_dict[ot]
-                tm = output_maps[ot]
-                if len(tm.shape) == 1 and tm.is_continuous():
-                    csv_row.append(str(tm.rescale(y)[0][0]))  # first index into batch then index into the 1x1 structure
-                    if ((tm.sentinel is not None and tm.sentinel == output_data[tm.output_name()][0][0])
-                            or np.isnan(output_data[tm.output_name()][0][0])):
+                otm = output_maps[ot]
+                if len(otm.shape) == 1 and otm.is_continuous():
+                    csv_row.append(str(otm.rescale(y)[0][0]))  # first index into batch then index into the 1x1 structure
+                    if ((otm.sentinel is not None and otm.sentinel == output_data[otm.output_name()][0][0])
+                            or np.isnan(output_data[otm.output_name()][0][0])):
                         csv_row.append("NA")
                     else:
-                        csv_row.append(str(tm.rescale(output_data[tm.output_name()])[0][0]))
-                elif len(tm.shape) == 1 and tm.is_categorical():
-                    for k, i in tm.channel_map.items():
+                        csv_row.append(str(otm.rescale(output_data[otm.output_name()])[0][0]))
+                elif len(otm.shape) == 1 and otm.is_categorical():
+                    for k, i in otm.channel_map.items():
                         try:
-                            csv_row.append(str(y[0][tm.channel_map[k]]))
-                            actual = output_data[tm.output_name()][0][i]
+                            csv_row.append(str(y[0][otm.channel_map[k]]))
+                            actual = output_data[otm.output_name()][0][i]
                             csv_row.append("NA" if np.isnan(actual) else str(actual))
                         except IndexError:
-                            logging.debug(f'index error at {tm.name} item {i} key {k} with cm: {tm.channel_map} y is {y.shape} y is {y}')
+                            logging.debug(f'index error at {otm.name} item {i} key {k} with cm: {otm.channel_map} y is {y.shape} y is {y}')
                 elif otm.is_survival_curve():
                     intervals = otm.shape[-1] // 2
                     predicted_survivals = np.cumprod(y[:, :intervals], axis=1)
                     csv_row.append(str(predicted_survivals[0, -1]))
-                    sick = np.sum(output_data[tm.output_name()][:, intervals:], axis=-1)
+                    sick = np.sum(output_data[otm.output_name()][:, intervals:], axis=-1)
                     csv_row.append(str(sick[0]))
 
             inference_writer.writerow(csv_row)
