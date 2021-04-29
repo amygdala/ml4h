@@ -344,7 +344,6 @@ def infer_multimodal_multitask(args):
                     csv_row.append(str(1-predicted_survivals[0, -1]))
                     sick = np.sum(output_data[otm.output_name()][:, intervals:], axis=-1)
                     csv_row.append(str(sick[0]))
-                    logging.info(f"predicted_survivals on {1-predicted_survivals[0, -1]} sick[0]: {sick[0]}")
 
             inference_writer.writerow(csv_row)
             tensor_paths_inferred.add(tensor_paths[0])
