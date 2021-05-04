@@ -418,8 +418,8 @@ def infer_encoders_block_multimodal_multitask(args):
     _, encoders, _, _ = block_make_multimodal_multitask_model(**args.__dict__)
     latent_dimensions = args.dense_layers[-1]
     for e in encoders:
-        inference_tsv = _hidden_file_name(args.output_folder, f'{e.name}_{args.hidden_layer}', args.id, '.tsv')
-        logging.info(f'Will write inferences to: {inference_tsv}')
+        inference_tsv = _hidden_file_name(args.output_folder, e.name, args.id, '.tsv')
+        logging.info(f'Will write encodings from {e.name} to: {inference_tsv}')
         with open(inference_tsv, mode='w') as inference_file:
             inference_writer = csv.writer(inference_file, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             header = ['FID', 'IID'] if tsv_style_is_genetics else ['sample_id']
