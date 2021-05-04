@@ -406,20 +406,21 @@ def infer_hidden_layer_multimodal_multitask(args):
 def infer_encoders_block_multimodal_multitask(args):
     stats = Counter()
     args.num_workers = 0
-
     tsv_style_is_genetics = 'genetics' in args.tsv_style
     tensor_paths = [os.path.join(args.tensors, tp) for tp in sorted(os.listdir(args.tensors)) if os.path.splitext(tp)[-1].lower() == TENSOR_EXT]
-    # hard code batch size to 1 so we can iterate over file names and generated tensors together in the tensor_paths for loop
-    generate_test = TensorGenerator(
-        1, args.tensor_maps_in, args.tensor_maps_out, tensor_paths, num_workers=0,
-        cache_size=args.cache_size, keep_paths=True, mixup=args.mixup_alpha,
-    )
-    generate_test.set_worker_paths(tensor_paths)
     _, encoders, _, _ = block_make_multimodal_multitask_model(**args.__dict__)
     latent_dimensions = args.dense_layers[-1]
     for e in encoders:
         inference_tsv = _hidden_file_name(args.output_folder, e.name, args.id, '.tsv')
         logging.info(f'Will write encodings from {e.name} to: {inference_tsv}')
+        # hard code batch size to 1 so we can iterate over file names and generated tensors together in the tensor_paths for loop
+        generate_test = TensorGenerator(
+            1, args.tensor_maps_in, args.tensor_maps_out, tensor_paths, num_workers=0,
+            cache_size=args.cache_size, keep_paths=True, mixup=args.mixup_alpha,
+        )
+        generate_test.set_worker_paths(tensor_paths)
+        if e.name == 'ecg_rest_median_raw_10':
+            continue # HACK FOR NOW REMOVE ME
         with open(inference_tsv, mode='w') as inference_file:
             inference_writer = csv.writer(inference_file, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             header = ['FID', 'IID'] if tsv_style_is_genetics else ['sample_id']
