@@ -217,7 +217,8 @@ def plot_metric_history(history, training_steps: int, title: str, prefix='./figu
                     break
 
     plt.tight_layout()
-    figure_path = os.path.join(prefix, 'metric_history_' + title + IMAGE_EXT)
+    now_string = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
+    figure_path = os.path.join(prefix, f'metrics_{now_string}_{title}{IMAGE_EXT}')
     if not os.path.exists(os.path.dirname(figure_path)):
         os.makedirs(os.path.dirname(figure_path))
     plt.savefig(figure_path)
