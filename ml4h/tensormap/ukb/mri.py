@@ -1336,7 +1336,7 @@ sax_random_slice = TensorMap(
     path_prefix='ukb_cardiac_mri', normalization=ZeroMeanStd1(), dependent_map=sax_random_slice_segmented,
 )
 sax_random_slice_lv_pix = TensorMap(
-    'sax_random_slice_lv_pix', shape=(224, 224, 1), tensor_from_file=sax_random_slice_tensor_maker('cine_segmented_sax_inlinevf/2', 'cine_segmented_sax_inlinevf_segmented/2', '/home/sam/csvs/summed-lv-pixelcount.tsv '),
+    'sax_random_slice_lv_pix', shape=(224, 224, 1), tensor_from_file=sax_random_slice_tensor_maker('cine_segmented_sax_inlinevf/2', 'cine_segmented_sax_inlinevf_segmented/2', '/home/sam/csvs/summed-lv-pixelcount.tsv'),
     path_prefix='ukb_cardiac_mri', normalization=ZeroMeanStd1(), dependent_map=sax_lv_pix,
 )
 
