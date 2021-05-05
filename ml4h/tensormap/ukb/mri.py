@@ -1318,7 +1318,7 @@ def sax_random_slice_tensor_maker(b_series_prefix, b_segmented_prefix, lv_tsv=No
         tensor[:, :, 0] = pad_or_crop_array_to_shape(tm_shape, np.array(hd5[f'{tm.path_prefix}/{b_series_prefix}/{random_key}'], dtype=np.float32))
         if lv_tsv:
             sample_id = os.path.basename(hd5.filename).replace('.hd5', '',)
-            dependents[tm.dependent_map] = lv_table[sample_id, "2", f"{random_key}"]
+            dependents[tm.dependent_map] = lv_table[sample_id, "2", random_key.replace("instance_", "")]
         categorical_index_slice = pad_or_crop_array_to_shape(tm_shape, np.array(hd5[f'{tm.path_prefix}/{b_segmented_prefix}/{random_key}'], dtype=np.float32))
         dependents[tm.dependent_map] = to_categorical(categorical_index_slice, len(tm.dependent_map.channel_map))
         return tensor
