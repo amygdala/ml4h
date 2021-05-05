@@ -1,5 +1,7 @@
 # MRI-specific tensormaps
+import csv
 import logging
+import os
 from typing import Dict, Tuple, Callable
 
 import h5py
@@ -1302,24 +1304,40 @@ sax_all_systole_3d = TensorMap(
 )
 
 
-def sax_random_slice(b_series_prefix, b_segmented_prefix):
+def sax_random_slice(b_series_prefix, b_segmented_prefix, lv_tsv=None):
+    if lv_tsv:
+        with open(lv_tsv, 'r') as f:
+            reader = csv.reader(f, delimiter='\t')
+            next(reader)
+            lv_table = {(row[0], row[1], row[2]): np.array([float(row[3])]) for row in reader}
+
     def sax_slice_from_file(tm, hd5, dependents={}):
         tensor = np.zeros(tm.shape, dtype=np.float32)
         tm_shape = (tm.shape[0], tm.shape[1])
         random_key = np.random.choice(list(hd5[f'{tm.path_prefix}/{b_series_prefix}/'].keys()))
         tensor[:, :, 0] = pad_or_crop_array_to_shape(tm_shape, np.array(hd5[f'{tm.path_prefix}/{b_series_prefix}/{random_key}'], dtype=np.float32))
+        if lv_tsv:
+            sample_id = os.path.basename(hd5.filename).replace('.hd5', '',)
+            dependents[tm.dependent_map] = lv_table[sample_id, "2", f"{random_key}"]
         categorical_index_slice = pad_or_crop_array_to_shape(tm_shape, np.array(hd5[f'{tm.path_prefix}/{b_segmented_prefix}/{random_key}'], dtype=np.float32))
         dependents[tm.dependent_map] = to_categorical(categorical_index_slice, len(tm.dependent_map.channel_map))
         return tensor
     return sax_slice_from_file
 
 
+sax_lv_pix = TensorMap(
+    'sax_lv_pix', Interpretation.CONTINUOUS, shape=(1,), channel_map={'sax_lv_pix': 0},
+)
 sax_random_slice_segmented = TensorMap(
     'sax_random_slice_segmented', Interpretation.CATEGORICAL, shape=(224, 224, len(MRI_SEGMENTED_CHANNEL_MAP)), channel_map=MRI_SEGMENTED_CHANNEL_MAP,
 )
 sax_random_slice = TensorMap(
     'sax_random_slice', shape=(224, 224, 1), tensor_from_file=sax_random_slice('cine_segmented_sax_inlinevf/2', 'cine_segmented_sax_inlinevf_segmented/2'),
     path_prefix='ukb_cardiac_mri', normalization=ZeroMeanStd1(), dependent_map=sax_random_slice_segmented,
+)
+sax_random_slice_lv_pix = TensorMap(
+    'sax_random_slice', shape=(224, 224, 1), tensor_from_file=sax_random_slice('cine_segmented_sax_inlinevf/2', 'cine_segmented_sax_inlinevf_segmented/2', '/home/sam/csvs/summed-lv-pixelcount.tsv '),
+    path_prefix='ukb_cardiac_mri', normalization=ZeroMeanStd1(), dependent_map=sax_lv_pix,
 )
 
 
