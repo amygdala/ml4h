@@ -218,7 +218,7 @@ class L2LossLayer(Layer):
 
     def call(self, inputs):
         #self.add_loss(self.weight * tf.reduce_sum(tf.square(inputs[0] - inputs[1])))
-        self.add_loss(self.weight * l2_norm(inputs[0] - inputs[1]))
+        self.add_loss(self.weight * K.mean(l2_norm(inputs[0] - inputs[1])))
         return inputs
 
 
