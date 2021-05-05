@@ -1305,13 +1305,19 @@ sax_all_systole_3d = TensorMap(
 
 
 def sax_random_slice_tensor_maker(b_series_prefix, b_segmented_prefix, lv_tsv=None):
+    error = None
     if lv_tsv:
-        with open(lv_tsv, 'r') as f:
-            reader = csv.reader(f, delimiter='\t')
-            next(reader)
-            lv_table = {(row[0], row[1], row[2]): np.array([float(row[3])]) for row in reader}
+        try:
+            with open(lv_tsv, 'r') as f:
+                reader = csv.reader(f, delimiter='\t')
+                next(reader)
+                lv_table = {(row[0], row[1], row[2]): np.array([float(row[3])]) for row in reader}
+        except FileNotFoundError as e:
+            error = e
 
     def sax_slice_from_file(tm, hd5, dependents={}):
+        if error:
+            raise error
         tensor = np.zeros(tm.shape, dtype=np.float32)
         tm_shape = (tm.shape[0], tm.shape[1])
         random_key = np.random.choice(list(hd5[f'{tm.path_prefix}/{b_series_prefix}/'].keys()))
