@@ -1334,7 +1334,7 @@ def sax_random_slice_tensor_maker(b_series_prefix, b_segmented_prefix, lv_tsv=No
 
 
 sax_lv_pix = TensorMap(
-    'sax_lv_pix', Interpretation.CONTINUOUS, shape=(1,), channel_map={'sax_lv_pix': 0},
+    'sax_lv_pix', Interpretation.CONTINUOUS, shape=(1,), channel_map={'sax_lv_pix': 0}, normalization=Standardize(mean=100.43, std=38.57)
 )
 sax_random_slice_segmented = TensorMap(
     'sax_random_slice_segmented', Interpretation.CATEGORICAL, shape=(224, 224, len(MRI_SEGMENTED_CHANNEL_MAP)), channel_map=MRI_SEGMENTED_CHANNEL_MAP,
