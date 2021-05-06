@@ -336,16 +336,14 @@ def make_hidden_layer_model(parent_model: Model, tensor_maps_in: List[TensorMap]
     # TODO: handle more nested models?
     for layer in parent_model.layers:
         if isinstance(layer, Model):
-            for l2 in layer.layers:
-                logging.info(f'at layer: {layer.name} l2 {l2.name}')
-                if isinstance(l2, Model):
-                    try:
-                        target_layer = l2.get_layer(output_layer_name)
-                        parent_inputs = [l2.get_layer(tm.input_name()).input for tm in tensor_maps_in]
-                        break
-                    except ValueError:
-                        logging.warning(f'Value error searching for layer: {output_layer_name} at layer: {layer.name} l2 {l2.name}')
-                        continue
+            try:
+                target_layer = layer.get_layer(output_layer_name)
+                parent_inputs = [layer.get_layer(tm.input_name()).input for tm in tensor_maps_in]
+                logging.info(f'Found {output_layer_name} nested in layer model: {layer.name}')
+                break
+            except ValueError:
+                logging.warning(f'Value error searching for layer: {output_layer_name} at layer: {layer.name}')
+                continue
     if not target_layer:
         target_layer = parent_model.get_layer(output_layer_name)
         parent_inputs = [parent_model.get_layer(tm.input_name()).input for tm in tensor_maps_in]
