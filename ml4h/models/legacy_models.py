@@ -341,6 +341,7 @@ def make_hidden_layer_model(parent_model: Model, tensor_maps_in: List[TensorMap]
                 parent_model = layer
                 break
             except ValueError:
+                logging.warning(f'Value error searching for layer: {output_layer_name}')
                 continue
     if not target_layer:
         target_layer = parent_model.get_layer(output_layer_name)
