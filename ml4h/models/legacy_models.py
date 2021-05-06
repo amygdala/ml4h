@@ -337,6 +337,7 @@ def make_hidden_layer_model(parent_model: Model, tensor_maps_in: List[TensorMap]
     for layer in parent_model.layers:
         if isinstance(layer, Model):
             for l2 in layer.layers:
+                logging.info(f'at layer: {layer.name} l2 {l2.name}')
                 if isinstance(l2, Model):
                     try:
                         target_layer = l2.get_layer(output_layer_name)
