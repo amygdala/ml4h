@@ -415,7 +415,7 @@ def infer_encoders_block_multimodal_multitask(args):
         logging.info(f'Will write encodings from {e.name} to: {inference_tsv}')
         # hard code batch size to 1 so we can iterate over file names and generated tensors together in the tensor_paths for loop
         generate_test = TensorGenerator(
-            1, [e], [e], tensor_paths, num_workers=0,
+            1, [e], [], tensor_paths, num_workers=0,
             cache_size=args.cache_size, keep_paths=True, mixup=args.mixup_alpha,
         )
         generate_test.set_worker_paths(tensor_paths)
