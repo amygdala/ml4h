@@ -419,8 +419,6 @@ def infer_encoders_block_multimodal_multitask(args):
             cache_size=args.cache_size, keep_paths=True, mixup=args.mixup_alpha,
         )
         generate_test.set_worker_paths(tensor_paths)
-        if e.name == 'ecg_rest_median_raw_10':
-            continue # HACK FOR NOW REMOVE ME
         with open(inference_tsv, mode='w') as inference_file:
             inference_writer = csv.writer(inference_file, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             header = ['FID', 'IID'] if tsv_style_is_genetics else ['sample_id']
