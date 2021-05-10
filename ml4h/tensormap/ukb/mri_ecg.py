@@ -51,7 +51,7 @@ def _heart_mask_and_ecg_instances(mri_path_prefix, mri_shape, mri_key, mri_segme
                 ecg_start = (frame-1) * (ecg_shape[0] // total_instances)
                 ecg_stop = frame * (ecg_shape[0] // total_instances)
                 for lead in ecg_leads:
-                    lead_index = ecg_leads[lead] + mri_shape[1]
+                    lead_index = ecg_leads[lead] + mri_shape[0]
                     if len(mri_shape) == 3:
                         tensor[lead_index, :, frame-1] = np.repeat(ecg[ecg_start:ecg_stop, ecg_leads[lead]], tm.shape[1]//(ecg_stop-ecg_start))
                     elif len(mri_shape) == 4:
