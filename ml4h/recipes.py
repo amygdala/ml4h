@@ -411,8 +411,8 @@ def infer_encoders_block_multimodal_multitask(args):
     _, encoders, _, _ = block_make_multimodal_multitask_model(**args.__dict__)
     latent_dimensions = args.dense_layers[-1]
     for e in encoders:
-        if e.name == 'ecg_rest_median_raw_10':
-            continue
+        # if e.name == 'ecg_rest_median_raw_10':
+        #     continue
         inference_tsv = _hidden_file_name(args.output_folder, e.name, args.id, '.tsv')
         logging.info(f'Will write encodings from {e.name} to: {inference_tsv}')
         # hard code batch size to 1 so we can iterate over file names and generated tensors together in the tensor_paths for loop
