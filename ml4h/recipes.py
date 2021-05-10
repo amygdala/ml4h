@@ -364,10 +364,11 @@ def infer_hidden_layer_multimodal_multitask(args):
     inference_tsv = _hidden_file_name(args.output_folder, args.hidden_layer, args.id, '.tsv')
     tsv_style_is_genetics = 'genetics' in args.tsv_style
     tensor_paths = [os.path.join(args.tensors, tp) for tp in sorted(os.listdir(args.tensors)) if os.path.splitext(tp)[-1].lower() == TENSOR_EXT]
+    no_fail_tmaps_out = [_make_tmap_nan_on_fail(tmap) for tmap in args.tensor_maps_out]
     # hard code batch size to 1 so we can iterate over file names and generated tensors together in the tensor_paths for loop
     generate_test = TensorGenerator(
-        1, args.tensor_maps_in, args.tensor_maps_out, tensor_paths, num_workers=0,
-        cache_size=args.cache_size, keep_paths=True, mixup=args.mixup_alpha,
+        1, args.tensor_maps_in, no_fail_tmaps_out, tensor_paths, num_workers=0,
+        cache_size=0, keep_paths=True, mixup=args.mixup_alpha,
     )
     generate_test.set_worker_paths(tensor_paths)
     full_model = make_multimodal_multitask_model(**args.__dict__)
