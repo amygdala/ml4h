@@ -146,8 +146,9 @@ class PairLossBlock(Block):
             self.loss_layer = ContrastiveLossLayer(pair_loss_weight, batch_size)
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]] = None) -> Tensor:
+        y = []
         for left, right in self.pairs:
-            y = self.loss_layer([intermediates[left][-1], intermediates[right][-1]])
+            y.extend(self.loss_layer([intermediates[left][-1], intermediates[right][-1]]))
         return Average()(y)
 
 
