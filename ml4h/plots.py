@@ -450,7 +450,6 @@ def subplot_pearson_per_class(
 ) -> Dict[str, float]:
     lw = 2
     alpha = 0.5
-    labels_to_areas = {}
     total_plots = len(protected) + 1
     cols = max(2, int(math.ceil(math.sqrt(total_plots))))
     rows = max(2, int(math.ceil(total_plots / cols)))
@@ -474,7 +473,7 @@ def subplot_pearson_per_class(
     plt.savefig(figure_path, bbox_inches='tight')
     plt.clf()
     logging.info(f"{label_text} saved at: {figure_path}{f' with {len(protected)} protected TensorMaps.' if len(protected) else '.'}")
-    return labels_to_areas
+    return {'Pearson': pearson, 'R^2': big_r_squared, 'Mean Absolute Error': mae}
 
 
 def subplot_scatters(scatters: List[Tuple[np.ndarray, np.ndarray, str, Optional[List[str]]]], prefix: str='./figures/', top_k: int=3, alpha: float=0.5):
