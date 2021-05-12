@@ -14,7 +14,7 @@ do
     --id ${ID}_fold_${i} --output_folder /home/sam/trained_models/ \
     --test_csv $TEST_CSV
     $ECHO ./scripts/tf.sh /home/sam/ml4h/ml4h/recipes.py --mode train --tensors ${TENSORS}  \
-     --input_tensors gre_mullti_echo_10_te_liver --output_tensors proton_fat \
+     --input_tensors gre_mullti_echo_10_te_liver --output_tensors proton_fat --tensormap_prefix ml4h.tensormap.ukb.mri \
      --training_steps 96 --validation_steps 32 --test_steps 32 --batch_size 8 --epochs 108 --patience 24 \
      --output_folder /home/sam/ml/trained_models/ --test_csv $TEST_CSV \
      --id ${ID}_fold_${i} --inspect_model
