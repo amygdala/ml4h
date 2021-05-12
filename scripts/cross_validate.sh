@@ -1,8 +1,8 @@
-ECHO=echo
+ECHO=
 MODEL_FILES=
 ID=liver_fat_student
 INPUT_TENSORS=lms_ideal_optimised_low_flip_6dyn
-OUTPUT_TENSORS=proton_fat
+OUTPUT_TENSORS=liver_fat_echo_predicted
 FOLDS=10
 TEST_CSV=/home/sam/testing_sample_ids_ideal_protocol.txt
 TENSORS=/mnt/disks/liver-tensors-40k/2019-11-13/
