@@ -18,7 +18,7 @@ do
     $ECHO ./scripts/tf.sh /home/sam/ml4h/ml4h/recipes.py --mode train --tensors ${TENSORS}  \
          --input_tensors $INPUT_TENSORS --output_tensors $OUTPUT_TENSORS --tensormap_prefix ml4h.tensormap.ukb.mri \
          --dense_blocks 32 24 16 --dense_layers 16 64 \
-         --training_steps 96 --validation_steps 32 --test_steps 32 --batch_size 8 --epochs 64 --patience 12 \
+         --training_steps 96 --validation_steps 32 --test_steps 32 --batch_size 4 --epochs 96 --patience 12 \
          --output_folder /home/sam/trained_models/ --test_csv $TEST_CSV \
          --id ${ID}_fold_${i} --random_seed $i
     $ECHO ./scripts/tf.sh /home/sam/ml4h/ml4h/recipes.py --mode infer --tensors ${TENSORS}  \
