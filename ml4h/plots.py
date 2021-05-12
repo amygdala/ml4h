@@ -440,6 +440,10 @@ def plot_scatters(predictions, truth, title, prefix='./figures/', paths=None, to
     logging.info("Saved scatter plot at: {}".format(figure_path))
 
 
+def _mean_absolute_error(x, y):
+    return np.sum(np.abs(x-y)) / x.shape[0]
+
+
 def subplot_pearson_per_class(
     prediction: np.ndarray, truth: np.ndarray, labels: Dict[str, int],
     protected: Dict[TensorMap, np.ndarray], title: str, prefix: str = './figures/',
@@ -458,7 +462,8 @@ def subplot_pearson_per_class(
     axes[-1, -1].plot([np.min(prediction), np.max(prediction)], [np.min(prediction), np.max(prediction)], linewidth=4)
     pearson = np.corrcoef(prediction.flatten(), truth.flatten())[1, 0]
     big_r_squared = coefficient_of_determination(truth, prediction)
-    label_text = f'Pearson:{pearson:0.3f} r^2:{pearson * pearson:0.3f} R^2:{big_r_squared:0.3f} n={truth.shape[0]:.0f}'
+    mae = _mean_absolute_error(truth, prediction)
+    label_text = f'Pearson:{pearson:0.3f} r^2:{pearson * pearson:0.3f} R^2:{big_r_squared:0.3f}, MAE:{mae:0.3f}, n={truth.shape[0]:.0f}'
     axes[-1, -1].scatter(prediction, truth, color=color, lw=lw, label=label_text, marker='.', alpha=alpha)
     axes[-1, -1].legend(loc='lower right')
     axes[-1, -1].set_title(f'Pearson {title}')
