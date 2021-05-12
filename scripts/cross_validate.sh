@@ -11,13 +11,13 @@ do
     --input_tensors gre_mullti_echo_10_te_liver proton_fat  --output_tensors  \
     --batch_size 4 \
     --tensormap_prefix ml4h.tensormap.ukb.mri \
-    --id ${id}_fold_${i} --output_folder /home/sam/trained_models/ \
+    --id ${ID}_fold_${i} --output_folder /home/sam/trained_models/ \
     --test_csv $TEST_CSV
     $ECHO ./scripts/tf.sh /home/sam/ml4h/ml4h/recipes.py --mode train --tensors ${TENSORS}  \
      --input_tensors gre_mullti_echo_10_te_liver --output_tensors proton_fat \
      --training_steps 96 --validation_steps 32 --test_steps 32 --batch_size 8 --epochs 108 --patience 24 \
      --output_folder /home/sam/ml/trained_models/ --test_csv $TEST_CSV \
-     --id ${id}_fold_${i} --inspect_model
+     --id ${ID}_fold_${i} --inspect_model
 done
 # $ECHO   ./scripts/tf.sh /home/sam/ml4h/ml4h/recipes.py --mode compare_scalar --tensors /mnt/disks/annotated-cardiac-tensors-45k-2021-03-25/2020-09-21/  \
 #     --input_tensors ecg.ecg_rest_median_raw_10  --output_tensors mri.LVEDV mri.LVEF mri.LVESV mri.LVM mri.LVSV mri.RVEDV mri.RVEF mri.RVESV mri.RVSV \
