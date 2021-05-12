@@ -5,7 +5,6 @@ FOLDS=10
 TEST_CSV=/home/sam/testing_sample_ids_echo_protocol.txt
 TENSORS=/mnt/disks/liver-tensors-40k/2019-11-13/
 for i in $(seq 1 $FOLDS)
-do echo $i; done
 do
     $ECHO "Cross validation fold: ${i}"
     $ECHO  ./scripts/tf.sh /home/sam/ml4h/ml4h/recipes.py --mode explore --tensors ${TENSORS}  \
