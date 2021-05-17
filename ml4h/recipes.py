@@ -408,7 +408,15 @@ def infer_encoders_block_multimodal_multitask(args):
     stats = Counter()
     args.num_workers = 0
     tsv_style_is_genetics = 'genetics' in args.tsv_style
-    tensor_paths = [os.path.join(args.tensors, tp) for tp in sorted(os.listdir(args.tensors)) if os.path.splitext(tp)[-1].lower() == TENSOR_EXT]
+    sample_set = None
+    if args.sample_csv is not None:
+        with open(args.sample_csv, 'r') as csv_file:
+            sample_ids = [row[0] for row in csv.reader(csv_file)]
+            sample_set = set(sample_ids[1:])
+    tensor_paths = [
+        os.path.join(args.tensors, tp) for tp in sorted(os.listdir(args.tensors))
+        if os.path.splitext(tp)[-1].lower() == TENSOR_EXT and (sample_set is None or os.path.splitext(tp)[0] in sample_set)
+    ]
     _, encoders, _, _ = block_make_multimodal_multitask_model(**args.__dict__)
     latent_dimensions = args.dense_layers[-1]
     for e in encoders:
