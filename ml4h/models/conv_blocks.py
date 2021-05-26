@@ -364,6 +364,8 @@ class ConvUp(Block):
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]] = None) -> Tensor:
         if not self.can_apply():
             return x
+        if x.shape != self.start_shape:
+            x = self.reshape(x)
         for convolve, activate, normalize, regularize, upsample in zip(
                 self.conv_layers, self.activations, self.normalizations, self.regularizations, self.upsamples
         ):
