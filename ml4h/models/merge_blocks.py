@@ -134,10 +134,12 @@ class PairLossBlock(Block):
             pairs: List[Tuple[TensorMap, TensorMap]],
             pair_loss: str = 'cosine',
             pair_loss_weight: float = 1.0,
+            pair_merge: str = 'dropout',
             batch_size: int = 4,
             **kwargs,
     ):
         self.pairs = pairs
+        self.pair_merge = pair_merge
         if pair_loss == 'cosine':
             self.loss_layer = CosineLossLayer(pair_loss_weight)
         elif pair_loss == 'euclid':
@@ -149,7 +151,17 @@ class PairLossBlock(Block):
         y = []
         for left, right in self.pairs:
             y.extend(self.loss_layer([intermediates[left][-1], intermediates[right][-1]]))
-        return Average()(y)
+        if self.pair_merge == 'average':
+            return Average()(y)
+        elif self.pair_merge == 'concat':
+            return concatenate(y)
+        elif self.pair_merge == 'dropout':
+            # get random index vector
+            np_y = np.array(y)
+            tf.print(f'y shape {len(y)} np_y {np_y.shape}')
+            random_index = tf.random.uniform(shape=[tf.shape(left)[-1]], minval=0, maxval=len(y), dtype=tf.int64)
+            tf.print(f'random index {random_index}')
+            return np_y.T[random_index]
 
 
 def contrastive_difference(left: tf.Tensor, right: tf.Tensor, batch_size: int, temperature: tf.Tensor):
