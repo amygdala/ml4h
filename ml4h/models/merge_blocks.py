@@ -159,7 +159,7 @@ class PairLossBlock(Block):
             # get random index vector
             np_y = np.array(y)
             tf.print(f'y shape {len(y)} np_y {np_y.shape}')
-            random_index = tf.random.uniform(shape=[tf.shape(left)[-1]], minval=0, maxval=len(y), dtype=tf.int64)
+            random_index = tf.random.uniform(shape=[tf.shape(intermediates[left][-1])[-1]], minval=0, maxval=len(y), dtype=tf.int64)
             tf.print(f'random index {random_index}')
             return np_y.T[random_index]
 
