@@ -161,7 +161,7 @@ class PairLossBlock(Block):
             tf.print(f'y shape {len(y)} tf_y {tf_y.shape}')
             random_index = np.random.randint(len(y), size=intermediates[left][-1].shape[-1])
             tf.print(f'random index {random_index[:6]}')
-            out = tf.gather(tf_y, indices=random_index, axis=1)
+            out = tf.gather(tf_y, indices=random_index, axis=0)
             tf.print(f'out shape {out.shape}')
             return out
 
