@@ -342,7 +342,7 @@ def make_hidden_layer_model(parent_model: Model, tensor_maps_in: List[TensorMap]
                 logging.info(f'Found {output_layer_name} nested in layer model: {layer.name}')
                 break
             except ValueError:
-                logging.warning(f'Value error searching for layer: {output_layer_name} at layer: {layer.name}')
+                logging.debug(f'Value error searching for layer: {output_layer_name} at layer: {layer.name}')
                 continue
     if not target_layer:
         target_layer = parent_model.get_layer(output_layer_name)
