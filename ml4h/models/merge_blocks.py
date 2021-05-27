@@ -157,11 +157,11 @@ class PairLossBlock(Block):
             return concatenate(y)
         elif self.pair_merge == 'dropout':
             # get random index vector
-            np_y = np.array(y)
-            tf.print(f'y shape {len(y)} np_y {np_y.shape}')
+            tf_y = tf.convert_to_tensor(y)
+            tf.print(f'y shape {len(y)} tf_y {tf.shape(tf_y)}')
             random_index = tf.random.uniform(shape=[tf.shape(intermediates[left][-1])[-1]], minval=0, maxval=len(y), dtype=tf.int64)
             tf.print(f'random index {random_index}')
-            return np_y.T[random_index]
+            return tf.transpose(tf_y)[random_index]
 
 
 def contrastive_difference(left: tf.Tensor, right: tf.Tensor, batch_size: int, temperature: tf.Tensor):
