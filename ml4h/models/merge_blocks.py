@@ -168,7 +168,7 @@ class PairLossBlock(Block):
             tf.print(f'permute y shape {tf_y.shape}')
             tf_g = tf.gather_nd(tf_y, idxs)
             tf.print(f'tf_g shape {tf_g.shape}')
-            return tf.transpose(tf_y)
+            return tf.transpose(tf_g)
         elif self.pair_merge == 'dropout':
             # get random index vector
             random_index = np.random.randint(len(y), size=intermediates[left][-1].shape[-1])
