@@ -667,9 +667,9 @@ def _predict_and_evaluate(
         subplot_rocs(rocs, plot_path)
     if len(scatters) > 1:
         subplot_scatters(scatters, plot_path)
-
-    test_labels_1d = {tm: np.array(test_labels[tm.output_name()]) for tm in tensor_maps_out if tm.output_name() in test_labels}
     if embed_visualization == "tsne":
+        test_labels_1d = {tm: np.array(test_labels[tm.output_name()]) for tm in tensor_maps_out if tm.output_name() in test_labels}
+        test_labels_1d.update(protected_data)
         _tsne_wrapper(model, hidden_layer, alpha, plot_path, test_paths, test_labels_1d, test_data=test_data, tensor_maps_in=tensor_maps_in, batch_size=batch_size)
 
     return performance_metrics
