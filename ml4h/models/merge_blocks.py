@@ -164,7 +164,7 @@ class PairLossBlock(Block):
 
             tf_y = tf.convert_to_tensor(y)
             tf.print(f'in y shape {tf_y.shape}')
-            tf_y = tf.transpose(tf_y, perm=[1, 2, 0], batch_size=1)
+            tf_y = tf.transpose(tf_y, perm=[0, 2, 1], batch_size=1)
             tf.print(f'permute y shape {tf_y.shape}')
             tf_g = tf.gather_nd(tf_y, idxs)
             tf.print(f'tf_g shape {tf_g.shape}')
