@@ -162,7 +162,7 @@ class PairLossBlock(Block):
             idxs = [[idx, i] for i, idx in enumerate(random_index)]
             tf.print(f'random index {random_index.shape} random_index {random_index[:4]}')
             tf_y = tf.convert_to_tensor(y)
-            tf_t = tf.transpose(tf_y, perm=[1, 0, 2])
+            tf_t = tf.transpose(tf_y, perm=[1, 2, 0])
             tf.print(f'tttt shape {tf_t.shape}')
             chosen = tf.gather_nd(tf_t, random_index)
             #dropped_y = [y[idx][:, i] for i, idx in enumerate(random_index)]
