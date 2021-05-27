@@ -163,7 +163,7 @@ class PairLossBlock(Block):
 
             tf_y = tf.convert_to_tensor(y)
             tf.print(f'out shape {tf_y.shape}')
-            tf_g = tf.gather_nd(tf_y)
+            tf_g = tf.gather_nd(tf_y, random_index)
             tf.print(f'out shape {tf_g.shape}')
             return tf.transpose(tf_y)
         elif self.pair_merge == 'dropout':
