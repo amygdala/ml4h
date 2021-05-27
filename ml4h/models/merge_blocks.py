@@ -160,13 +160,14 @@ class PairLossBlock(Block):
             # get random index vector
             tf_y = tf.convert_to_tensor(y)
             tf.print(f'y shape {len(y)} tf_y {tf_y.shape}')
-            random_index = np.random.randint(len(y), size=intermediates[left][-1].shape[-1])
+            random_index = np.random.randint(len(y), size=(self.batch_size, intermediates[left][-1].shape[-1]))
             tf.print(f'random index {random_index.shape} random_index {random_index[:4]}')
-            tf_t = tf.transpose(tf_y, perm=[1, 0, 2])
+            tf_t = tf.transpose(tf_y, perm=[1, 2, 1])
             tf.print(f' new shape {tf_t.shape}')
-            out = tf.gather_nd(tf_t, indices=random_index)
+            tf_tnp = tf_t.numpy()
+            out = tf_tnp[random_index]
             tf.print(f'out shape {out.shape}')
-            return out
+            return tf.convert_to_tensor(out)
 
 
 def contrastive_difference(left: tf.Tensor, right: tf.Tensor, batch_size: int, temperature: tf.Tensor):
