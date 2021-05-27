@@ -148,7 +148,6 @@ class PairLossBlock(Block):
         elif pair_loss == 'contrastive':
             self.loss_layer = ContrastiveLossLayer(pair_loss_weight, batch_size)
 
-    @tf.function
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]] = None) -> Tensor:
         y = []
         for left, right in self.pairs:
@@ -165,7 +164,7 @@ class PairLossBlock(Block):
             tf.print(f'random index {random_index[:4, :4]}')
             tf_t = tf.transpose(tf_y, perm=[1,0,2])
             tf.print(f' new shape {tf_t.shape}')
-            out = tf.gather_nd(tf_y, indices=random_index, batch_dims=1)
+            out = tf.gather_nd(tf_t, indices=random_index, batch_dims=1)
             tf.print(f'out shape {out.shape}')
             return out
 
