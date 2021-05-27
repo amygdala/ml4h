@@ -164,7 +164,7 @@ class PairLossBlock(Block):
             tf_t = tf.transpose(tf_y, perm=[0, 2, 1])
 
             tf.print(f'tttt shape {tf_t.shape}')
-            tfg = tf.gather(tf_t, random_index)
+            tfg = tf.gather(tf_t, random_index, axis =1)
             #dropped_y = [y[idx][:, i] for i, idx in enumerate(random_index)]
             tf.print(f'tfg shape {tfg.shape} ')
             # tf_y = tf.convert_to_tensor(dropped_y)
