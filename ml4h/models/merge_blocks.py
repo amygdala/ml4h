@@ -148,6 +148,7 @@ class PairLossBlock(Block):
         elif pair_loss == 'contrastive':
             self.loss_layer = ContrastiveLossLayer(pair_loss_weight, batch_size)
 
+    @tf.function
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]] = None) -> Tensor:
         y = []
         for left, right in self.pairs:
