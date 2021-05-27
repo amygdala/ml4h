@@ -159,12 +159,12 @@ class PairLossBlock(Block):
         elif self.pair_merge == 'dropout':
             # get random index vector
             random_index = np.random.randint(len(y), size=intermediates[left][-1].shape[-1])
-            idxs = [[i, idx] for i, idx in enumerate(random_index)]
+            idxs = [[idx, i] for i, idx in enumerate(random_index)]
             tf.print(f'random index {random_index.shape} random_index {random_index[:4]}')
             tf_y = tf.convert_to_tensor(y)
             tf_t = tf.transpose(tf_y, perm=[1, 0, 2])
             tf.print(f'tttt shape {tf_t.shape}')
-            chosen = tf.gather_nd(tf_t, idxs)
+            chosen = tf.gather_nd(tf_t, idxs, batch_dims=1)
             #dropped_y = [y[idx][:, i] for i, idx in enumerate(random_index)]
             tf.print(f'tfg shape {chosen.shape} ')
             # tf_y = tf.convert_to_tensor(dropped_y)
