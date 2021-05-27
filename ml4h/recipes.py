@@ -221,8 +221,8 @@ def test_multimodal_scalar_tasks(args):
     model = make_multimodal_multitask_model(**args.__dict__)
     p = os.path.join(args.output_folder, args.id + '/')
     return _predict_scalars_and_evaluate_from_generator(
-        model, generate_test, args.tensor_maps_in, args.tensor_maps_out,
-        args.tensor_maps_protected, args.test_steps, args.hidden_layer, p, args.alpha,
+        model, generate_test, args.tensor_maps_in, args.tensor_maps_out, args.tensor_maps_protected,
+        args.test_steps, args.batch_size, args.hidden_layer, p, args.alpha,
     )
 
 
@@ -677,7 +677,7 @@ def _predict_and_evaluate(
 
 def _predict_scalars_and_evaluate_from_generator(
     model, generate_test, tensor_maps_in, tensor_maps_out, tensor_maps_protected,
-    steps, hidden_layer, plot_path, alpha,
+    steps, batch_size, hidden_layer, plot_path, alpha,
 ):
     layer_names = [layer.name for layer in model.layers]
     model_predictions = [tm.output_name() for tm in tensor_maps_out if tm.output_name() in layer_names]
@@ -695,7 +695,7 @@ def _predict_scalars_and_evaluate_from_generator(
         y_predictions = model.predict(input_data)
         test_paths.extend(tensor_paths)
         if hidden_layer in layer_names:
-            x_embed = embed_model_predict(model, tensor_maps_in, hidden_layer, input_data, 2)
+            x_embed = embed_model_predict(model, tensor_maps_in, hidden_layer, input_data, batch_size)
             embeddings.extend(np.copy(np.reshape(x_embed, (x_embed.shape[0], np.prod(x_embed.shape[1:])))))
 
         for tm_output_name in test_labels:
