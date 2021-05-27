@@ -167,9 +167,7 @@ def evaluate_predictions(
             y_truth = y_truth[y_truth != tm.sentinel]
         prediction_flat = tm.rescale(y_predictions).flatten()[:max_melt]
         truth_flat = tm.rescale(y_truth).flatten()[:max_melt]
-        if len(protected) > 0 and prediction_flat.shape[0] == truth_flat.shape[0]:
-            performance_metrics.update(subplot_pearson_per_class(prediction_flat, truth_flat, tm.channel_map, protected, title, prefix=folder))
-        elif prediction_flat.shape[0] == truth_flat.shape[0]:
+        if prediction_flat.shape[0] == truth_flat.shape[0]:
             performance_metrics.update(plot_scatter(prediction_flat, truth_flat, title, folder))
     elif tm.is_continuous():
         if tm.sentinel is not None:
