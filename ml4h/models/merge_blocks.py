@@ -149,7 +149,7 @@ class PairLossBlock(Block):
             self.loss_layer = ContrastiveLossLayer(pair_loss_weight, batch_size)
         else:
             raise ValueError(f'Unknown pair loss type: {pair_loss}')
-        
+
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]] = None) -> Tensor:
         y = []
         for left, right in self.pairs:
@@ -161,11 +161,16 @@ class PairLossBlock(Block):
         elif self.pair_merge == 'dropout':
             # get random index vector
             random_index = np.random.randint(len(y), size=intermediates[left][-1].shape[-1])
+            tf.print(f'random_index shape {random_index.shape} random_index {random_index}')
             indices = list(zip(random_index, range(intermediates[left][-1].shape[-1])))
             tf_y = tf.convert_to_tensor(y)
             tf_y = tf.transpose(tf_y, perm=[0, 2, 1])
+            tf.print(f'gathered shape {tf_y.shape} tf_g {tf_y}')
             tf_g = tf.gather_nd(tf_y, indices)
-            return tf.transpose(tf_g)
+            tf.print(f'gathered shape {tf_g.shape} tf_g {tf_g}')
+            out = tf.transpose(tf_g)
+            tf.print(f'out shape {out.shape} out {out}')
+            return out
         else:
             raise ValueError(f'Unknown pair merge method: {self.pair_merge}')
         # elif self.pair_merge == 'dropout':
