@@ -173,7 +173,7 @@ class PairLossBlock(Block):
             tf_g = tf.gather_nd(tf_y, indices)
             tf.print(f'gathered shape {tf_g.shape} tf_g {tf_g}')
             out = tf.transpose(tf_g)
-            tf.print(f'out shape {out.shape} out {out.numpy()}')
+            tf.print(f'out shape {out.shape} out {out}')
             return out
         else:
             raise ValueError(f'Unknown pair merge method: {self.pair_merge}')
