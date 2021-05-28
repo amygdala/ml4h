@@ -165,7 +165,7 @@ class PairLossBlock(Block):
             tf.print(f'random_index shape {random_index.shape} random_index {random_index}')
             ranger = tf.range(intermediates[left][-1].shape[-1])
             tf.print(f'ranger shape {ranger.shape} random_index {ranger}')
-            indices = tf.stack([random_index, ranger])
+            indices = tf.stack([random_index, ranger], axis=-1)
             tf.print(f'indices shape {indices.shape} random_index {indices}')
             tf_y = tf.convert_to_tensor(y)
             tf_y = tf.transpose(tf_y, perm=[0, 2, 1])
