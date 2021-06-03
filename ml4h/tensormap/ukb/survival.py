@@ -319,3 +319,11 @@ prevalent_af_as_hf_wrt_instance2 = TensorMap('heart_failure', Interpretation.CAT
 
                                        )
 
+prevalent_cad_wrt_instance2 = TensorMap('coronary_artery_disease', Interpretation.CATEGORICAL, storage_type=StorageType.CATEGORICAL_FLAG,
+                                       loss=weighted_crossentropy([1.0, 10], 'coronary_artery_disease'), path_prefix='categorical',
+                                       channel_map={'no_coronary_artery_disease': 0, 'prevalent_coronary_artery_disease': 1},
+                                       tensor_from_file=prevalent_tensor('ukb_cardiac_mri/cine_segmented_lax_2ch/2/instance_0/',
+                                                                         'dates/coronary_artery_disease_date',
+                                                                         start_date_is_attribute=True),
+
+                                       )
