@@ -147,6 +147,8 @@ class PairLossBlock(Block):
             self.loss_layer = L2LossLayer(pair_loss_weight)
         elif pair_loss == 'contrastive':
             self.loss_layer = ContrastiveLossLayer(pair_loss_weight, batch_size)
+        else:
+            raise ValueError(f'Unknown pair loss type: {pair_loss}')
 
     def __call__(self, x: Tensor, intermediates: Dict[TensorMap, List[Tensor]] = None) -> Tensor:
         y = []
@@ -157,27 +159,25 @@ class PairLossBlock(Block):
         elif self.pair_merge == 'concat':
             return concatenate(y)
         elif self.pair_merge == 'dropout':
-            # get random index vector
-            random_index = np.random.randint(len(y), size=intermediates[left][-1].shape[-1])
-            idxs = list(zip(random_index, range(intermediates[left][-1].shape[-1])))
-            tf.print(f'random index {random_index.shape} idxs {idxs}')
-
+            random_index = tf.random.uniform(shape=[intermediates[left][-1].shape[-1]], maxval=len(y), dtype=tf.int32)
+            ranger = tf.range(intermediates[left][-1].shape[-1])
+            indices = tf.stack([random_index, ranger], axis=-1)
             tf_y = tf.convert_to_tensor(y)
-            tf.print(f'in y shape {tf_y.shape}')
             tf_y = tf.transpose(tf_y, perm=[0, 2, 1])
-            tf.print(f'permute y shape {tf_y.shape}')
-            tf_g = tf.gather_nd(tf_y, idxs)
-            tf.print(f'tf_g shape {tf_g.shape}')
-            return tf.transpose(tf_g)
-        elif self.pair_merge == 'dropout':
-            # get random index vector
-            random_index = np.random.randint(len(y), size=intermediates[left][-1].shape[-1])
-            tf.print(f'random index {random_index.shape} random_index {random_index[:4]}')
-            dropped_y = [y[idx][:, i] for i, idx in enumerate(random_index)]
-            tf.print(f'y {len(y)} shape {len(dropped_y)} tf_y {dropped_y[:4]}')
-            tf_y = tf.convert_to_tensor(dropped_y)
-            tf.print(f'out shape {tf_y.shape}')
-            return tf.transpose(tf_y)
+            tf_g = tf.gather_nd(tf_y, indices)
+            out = tf.transpose(tf_g)
+            return out
+        else:
+            raise ValueError(f'Unknown pair merge method: {self.pair_merge}')
+        # elif self.pair_merge == 'dropout':
+        #     # get random index vector
+        #     random_index = np.random.randint(len(y), size=intermediates[left][-1].shape[-1])
+        #     tf.print(f'random index {random_index.shape} random_index {random_index[:4]}')
+        #     dropped_y = [y[idx][:, i] for i, idx in enumerate(random_index)]
+        #     tf.print(f'y {len(y)} shape {len(dropped_y)} tf_y {dropped_y[:4]}')
+        #     tf_y = tf.convert_to_tensor(dropped_y)
+        #     tf.print(f'out shape {tf_y.shape}')
+        #     return tf.transpose(tf_y)
 
 
 def contrastive_difference(left: tf.Tensor, right: tf.Tensor, batch_size: int, temperature: tf.Tensor):

@@ -778,7 +778,7 @@ qrs_num = TensorMap(
 )
 qt_interval = TensorMap(
     'QTInterval', Interpretation.CONTINUOUS, path_prefix='ukb_ecg_rest', channel_map={'QTInterval': 0}, loss='logcosh', validator=make_range_validator(300, 600),
-    normalization={'mean': 426.1, 'std': 32.24},
+    normalization=Standardize(mean=426.1, std=32.24),
 )
 qt_interval_quintiles = TensorMap(
     'QTInterval', Interpretation.DISCRETIZED, path_prefix='ukb_ecg_rest',
