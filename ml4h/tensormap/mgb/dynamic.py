@@ -542,6 +542,11 @@ def make_wide_file_maps(desired_map_name: str, **kwargs) -> Union[TensorMap, Non
             'ecg_5000_raw', shape=(5000, 12), path_prefix=PARTNERS_PREFIX, tensor_from_file=tff,
             cacheable=False, channel_map=ECG_REST_UKB_LEADS, normalization=Standardize(mean=0, std=2000),
         )
+    elif desired_map_name == 'ecg_count':
+        tff = tensor_from_wide(kwargs['app_csv'], target='ecg_count', diagnosis_column='af_age')
+        return TensorMap(
+            'ecg_count', shape=(1,), path_prefix=PARTNERS_PREFIX, tensor_from_file=tff,
+        )
     elif desired_map_name == 'ecg_rest_stft_33_158_from_wide_csv':
         tff = tensor_from_wide(kwargs['app_csv'], target='ecg', diagnosis_column='af_age',
                                short_time_nperseg=64, short_time_noverlap=32)
@@ -808,6 +813,11 @@ def tensor_from_wide(
             return _ecg_tensor_from_date(tm, hd5, ecg_date_key,
                                          short_time_nperseg=short_time_nperseg,
                                          short_time_noverlap=short_time_noverlap)
+        elif target == 'ecg_count':
+            tensor = np.zeros(tm.shape, dtype=np.float32)
+            incident_dates = [d for d in ecg_dates if earliest < datetime.datetime.strptime(d, PARTNERS_DATETIME_FORMAT) < patient_data[mrn_int]['start_date']]
+            tensor[0] = len(incident_dates)
+            return tensor
         elif target == 'age':
             tensor = np.zeros(tm.shape, dtype=np.float32)
             if patient_data[mrn_int][target] is None:

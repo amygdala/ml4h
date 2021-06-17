@@ -3,6 +3,8 @@ import numpy as np
 from datetime import datetime
 import logging
 from typing import List, Tuple
+
+from ml4h.normalizer import Standardize
 from ml4h.tensormap.general import tensor_path
 from ml4h.TensorMap import TensorMap, Interpretation, str2date, make_range_validator
 from ml4h.defines import StorageType
@@ -235,7 +237,7 @@ bmi_ukb = TensorMap(
 )
 bmi_21 = TensorMap(
     '21001_Body-mass-index-BMI_0_0', Interpretation.CONTINUOUS, path_prefix='continuous', channel_map={'21001_Body-mass-index-BMI_0_0': 0}, annotation_units=1,
-    validator=make_range_validator(0, 300), normalization={'mean': 27.3397, 'std': 4.7721}, loss='logcosh',
+    validator=make_range_validator(0, 300), normalization=Standardize(mean=27.3397, std=4.7721), loss='logcosh',
 )
 birth_year = TensorMap(
     '22200_Year-of-birth_0_0', Interpretation.CONTINUOUS, path_prefix='continuous', channel_map={'22200_Year-of-birth_0_0': 0}, annotation_units=1, loss='logcosh',

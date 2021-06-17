@@ -2256,7 +2256,7 @@ LVESV = TensorMap(
     validator=make_range_validator(0, 400), channel_map={'LVESV': 0}, path_prefix='continuous',
 )
 LVM = TensorMap(
-    'LVM',  Interpretation.CONTINUOUS, normalization={'mean': 89.70372484725051, 'std': 24.803669503436304}, loss='logcosh',
+    'LVM',  Interpretation.CONTINUOUS, normalization=Standardize(mean=89.70372484725051, std=24.803669503436304), loss='logcosh',
     validator=make_range_validator(0, 400), channel_map={'LVM': 0}, path_prefix='continuous',
 )
 LVSV = TensorMap(
