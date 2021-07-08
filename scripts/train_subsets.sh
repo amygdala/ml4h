@@ -11,7 +11,7 @@ do
     --merge_blocks \
     --decoder_blocks /home/sam/trained_models/hypertuned_48m_16e_ecg_median_raw_10_autoencoder_256d/decoder_ecg_rest_median_raw_10.h5 \
                      /home/sam/trained_models/hypertuned_32m_8e_lax_4ch_heart_center_autoencoder_256d/decoder_lax_4ch_heart_center.h5 \
-    --pairs $TENSOR_MAPS --pair_loss contrastive --pair_loss_weight 0.1 --pair_merge dropout \
+    --pairs "$TENSOR_MAPS" --pair_loss contrastive --pair_loss_weight 0.1 --pair_merge dropout \
     --batch_size 4 --epochs 1 --training_steps 128 --validation_steps 32 --test_steps 1 \
     --num_workers 4 --patience 36 --tensormap_prefix ml4h.tensormap.ukb \
     --id "drop_fuse_${i}" --output_folder /home/sam/trained_models/ \
@@ -20,4 +20,10 @@ do
     --valid_csv /home/sam/csvs/multimodal_validation.csv \
     --test_csv /home/sam/csvs/multimodal_test.csv \
     --learning_rate 0.00005
+
+    $ECHO ./scripts/tf.sh /home/sam/ml4h/ml4h/recipes.py --mode train_block --tensors /mnt/disks/annotated-cardiac-tensors-45k-2021-03-25/2020-09-21/  \
+    --input_tensors "$TENSOR_MAPS" --output_tensors "$TENSOR_MAPS" \
+    --model_file "/home/sam/trained_models/drop_fuse_${i}" \
+    --sample_csv /home/sam/csvs/multimodal_test.csv \
+    --dense_layers 256
 done
