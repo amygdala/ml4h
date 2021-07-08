@@ -25,6 +25,7 @@ do
     $ECHO ./scripts/tf.sh /home/sam/ml4h/ml4h/recipes.py --mode infer_encoders \
     --tensors "$TENSORS" --input_tensors "$TENSOR_MAPS" --output_tensors "$TENSOR_MAPS" \
     --model_file "/home/sam/trained_models/drop_fuse_${i}/drop_fuse_${i}.h5" \
+    --id "drop_fuse_${i}" --output_folder /home/sam/trained_models/ \
     --sample_csv /home/sam/csvs/multimodal_test.csv \
     --tensormap_prefix ml4h.tensormap.ukb \
     --dense_layers 256
