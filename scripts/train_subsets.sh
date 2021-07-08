@@ -23,7 +23,7 @@ do
 
     $ECHO ./scripts/tf.sh /home/sam/ml4h/ml4h/recipes.py --mode train_block --tensors /mnt/disks/annotated-cardiac-tensors-45k-2021-03-25/2020-09-21/  \
     --input_tensors "$TENSOR_MAPS" --output_tensors "$TENSOR_MAPS" \
-    --model_file "/home/sam/trained_models/drop_fuse_${i}" \
+    --model_file "/home/sam/trained_models/drop_fuse_${i}/drop_fuse_${i}.h5" \
     --sample_csv /home/sam/csvs/multimodal_test.csv \
     --tensormap_prefix ml4h.tensormap.ukb \
     --dense_layers 256
