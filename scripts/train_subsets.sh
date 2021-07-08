@@ -14,9 +14,9 @@ do
                      /home/sam/trained_models/hypertuned_32m_8e_lax_4ch_heart_center_autoencoder_256d/decoder_lax_4ch_heart_center.h5 \
     --pairs "$TENSOR_MAPS" --pair_loss contrastive --pair_loss_weight 0.1 --pair_merge dropout \
     --batch_size 4 --epochs 316 --training_steps 128 --validation_steps 32 --test_steps 1 \
-    --num_workers 4 --patience 48 --tensormap_prefix ml4h.tensormap.ukb \
+    --num_workers 4 --patience 108 --tensormap_prefix ml4h.tensormap.ukb \
     --id "drop_fuse_${i%.*}" --output_folder /home/sam/trained_models/ \
-    --inspect_model \
+    --inspect_model --save_last_model \
     --train_csv "/home/sam/csvs/${i}" \
     --valid_csv /home/sam/csvs/multimodal_validation.csv \
     --test_csv /home/sam/csvs/multimodal_test.csv \
