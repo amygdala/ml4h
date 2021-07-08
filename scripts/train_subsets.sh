@@ -15,16 +15,16 @@ do
     --pairs "$TENSOR_MAPS" --pair_loss contrastive --pair_loss_weight 0.1 --pair_merge dropout \
     --batch_size 4 --epochs 1 --training_steps 128 --validation_steps 32 --test_steps 1 \
     --num_workers 4 --patience 36 --tensormap_prefix ml4h.tensormap.ukb \
-    --id "drop_fuse_${i}" --output_folder /home/sam/trained_models/ \
+    --id "drop_fuse_${i%.*}" --output_folder /home/sam/trained_models/ \
     --inspect_model \
-    --train_csv "/home/sam/csvs/${i}" \
+    --train_csv "/home/sam/csvs/${i%.*}" \
     --valid_csv /home/sam/csvs/multimodal_validation.csv \
     --test_csv /home/sam/csvs/multimodal_test.csv \
     --learning_rate 0.00005
 
     $ECHO ./scripts/tf.sh /home/sam/ml4h/ml4h/recipes.py --mode infer_encoders \
     --tensors "$TENSORS" --input_tensors "$TENSOR_MAPS" --output_tensors "$TENSOR_MAPS" \
-    --model_file "/home/sam/trained_models/drop_fuse_${i}/drop_fuse_${i}.h5" \
+    --model_file "/home/sam/trained_models/drop_fuse_${i%.*}/drop_fuse_${i%.*}.h5" \
     --id "drop_fuse_${i}" --output_folder /home/sam/trained_models/ \
     --sample_csv /home/sam/csvs/multimodal_test.csv \
     --tensormap_prefix ml4h.tensormap.ukb \
