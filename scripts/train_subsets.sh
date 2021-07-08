@@ -1,6 +1,6 @@
 ECHO=
 MODEL_FILES=
-TENORS="/mnt/disks/annotated-cardiac-tensors-45k-2021-03-25/2020-09-21/"
+TENSORS="/mnt/disks/annotated-cardiac-tensors-45k-2021-03-25/2020-09-21/"
 TENSOR_MAPS="ecg.ecg_rest_median_raw_10 mri.lax_4ch_heart_center "
 array=( "multimodal_split_64.csv" "multimodal_split_128.csv" "multimodal_split_256.csv" "multimodal_split_512.csv" "multimodal_split_1024.csv"  "multimodal_split_2048.csv")
 for i in "${array[@]}"
