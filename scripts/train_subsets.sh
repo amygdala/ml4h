@@ -25,5 +25,6 @@ do
     --input_tensors "$TENSOR_MAPS" --output_tensors "$TENSOR_MAPS" \
     --model_file "/home/sam/trained_models/drop_fuse_${i}" \
     --sample_csv /home/sam/csvs/multimodal_test.csv \
+    --tensormap_prefix ml4h.tensormap.ukb \
     --dense_layers 256
 done
