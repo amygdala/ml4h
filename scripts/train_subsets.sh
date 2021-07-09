@@ -13,9 +13,9 @@ do
     --decoder_blocks /home/sam/trained_models/hypertuned_48m_16e_ecg_median_raw_10_autoencoder_256d/decoder_ecg_rest_median_raw_10.h5 \
                      /home/sam/trained_models/hypertuned_32m_8e_lax_4ch_heart_center_autoencoder_256d/decoder_lax_4ch_heart_center.h5 \
     --pairs "$TENSOR_MAPS" --pair_loss contrastive --pair_loss_weight 0.1 --pair_merge dropout \
-    --batch_size 4 --epochs 108 --training_steps 128 --validation_steps 32 --test_steps 1 \
-    --num_workers 4 --patience 36 --tensormap_prefix ml4h.tensormap.ukb \
-    --id "drop_fuse_${i%.*}" --output_folder /home/sam/trained_models/ \
+    --batch_size 4 --epochs 316 --training_steps 128 --validation_steps 32 --test_steps 1 \
+    --num_workers 4 --patience 12 --tensormap_prefix ml4h.tensormap.ukb \
+    --id "drop_fuse_early_stop_${i%.*}" --output_folder /home/sam/trained_models/ \
     --inspect_model --save_last_model \
     --train_csv "/home/sam/csvs/${i}" \
     --valid_csv /home/sam/csvs/multimodal_validation.csv \
@@ -25,7 +25,7 @@ do
     $ECHO ./scripts/tf.sh /home/sam/ml4h/ml4h/recipes.py --mode infer_encoders \
     --tensors "$TENSORS" --input_tensors "$TENSOR_MAPS" --output_tensors "$TENSOR_MAPS" \
     --model_file "/home/sam/trained_models/drop_fuse_${i%.*}/drop_fuse_${i%.*}.h5" \
-    --id "drop_fuse_${i%.*}" --output_folder /home/sam/trained_models/ \
+    --id "drop_fuse_early_stop_${i%.*}" --output_folder /home/sam/trained_models/ \
     --sample_csv /home/sam/csvs/multimodal_test.csv \
     --tensormap_prefix ml4h.tensormap.ukb \
     --dense_layers 256
