@@ -12,9 +12,9 @@ do
     --decoder_blocks conv_decode \
     --pairs "$TENSOR_MAPS" --pair_loss contrastive --pair_loss_weight 0.1 --pair_merge dropout \
     --batch_size 4 --epochs 316 --training_steps 128 --validation_steps 32 --test_steps 1 \
-    --num_workers 4 --patience 12 --tensormap_prefix ml4h.tensormap.ukb \
+    --num_workers 4 --patience 4 --tensormap_prefix ml4h.tensormap.ukb \
     --id "drop_fuse_early_stop_v2_${i%.*}" --output_folder /home/sam/trained_models/ \
-    --inspect_model \
+    --inspect_model --activation mish --dense_layers 256 \
     --train_csv "/home/sam/csvs/${i}" \
     --valid_csv /home/sam/csvs/multimodal_validation.csv \
     --test_csv /home/sam/csvs/multimodal_test.csv
