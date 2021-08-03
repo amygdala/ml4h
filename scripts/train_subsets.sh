@@ -22,8 +22,8 @@ do
 
     $ECHO ./scripts/tf.sh /home/sam/ml4h/ml4h/recipes.py --mode infer_encoders \
     --tensors "$TENSORS" --input_tensors "$TENSOR_MAPS" --output_tensors "$TENSOR_MAPS" \
-    --model_file "/home/sam/trained_models/drop_fuse_early_stop_v2_${i%.*}/drop_fuse_early_stop_v2_${i%.*}.h5" \
-    --id "drop_fuse_early_stop_v2_all_infer_${i%.*}" --output_folder /home/sam/trained_models/ \
+    --model_file "/home/sam/trained_models/drop_fuse_early_stop_${i%.*}/drop_fuse_early_stop_${i%.*}.h5" \
+    --id "drop_fuse_early_stop_all_infer_${i%.*}" --output_folder /home/sam/trained_models/ \
     --sample_csv /home/sam/csvs/sample_id_returned_lv_mass.csv \
     --tensormap_prefix ml4h.tensormap.ukb \
     --dense_layers 256
